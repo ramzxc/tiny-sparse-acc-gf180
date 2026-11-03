@@ -1,6 +1,6 @@
 # Tiny Tapeout project information
 project:
-  title:        "tiny-acc"      # Project title
+  title:        "tiny-sparse-acc"      # Project title
   author:       "Aram Yun"      # Your name
   discord:      "ramzxc"      # Your discord username, for communication and automatically assigning you a Tapeout role (optional)
   description:  "tiny-acc"      # One line description of what your project does
