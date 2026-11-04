@@ -13,10 +13,40 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Checkout GDS action
+        uses: actions/checkout@v6
+        with:
+          repository: TinyTapeout/tt-gds-action
+          ref: ttgf26c
+          path: .tt-gds-action
+
+      - name: Add build diagnostics
+        shell: bash
+        run: |
+          python3 - <<'PYTHON'
+          from pathlib import Path
+          action = Path('.tt-gds-action/action.yml')
+          original = 'run: ./tt/tt_tool.py --harden $TT_ARGS'
+          replacement = ('run: python3 scripts/monitor_gds.py -- '
+                         './tt/tt_tool.py --harden $TT_ARGS')
+          text = action.read_text()
+          if text.count(original) != 1:
+              raise SystemExit('GDS action changed; review diagnostic wrapper insertion')
+          action.write_text(text.replace(original, replacement))
+          PYTHON
+
       - name: Build GDS
-        uses: TinyTapeout/tt-gds-action@ttgf26c
+        uses: ./.tt-gds-action
         with:
           pdk: gf180mcuD
+
+      - name: Upload build diagnostics
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: gds-diagnostics
+          path: test/output/gds_diagnostics/
+          if-no-files-found: warn
 
   precheck:
     needs: gds
