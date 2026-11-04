@@ -138,7 +138,7 @@
         ]
       },
       "instances": {
-        "core.tpu_core_tpu.weight_buffer_core.memory.storage.gen_sram512.mem": {
+        "core.tpu_core_tpu.weight_buffer_core.memory.storage.genblk1.gen_sram512.mem": {
           "location": [
             30,
             30
