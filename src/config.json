@@ -71,6 +71,8 @@
 
   "//": "Only export pin area in LEF (without any connected nets)",
   "MAGIC_WRITE_LEF_PINONLY": 1,
+  "//": "SRAM power pins are on Metal3; connect them to TT Metal4 straps. PDN_MULTILAYER remains off.",
+  "PDN_HORIZONTAL_LAYER": "Metal3",
   "MACROS": {
     "gf180mcu_fd_ip_sram__sram64x8m8wm1": {
       "gds": [
