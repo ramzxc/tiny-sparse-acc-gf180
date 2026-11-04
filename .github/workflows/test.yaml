@@ -9,18 +9,28 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Cache Verilator
+        id: verilator-cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/verilator-install
+          key: verilator-5.052-ubuntu24-v1
+
       - name: Build Verilator 5.052 (cocotb requires at least 5.036)
+        if: steps.verilator-cache.outputs.cache-hit != 'true'
         shell: bash
         run: |
           sudo apt-get update
-          sudo apt-get install -y autoconf flex bison help2man g++ make
+          sudo apt-get install -y autoconf flex libfl-dev bison help2man g++ make
           git clone --depth 1 --branch v5.052 https://github.com/verilator/verilator.git "$RUNNER_TEMP/verilator"
           cd "$RUNNER_TEMP/verilator"
           autoconf
           ./configure --prefix="$RUNNER_TEMP/verilator-install"
           make -j2
           make install
-          echo "$RUNNER_TEMP/verilator-install/bin" >> "$GITHUB_PATH"
+
+      - name: Add Verilator to PATH
+        run: echo "$RUNNER_TEMP/verilator-install/bin" >> "$GITHUB_PATH"
 
       - name: Install sv2v 0.0.13
         shell: bash
