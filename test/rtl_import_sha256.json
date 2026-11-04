@@ -1,0 +1,23 @@
+{
+  "lib/tpu_pkg.sv": "f4310da88a1d48d23447b7244dd3ba813adf35f680ef3a1c94835721522fc335",
+  "rtl/inst_fifo.sv": "848c72d8c80e902a4c57886300c3735b1c45f925c34e1261fab6a2ec81c836f0",
+  "rtl/dma.sv": "c57d061c309d396ed5bc794a2196f0306eea65caafd5c8be8661957d62277237",
+  "rtl/weight_buffer.sv": "f2ff589df612cf8e67e51721572884f68f5ea37f7bc843a6fe21d7de398a1305",
+  "rtl/weight_load_ctrl.sv": "7e9cde3295ef646de61007bbd6c0ad9110353b741d7a4936de299cb7cb3b1f8a",
+  "rtl/sparsity_ctrl.sv": "f7387c3f06d923cc19e2f5d3bd357875e58e321f7b3bbdd694468562bbc9f331",
+  "rtl/unified_buffer.sv": "966fb0c7fa97f504b0ab6634cc7e8693ad01ae61ceacb217ca3a15552fa5a090",
+  "rtl/accumulation_buffer.sv": "35efd5739b1a5dad2f824554ab4a297bff95cbfcc21e5e04a0335e048223da09",
+  "rtl/activation.sv": "356455c98e6bfb4950f4a3d4b6c4acaab119481c070236e2fd51c56566bde1dc",
+  "rtl/activation_ctrl.sv": "3f83eb170744499f53d602b2064b7ddbe58f86439f447f78e8dd3a66f29b5425",
+  "rtl/vpu.sv": "a995785909f5e91e4e2c8191b05f09ccc3518bd1e8192e212e6351924f036935",
+  "rtl/vpu_ctrl.sv": "8b8d6dff41f980bf092082b4af4fd96134032f2de40e2ac8e3e6b5ea59678af9",
+  "rtl/inst_decoder.sv": "0ee0fbd77776089ef29b3eee8a27c555656f78cd946e7d5ce4a71ee06e83a488",
+  "rtl/tpu_core.sv": "0099d2c78296075addd3eeeb974726d99f7fa1e078b5d81556b2569bcc1ec694",
+  "rtl/tpu.sv": "77d2dd3723e41e83f7394115e63462ece7a037047ec931d29e4a1a3f16cf751f",
+  "rtl/sram_wrapper.sv": "080e81dcbb5688899b2f97d4e6b3bfa7cea06c252caf89c2d640e46e9449bb6b",
+  "rtl/sram_ctrl.sv": "c1a048c2449ffabb1b1bdc9a1910dafd7ce10e5ab4a47198e575f908b82180a8",
+  "rtl/qspi_flash_phy.sv": "294aee2a8d10a9b310cf8023dad42b936a25cca6fef9f9acba483cf1738ab356",
+  "rtl/qspi_flash_adapter.sv": "e34e8e5fba31ca0f3a5351faf55e2e55a170a509efe01466a72f3e6bed9be9eb",
+  "rtl/uart_byte.sv": "b652962c3e22fb1e8a9d5b4936d3b3040aa8ecf76bae180a6c72b56b293536ab",
+  "rtl/tt_um_tiny_sparse_acc_ramzxc.sv": "6557d03a6897a7227f3689ceb222f54e533b6026afcdbb31b3afb2300d22bf20"
+}
