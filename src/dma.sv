@@ -351,6 +351,7 @@ module dma
     always_comb begin
         int unsigned selected;
         int unsigned row_space;
+        row_data_type aligned_data;
 
         row_space = active_row_bytes - $unsigned(load_rsp_offset_cs);
         selected = $unsigned(load_beat_bytes_left_cs);
@@ -361,12 +362,17 @@ module dma
         load_unpack_completes_row = (selected != 0) && (selected == row_space);
         load_unpack_consumes_beat = (selected != 0) && (selected == $unsigned(load_beat_bytes_left_cs));
 
+        // Align once, then update fixed byte positions. This shares the
+        // selection logic instead of building a separate mux for each byte.
+        aligned_data = row_data_type'(load_beat_data_cs >> (load_beat_offset_cs * BYTE_WIDTH));
+        aligned_data = aligned_data << (load_rsp_offset_cs * BYTE_WIDTH);
+
         load_unpack_row = load_rsp_row_data_cs;
-        for (int unsigned i = 0; i < ROW_BYTES; i++) begin
-            if (i < selected) begin
-                load_unpack_row[($unsigned(load_rsp_offset_cs)+i)*BYTE_WIDTH +: BYTE_WIDTH] =
-                    load_beat_data_cs[($unsigned(load_beat_offset_cs)+i)*BYTE_WIDTH +: BYTE_WIDTH];
-            end
+        for (int unsigned byte_index = 0; byte_index < ROW_BYTES; byte_index++) begin
+            if (byte_index >= $unsigned(load_rsp_offset_cs) &&
+                byte_index < $unsigned(load_rsp_offset_cs) + selected)
+                load_unpack_row[byte_index*BYTE_WIDTH +: BYTE_WIDTH] =
+                    aligned_data[byte_index*BYTE_WIDTH +: BYTE_WIDTH];
         end
     end
 
@@ -456,6 +462,7 @@ module dma
         int unsigned beat_space;
         int unsigned row_bytes_left;
         int unsigned selected;
+        beat_data_type aligned_data;
 
         if (store_data_fire) begin
             store_pack_data = '0;
@@ -482,11 +489,16 @@ module dma
         store_pack_completes_beat   = (selected != 0) && ((beat_fill + selected) == DRAM_DATA_BYTES);
         store_pack_completes_stream = (selected != 0) && (selected == $unsigned(store_stream_bytes_left_cs));
 
-        for (int unsigned i = 0; i < ROW_BYTES; i++) begin
-            if (i < selected) begin
-                store_pack_data[(beat_fill+i)*BYTE_WIDTH +: BYTE_WIDTH] =
-                    row_fifo_head_data[($unsigned(store_stream_row_offset_cs)+i)*BYTE_WIDTH +: BYTE_WIDTH];
-                store_pack_strb[beat_fill+i] = 1'b1;
+        // Widen before shifting into the outgoing beat so upper bytes
+        // are retained. The strobe still marks only bytes actually copied.
+        aligned_data = beat_data_type'(row_fifo_head_data >> (store_stream_row_offset_cs * BYTE_WIDTH));
+        aligned_data = aligned_data << (beat_fill * BYTE_WIDTH);
+
+        for (int unsigned byte_index = 0; byte_index < DRAM_DATA_BYTES; byte_index++) begin
+            if (byte_index >= beat_fill && byte_index < beat_fill + selected) begin
+                store_pack_data[byte_index*BYTE_WIDTH +: BYTE_WIDTH] =
+                    aligned_data[byte_index*BYTE_WIDTH +: BYTE_WIDTH];
+                store_pack_strb[byte_index] = 1'b1;
             end
         end
     end

@@ -380,9 +380,14 @@ module dma (
 			selected = $unsigned(load_rsp_bytes_left_cs);
 		load_rsp_valid_byte_count = sv2v_cast_188D2(selected);
 	end
+	function automatic [ROW_BITS - 1:0] sv2v_cast_9C404;
+		input reg [ROW_BITS - 1:0] inp;
+		sv2v_cast_9C404 = inp;
+	endfunction
 	always @(*) begin : sv2v_autoblock_2
 		reg [31:0] selected;
 		reg [31:0] row_space;
+		reg [ROW_BITS - 1:0] aligned_data;
 		if (_sv2v_0)
 			;
 		row_space = active_row_bytes - $unsigned(load_rsp_offset_cs);
@@ -392,12 +397,14 @@ module dma (
 		load_unpack_byte_count = sv2v_cast_188D2(selected);
 		load_unpack_completes_row = (selected != 0) && (selected == row_space);
 		load_unpack_consumes_beat = (selected != 0) && (selected == $unsigned(load_beat_bytes_left_cs));
+		aligned_data = sv2v_cast_9C404(load_beat_data_cs >> (load_beat_offset_cs * tpu_pkg_BYTE_WIDTH));
+		aligned_data = aligned_data << (load_rsp_offset_cs * tpu_pkg_BYTE_WIDTH);
 		load_unpack_row = load_rsp_row_data_cs;
 		begin : sv2v_autoblock_3
-			reg [31:0] i;
-			for (i = 0; i < ROW_BYTES; i = i + 1)
-				if (i < selected)
-					load_unpack_row[($unsigned(load_rsp_offset_cs) + i) * tpu_pkg_BYTE_WIDTH+:tpu_pkg_BYTE_WIDTH] = load_beat_data_cs[($unsigned(load_beat_offset_cs) + i) * tpu_pkg_BYTE_WIDTH+:tpu_pkg_BYTE_WIDTH];
+			reg [31:0] byte_index;
+			for (byte_index = 0; byte_index < ROW_BYTES; byte_index = byte_index + 1)
+				if ((byte_index >= $unsigned(load_rsp_offset_cs)) && (byte_index < ($unsigned(load_rsp_offset_cs) + selected)))
+					load_unpack_row[byte_index * tpu_pkg_BYTE_WIDTH+:tpu_pkg_BYTE_WIDTH] = aligned_data[byte_index * tpu_pkg_BYTE_WIDTH+:tpu_pkg_BYTE_WIDTH];
 		end
 	end
 	assign load_unpack_fire = (((state_cs == 2'd1) && load_beat_valid_cs) && (load_unpack_byte_count != {BEAT_COUNT_WIDTH {1'sb0}})) && (!load_unpack_completes_row || row_fifo_can_push);
@@ -445,10 +452,6 @@ module dma (
 	assign buffer_read_rsp_ready = (((state_cs == 2'd2) && (operation_cs == 3'd2)) && !row_fifo_reserve_empty) && row_fifo_can_push;
 	assign acc_read_rsp_ready = (((state_cs == 2'd2) && (operation_cs == 3'd3)) && !row_fifo_reserve_empty) && row_fifo_can_push;
 	assign local_store_rsp_fire = (buffer_read_rsp_valid && buffer_read_rsp_ready) || (acc_read_rsp_valid && acc_read_rsp_ready);
-	function automatic [ROW_BITS - 1:0] sv2v_cast_9C404;
-		input reg [ROW_BITS - 1:0] inp;
-		sv2v_cast_9C404 = inp;
-	endfunction
 	assign packed_buffer_row = sv2v_cast_9C404(buffer_read_rsp_data);
 	assign packed_acc_row = acc_read_rsp_data;
 	assign store_cmd_beats = select_burst_beats(store_cmd_addr_cs, store_cmd_beats_left_cs);
@@ -456,11 +459,16 @@ module dma (
 	assign dram_write_cmd_len = (store_cmd_beats == {9 {1'sb0}} ? 8'd0 : sv2v_cast_8(store_cmd_beats - 1'b1));
 	assign dram_write_cmd_valid = ((state_cs == 2'd2) && !store_burst_inflight_cs) && (store_cmd_beats_left_cs != {33 {1'sb0}});
 	assign store_cmd_fire = dram_write_cmd_valid && dram_write_cmd_ready;
+	function automatic [(DRAM_DATA_BYTES * tpu_pkg_BYTE_WIDTH) - 1:0] sv2v_cast_A3436;
+		input reg [(DRAM_DATA_BYTES * tpu_pkg_BYTE_WIDTH) - 1:0] inp;
+		sv2v_cast_A3436 = inp;
+	endfunction
 	always @(*) begin : sv2v_autoblock_4
 		reg [31:0] beat_fill;
 		reg [31:0] beat_space;
 		reg [31:0] row_bytes_left;
 		reg [31:0] selected;
+		reg [(DRAM_DATA_BYTES * tpu_pkg_BYTE_WIDTH) - 1:0] aligned_data;
 		if (_sv2v_0)
 			;
 		if (store_data_fire) begin
@@ -484,12 +492,14 @@ module dma (
 		store_pack_consumes_row = (selected != 0) && (selected == row_bytes_left);
 		store_pack_completes_beat = (selected != 0) && ((beat_fill + selected) == DRAM_DATA_BYTES);
 		store_pack_completes_stream = (selected != 0) && (selected == $unsigned(store_stream_bytes_left_cs));
+		aligned_data = sv2v_cast_A3436(row_fifo_head_data >> (store_stream_row_offset_cs * tpu_pkg_BYTE_WIDTH));
+		aligned_data = aligned_data << (beat_fill * tpu_pkg_BYTE_WIDTH);
 		begin : sv2v_autoblock_5
-			reg [31:0] i;
-			for (i = 0; i < ROW_BYTES; i = i + 1)
-				if (i < selected) begin
-					store_pack_data[(beat_fill + i) * tpu_pkg_BYTE_WIDTH+:tpu_pkg_BYTE_WIDTH] = row_fifo_head_data[($unsigned(store_stream_row_offset_cs) + i) * tpu_pkg_BYTE_WIDTH+:tpu_pkg_BYTE_WIDTH];
-					store_pack_strb[beat_fill + i] = 1'b1;
+			reg [31:0] byte_index;
+			for (byte_index = 0; byte_index < DRAM_DATA_BYTES; byte_index = byte_index + 1)
+				if ((byte_index >= beat_fill) && (byte_index < (beat_fill + selected))) begin
+					store_pack_data[byte_index * tpu_pkg_BYTE_WIDTH+:tpu_pkg_BYTE_WIDTH] = aligned_data[byte_index * tpu_pkg_BYTE_WIDTH+:tpu_pkg_BYTE_WIDTH];
+					store_pack_strb[byte_index] = 1'b1;
 				end
 		end
 	end
