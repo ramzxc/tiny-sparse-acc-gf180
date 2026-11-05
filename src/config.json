@@ -22,6 +22,18 @@
     [0, 0, 941.86, 30]
   ],
 
+  "//": "Keep signal routes off the two 64B SRAM bodies on Metal4. Applied after PDN generation; Metal2 pins and exterior routing channels stay accessible.",
+  "ROUTING_OBSTRUCTIONS": [
+    ["Metal4", 500, 30, 931.86, 262.88],
+    ["Metal4", 500, 300, 931.86, 532.88]
+  ],
+
+  "//": "Keep intermediate DRC coordinates for diagnosing routing convergence.",
+  "DRT_SAVE_DRC_REPORT_ITERS": 10,
+
+  "//": "KLayout streamout has a single design top; Magic retains unreferenced SRAM cells that break rendering.",
+  "PRIMARY_GDSII_STREAMOUT_TOOL": "klayout",
+
   "//": "CLOCK_PERIOD - Increase this in case you are getting setup time violations.",
   "//": "The value is in nanoseconds, so 20ns == 50MHz.",
   "CLOCK_PERIOD": 100,
