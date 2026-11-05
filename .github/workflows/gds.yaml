@@ -56,6 +56,9 @@ jobs:
         uses: TinyTapeout/tt-gds-action/precheck@ttgf26c
 
   gl_test:
+    # The composite action runs make clean before GATES=yes make.
+    env:
+      GATES: "yes"
     needs: gds
     runs-on: ubuntu-24.04
     steps:
