@@ -15,18 +15,7 @@
   "//": "Users have reported that values up to 80 worked well for them.",
   "PL_TARGET_DENSITY_PCT": 70,
 
-  "//": "Keep the SRAM bank near the lower-left corner. Remove cell sites only in the boundary-facing strips; routing remains allowed.",
-  "//": "The strip ends include the existing 10um macro halo. Leave the inward-facing channels unchanged.",
-  "FP_OBSTRUCTIONS": [
-    [0, 0, 30, 380.88],
-    [0, 0, 941.86, 30]
-  ],
-
-  "//": "Keep signal routes off the two 64B SRAM bodies on Metal4. Applied after PDN generation; Metal2 pins and exterior routing channels stay accessible.",
-  "ROUTING_OBSTRUCTIONS": [
-    ["Metal4", 500, 30, 931.86, 262.88],
-    ["Metal4", 500, 300, 931.86, 532.88]
-  ],
+  "//": "Temporary 32-byte standard-cell memory experiment: no SRAM placement or routing obstructions.",
 
   "//": "Keep intermediate DRC coordinates for diagnosing routing convergence.",
   "DRT_SAVE_DRC_REPORT_ITERS": 10,
@@ -89,87 +78,5 @@
   "MAGIC_DEF_LABELS": 0,
 
   "//": "Only export pin area in LEF (without any connected nets)",
-  "MAGIC_WRITE_LEF_PINONLY": 1,
-  "//": "SRAM power pins are on Metal3; connect them to TT Metal4 straps. PDN_MULTILAYER remains off.",
-  "PDN_HORIZONTAL_LAYER": "Metal3",
-  "MACROS": {
-    "gf180mcu_fd_ip_sram__sram64x8m8wm1": {
-      "gds": [
-        "dir::macros/gf180mcu_fd_ip_sram__sram64x8m8wm1/gf180mcu_fd_ip_sram__sram64x8m8wm1.gds"
-      ],
-      "lef": [
-        "dir::macros/gf180mcu_fd_ip_sram__sram64x8m8wm1/gf180mcu_fd_ip_sram__sram64x8m8wm1.lef"
-      ],
-      "vh": [
-        "dir::macros/gf180mcu_fd_ip_sram__sram64x8m8wm1/gf180mcu_fd_ip_sram__sram64x8m8wm1.vh"
-      ],
-      "spice": [
-        "dir::macros/gf180mcu_fd_ip_sram__sram64x8m8wm1/gf180mcu_fd_ip_sram__sram64x8m8wm1.cdl"
-      ],
-      "lib": {
-        "*_tt_025C_3v30": [
-          "dir::macros/gf180mcu_fd_ip_sram__sram64x8m8wm1/gf180mcu_fd_ip_sram__sram64x8m8wm1__tt_025C_3v30.lib"
-        ],
-        "*_ss_125C_3v00": [
-          "dir::macros/gf180mcu_fd_ip_sram__sram64x8m8wm1/gf180mcu_fd_ip_sram__sram64x8m8wm1__ss_125C_3v00.lib"
-        ],
-        "*_ff_n40C_3v60": [
-          "dir::macros/gf180mcu_fd_ip_sram__sram64x8m8wm1/gf180mcu_fd_ip_sram__sram64x8m8wm1__ff_n40C_3v60.lib"
-        ]
-      },
-      "instances": {
-        "core.tpu_core_tpu.unified_buffer_core.memory.storage.gen_sram64.mem": {
-          "location": [
-            500,
-            30
-          ],
-          "orientation": "N"
-        },
-        "core.tpu_core_tpu.accumulation_buffer.memory.storage.gen_sram64.mem": {
-          "location": [
-            500,
-            300
-          ],
-          "orientation": "N"
-        }
-      }
-    },
-    "gf180mcu_fd_ip_sram__sram256x8m8wm1": {
-      "gds": [
-        "dir::macros/gf180mcu_fd_ip_sram__sram256x8m8wm1/gf180mcu_fd_ip_sram__sram256x8m8wm1.gds"
-      ],
-      "lef": [
-        "dir::macros/gf180mcu_fd_ip_sram__sram256x8m8wm1/gf180mcu_fd_ip_sram__sram256x8m8wm1.lef"
-      ],
-      "vh": [
-        "dir::macros/gf180mcu_fd_ip_sram__sram256x8m8wm1/gf180mcu_fd_ip_sram__sram256x8m8wm1.vh"
-      ],
-      "spice": [
-        "dir::macros/gf180mcu_fd_ip_sram__sram256x8m8wm1/gf180mcu_fd_ip_sram__sram256x8m8wm1.cdl"
-      ],
-      "lib": {
-        "*_tt_025C_3v30": [
-          "dir::macros/gf180mcu_fd_ip_sram__sram256x8m8wm1/gf180mcu_fd_ip_sram__sram256x8m8wm1__tt_025C_3v30.lib"
-        ],
-        "*_ss_125C_3v00": [
-          "dir::macros/gf180mcu_fd_ip_sram__sram256x8m8wm1/gf180mcu_fd_ip_sram__sram256x8m8wm1__ss_125C_3v00.lib"
-        ],
-        "*_ff_n40C_3v60": [
-          "dir::macros/gf180mcu_fd_ip_sram__sram256x8m8wm1/gf180mcu_fd_ip_sram__sram256x8m8wm1__ff_n40C_3v60.lib"
-        ]
-      },
-      "instances": {
-        "core.tpu_core_tpu.weight_buffer_core.memory.storage.genblk1.gen_sram256.mem": {
-          "location": [
-            30,
-            30
-          ],
-          "orientation": "N"
-        }
-      }
-    }
-  },
-  "PDN_MACRO_CONNECTIONS": [
-    ".*gen_sram(64|256)\\.mem VPWR VGND VDD VSS"
-  ]
+  "MAGIC_WRITE_LEF_PINONLY": 1
 }

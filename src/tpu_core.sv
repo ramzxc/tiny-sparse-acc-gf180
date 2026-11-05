@@ -9,9 +9,9 @@ module tpu_core
 #(
     parameter int COMPUTE_WIDTH                = 2,
     parameter int MAX_COLUMN_ROWS              = COMPUTE_WIDTH,
-    parameter int WEIGHT_BUFFER_DEPTH          = 128,
-    parameter int UNIFIED_BUFFER_DEPTH         = 32,
-    parameter int REGISTER_DEPTH               = 16,
+    parameter int WEIGHT_BUFFER_DEPTH          = 4,
+    parameter int UNIFIED_BUFFER_DEPTH         = 4,
+    parameter int REGISTER_DEPTH               = 4,
     parameter int WEIGHT_REQ_FIFO_DEPTH        = 4,
     parameter int VPU_META_FIFO_DEPTH          = 4,
     parameter int ACTIVATION_META_FIFO_DEPTH   = 4,

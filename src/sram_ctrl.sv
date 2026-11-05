@@ -1,9 +1,9 @@
-// 16-bit or 32-bit words serialized over one 64x8 or 256x8 single-port GF180 macro.
+// 16-bit or 32-bit words serialized over a byte-wide synchronous memory.
 // MACRO_BYTES selects physical capacity; DEPTH limits the usable word count.
 // The caller must not assert read and write requests together. Scheduling is
 // handled upstream; each accepted request owns all byte accesses.
 module sram_ctrl #(
-    parameter int MACRO_BYTES = 64,
+    parameter int MACRO_BYTES = 8,
     parameter int DATA_WIDTH = 16,
     parameter int DEPTH = MACRO_BYTES / (DATA_WIDTH / 8),
     parameter int ADDR_WIDTH = $clog2(MACRO_BYTES / (DATA_WIDTH / 8))
@@ -144,9 +144,9 @@ module sram_ctrl #(
     end
 
     initial begin
-        assert ((MACRO_BYTES == 64 || MACRO_BYTES == 256) && (DATA_WIDTH == 16 || DATA_WIDTH == 32) &&
+        assert ((MACRO_BYTES >= 8 && (MACRO_BYTES & (MACRO_BYTES - 1)) == 0) && (DATA_WIDTH == 16 || DATA_WIDTH == 32) &&
                 DEPTH > 0 && DEPTH <= MACRO_BYTES / WORD_BYTES && ADDR_WIDTH >= WORD_ADDR_WIDTH)
-            else $fatal(1, "Unsupported GF180 SRAM controller geometry");
+            else $fatal(1, "Unsupported byte-memory controller geometry");
     end
 `endif
 endmodule

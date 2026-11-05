@@ -720,7 +720,7 @@ module weight_buffer (
 	load_write_ready
 );
 	parameter signed [31:0] COMPUTE_WIDTH = 2;
-	parameter signed [31:0] DEPTH = 128;
+	parameter signed [31:0] DEPTH = 4;
 	input wire clk;
 	input wire rst;
 	localparam signed [31:0] tpu_pkg_WEIGHT_ADDR_WIDTH = 24;
@@ -735,7 +735,7 @@ module weight_buffer (
 	output wire load_write_ready;
 	localparam signed [31:0] tpu_pkg_FP8_WIDTH = 8;
 	sram_ctrl #(
-		.MACRO_BYTES(256),
+		.MACRO_BYTES(DEPTH * ((COMPUTE_WIDTH * tpu_pkg_FP8_WIDTH) / 8)),
 		.DATA_WIDTH(COMPUTE_WIDTH * tpu_pkg_FP8_WIDTH),
 		.DEPTH(DEPTH),
 		.ADDR_WIDTH(tpu_pkg_WEIGHT_ADDR_WIDTH)
@@ -1023,7 +1023,7 @@ module unified_buffer (
 );
 	reg _sv2v_0;
 	parameter signed [31:0] COMPUTE_WIDTH = 2;
-	parameter signed [31:0] DEPTH = 32;
+	parameter signed [31:0] DEPTH = 4;
 	input wire clk;
 	input wire rst;
 	localparam signed [31:0] tpu_pkg_BUFFER_ADDR_WIDTH = 16;
@@ -1165,7 +1165,7 @@ module unified_buffer (
 	end
 	localparam signed [31:0] tpu_pkg_FP8_WIDTH = 8;
 	sram_ctrl #(
-		.MACRO_BYTES(64),
+		.MACRO_BYTES(DEPTH * ((COMPUTE_WIDTH * tpu_pkg_FP8_WIDTH) / 8)),
 		.DATA_WIDTH(COMPUTE_WIDTH * tpu_pkg_FP8_WIDTH),
 		.DEPTH(DEPTH),
 		.ADDR_WIDTH(tpu_pkg_BUFFER_ADDR_WIDTH)
@@ -1209,7 +1209,7 @@ module accumulation_buffer (
 	read_rsp_ready
 );
 	parameter signed [31:0] COMPUTE_WIDTH = 2;
-	parameter signed [31:0] REGISTER_DEPTH = 16;
+	parameter signed [31:0] REGISTER_DEPTH = 4;
 	input wire clk;
 	input wire rst;
 	localparam signed [31:0] tpu_pkg_ACCUMULATOR_ADDR_WIDTH = 8;
@@ -1258,7 +1258,7 @@ module accumulation_buffer (
 	assign busy = (state_cs != 3'd0) || mem_busy;
 	assign sram_write_enable = mem_wvalid && mem_wready;
 	sram_ctrl #(
-		.MACRO_BYTES(64),
+		.MACRO_BYTES(REGISTER_DEPTH * ((COMPUTE_WIDTH * tpu_pkg_FP16_WIDTH) / 8)),
 		.DATA_WIDTH(32),
 		.DEPTH(REGISTER_DEPTH),
 		.ADDR_WIDTH(tpu_pkg_ACCUMULATOR_ADDR_WIDTH)
@@ -2720,9 +2720,9 @@ module tpu_core (
 	reg _sv2v_0;
 	parameter signed [31:0] COMPUTE_WIDTH = 2;
 	parameter signed [31:0] MAX_COLUMN_ROWS = COMPUTE_WIDTH;
-	parameter signed [31:0] WEIGHT_BUFFER_DEPTH = 128;
-	parameter signed [31:0] UNIFIED_BUFFER_DEPTH = 32;
-	parameter signed [31:0] REGISTER_DEPTH = 16;
+	parameter signed [31:0] WEIGHT_BUFFER_DEPTH = 4;
+	parameter signed [31:0] UNIFIED_BUFFER_DEPTH = 4;
+	parameter signed [31:0] REGISTER_DEPTH = 4;
 	parameter signed [31:0] WEIGHT_REQ_FIFO_DEPTH = 4;
 	parameter signed [31:0] VPU_META_FIFO_DEPTH = 4;
 	parameter signed [31:0] ACTIVATION_META_FIFO_DEPTH = 4;
@@ -3337,11 +3337,11 @@ module tpu (
 	qspi_cs_n
 );
 	parameter signed [31:0] COMPUTE_WIDTH = 2;
-	parameter signed [31:0] WEIGHT_BUFFER_DEPTH = 128;
-	parameter signed [31:0] UNIFIED_BUFFER_DEPTH = 32;
+	parameter signed [31:0] WEIGHT_BUFFER_DEPTH = 4;
+	parameter signed [31:0] UNIFIED_BUFFER_DEPTH = 4;
 	parameter signed [31:0] AXI_DATA_BYTES = 8;
 	parameter signed [31:0] AXI_ID_WIDTH = 4;
-	parameter signed [31:0] REGISTER_DEPTH = 16;
+	parameter signed [31:0] REGISTER_DEPTH = 4;
 	parameter signed [31:0] INST_FIFO_DEPTH = 4;
 	input wire clk;
 	input wire rst;
@@ -3571,45 +3571,21 @@ module sram_wrapper (
 	write_data,
 	read_data
 );
-	parameter signed [31:0] MACRO_BYTES = 64;
+	parameter signed [31:0] MACRO_BYTES = 8;
 	input wire clk;
 	input wire enable;
 	input wire write_enable;
 	input wire [$clog2(MACRO_BYTES) - 1:0] addr;
 	input wire [7:0] write_data;
-	output wire [7:0] read_data;
-	wire cen_pin;
-	wire gwen_pin;
-	wire [$clog2(MACRO_BYTES) - 1:0] addr_pin;
-	wire [7:0] data_pin;
-	assign cen_pin = !enable;
-	assign gwen_pin = !write_enable;
-	assign addr_pin = addr;
-	assign data_pin = write_data;
-	generate
-		if (MACRO_BYTES == 64) begin : gen_sram64
-			gf180mcu_fd_ip_sram__sram64x8m8wm1 mem(
-				.CLK(clk),
-				.CEN(cen_pin),
-				.GWEN(gwen_pin),
-				.WEN(8'h00),
-				.A(addr_pin),
-				.D(data_pin),
-				.Q(read_data)
-			);
+	output reg [7:0] read_data;
+	reg [7:0] mem [0:MACRO_BYTES - 1];
+	always @(posedge clk)
+		if (enable) begin
+			if (write_enable)
+				mem[addr] <= write_data;
+			else
+				read_data <= mem[addr];
 		end
-		else if (MACRO_BYTES == 256) begin : gen_sram256
-			gf180mcu_fd_ip_sram__sram256x8m8wm1 mem(
-				.CLK(clk),
-				.CEN(cen_pin),
-				.GWEN(gwen_pin),
-				.WEN(8'h00),
-				.A(addr_pin),
-				.D(data_pin),
-				.Q(read_data)
-			);
-		end
-	endgenerate
 endmodule
 module sram_ctrl (
 	clk,
@@ -3628,7 +3604,7 @@ module sram_ctrl (
 	busy
 );
 	reg _sv2v_0;
-	parameter signed [31:0] MACRO_BYTES = 64;
+	parameter signed [31:0] MACRO_BYTES = 8;
 	parameter signed [31:0] DATA_WIDTH = 16;
 	parameter signed [31:0] DEPTH = MACRO_BYTES / (DATA_WIDTH / 8);
 	parameter signed [31:0] ADDR_WIDTH = $clog2(MACRO_BYTES / (DATA_WIDTH / 8));

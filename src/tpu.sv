@@ -8,11 +8,11 @@ module tpu
     import tpu_pkg::*;
 #(
     parameter int COMPUTE_WIDTH          = 2,
-    parameter int WEIGHT_BUFFER_DEPTH    = 128,
-    parameter int UNIFIED_BUFFER_DEPTH   = 32,
+    parameter int WEIGHT_BUFFER_DEPTH    = 4,
+    parameter int UNIFIED_BUFFER_DEPTH   = 4,
     parameter int AXI_DATA_BYTES         = 8,
     parameter int AXI_ID_WIDTH           = 4,
-    parameter int REGISTER_DEPTH         = 16,
+    parameter int REGISTER_DEPTH         = 4,
     parameter int INST_FIFO_DEPTH        = 4
 )(
     input logic clk,rst,

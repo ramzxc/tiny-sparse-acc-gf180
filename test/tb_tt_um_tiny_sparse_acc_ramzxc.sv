@@ -87,11 +87,11 @@ module tb_tt_um_tiny_sparse_acc_ramzxc;
         response(8'h06,status);
         if(accepted!=before_count+1) $fatal(1,"pending instruction lost");
         before_count=accepted;
-        send_inst(dma_inst(OPCODE_DRAM_TO_BUFFER,0,0,32));
-        for(int n=0;n<8;n++) send_inst(dma_inst(OPCODE_BUFFER_TO_DRAM,8192+64*n,0,32));
+        send_inst(dma_inst(OPCODE_DRAM_TO_BUFFER,0,0,4));
+        for(int n=0;n<8;n++) send_inst(dma_inst(OPCODE_BUFFER_TO_DRAM,8192+64*n,0,4));
         sync_wait();
         if(accepted!=before_count+10) $fatal(1,"duplicate/lost instructions");
-        for(int n=0;n<8;n++) for(int b=0;b<64;b++)
+        for(int n=0;n<8;n++) for(int b=0;b<8;b++)
             if(flash.mem[8192+64*n+b]!==8'(b^8'h5a)) $fatal(1,"DMA result mismatch");
         if(flash.erase_ops!=0) $fatal(1,"unexpected erase");
         send_inst(dma_inst(OPCODE_BUFFER_TO_DRAM,12289,0,3)); sync_wait();

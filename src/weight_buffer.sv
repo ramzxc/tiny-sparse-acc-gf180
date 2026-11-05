@@ -1,9 +1,9 @@
-// Weight buffer: read and DMA write requests share one GF180 SRAM port.
+// Weight buffer: read and DMA write requests share one byte-wide memory port.
 module weight_buffer
     import tpu_pkg::*;
 #(
     parameter int COMPUTE_WIDTH = 2,
-    parameter int DEPTH         = 128
+    parameter int DEPTH         = 4
 )(
     input logic clk,
     input logic rst,
@@ -23,7 +23,7 @@ module weight_buffer
 );
 
     sram_ctrl #(
-        .MACRO_BYTES(256),
+        .MACRO_BYTES(DEPTH * (COMPUTE_WIDTH * FP8_WIDTH / 8)),
         .DATA_WIDTH(COMPUTE_WIDTH * FP8_WIDTH),
         .DEPTH(DEPTH),
         .ADDR_WIDTH(WEIGHT_ADDR_WIDTH)
