@@ -8,7 +8,7 @@ module tpu
     import tpu_pkg::*;
 #(
     parameter int COMPUTE_WIDTH          = 2,
-    parameter int WEIGHT_BUFFER_DEPTH    = 256,
+    parameter int WEIGHT_BUFFER_DEPTH    = 128,
     parameter int UNIFIED_BUFFER_DEPTH   = 32,
     parameter int AXI_DATA_BYTES         = 8,
     parameter int AXI_ID_WIDTH           = 4,

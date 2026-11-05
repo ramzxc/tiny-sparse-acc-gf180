@@ -1,7 +1,7 @@
 ## How it works
 
 Two-lane sparse neural-network accelerator with FP8 E4M3 operands and weights,
-FP16 accumulation, and a 64-bit instruction stream. Weight storage is 512 bytes;
+FP16 accumulation, and a 64-bit instruction stream. Weight storage is 256 bytes (128 two-element FP8 rows);
 unified and accumulation storage are 64 bytes each, using GF180 SRAM macros.
 An INPUT instruction reads unified-buffer lane zero and holds that scalar until
 the next INPUT or reset. Zero inputs skip weight reads and scalar multiplication.

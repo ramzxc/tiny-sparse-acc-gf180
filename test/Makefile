@@ -12,7 +12,7 @@ TOPLEVEL_LANG ?= verilog
 SRC_DIR = $(CURDIR)/../src
 PROJECT_SOURCES = tpu_pkg.sv inst_fifo.sv dma.sv weight_buffer.sv weight_load_ctrl.sv sparsity_ctrl.sv unified_buffer.sv accumulation_buffer.sv activation.sv activation_ctrl.sv vpu.sv vpu_ctrl.sv inst_decoder.sv tpu_core.sv tpu.sv sram_wrapper.sv sram_ctrl.sv qspi_flash_phy.sv qspi_flash_adapter.sv uart_byte.sv tt_um_tiny_sparse_acc_ramzxc.sv
 
-VERILOG_SOURCES += $(addprefix $(CURDIR)/,models/gf180mcu_fd_ip_sram__sram64x8m8wm1.v models/gf180mcu_fd_ip_sram__sram512x8m8wm1.v)
+VERILOG_SOURCES += $(addprefix $(CURDIR)/,models/gf180mcu_fd_ip_sram__sram64x8m8wm1.v models/gf180mcu_fd_ip_sram__sram256x8m8wm1.v models/gf180mcu_fd_ip_sram__sram512x8m8wm1.v)
 
 ifneq ($(GATES),yes)
 

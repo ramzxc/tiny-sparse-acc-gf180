@@ -1,4 +1,4 @@
-These two Apache-2.0 GF180 SRAM simulation models were copied from the local
+These three Apache-2.0 GF180 SRAM simulation models were copied from the local
 GF180 PDK used by the source accelerator. Copyright/license headers are preserved;
 the full upstream license is in ../../src/macros/LICENSE.
 

@@ -3,7 +3,7 @@ module weight_buffer
     import tpu_pkg::*;
 #(
     parameter int COMPUTE_WIDTH = 2,
-    parameter int DEPTH         = 256
+    parameter int DEPTH         = 128
 )(
     input logic clk,
     input logic rst,
@@ -23,7 +23,7 @@ module weight_buffer
 );
 
     sram_ctrl #(
-        .MACRO_BYTES(512),
+        .MACRO_BYTES(256),
         .DATA_WIDTH(COMPUTE_WIDTH * FP8_WIDTH),
         .DEPTH(DEPTH),
         .ADDR_WIDTH(WEIGHT_ADDR_WIDTH)

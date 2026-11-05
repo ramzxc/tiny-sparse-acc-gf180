@@ -720,7 +720,7 @@ module weight_buffer (
 	load_write_ready
 );
 	parameter signed [31:0] COMPUTE_WIDTH = 2;
-	parameter signed [31:0] DEPTH = 256;
+	parameter signed [31:0] DEPTH = 128;
 	input wire clk;
 	input wire rst;
 	localparam signed [31:0] tpu_pkg_WEIGHT_ADDR_WIDTH = 24;
@@ -735,7 +735,7 @@ module weight_buffer (
 	output wire load_write_ready;
 	localparam signed [31:0] tpu_pkg_FP8_WIDTH = 8;
 	sram_ctrl #(
-		.MACRO_BYTES(512),
+		.MACRO_BYTES(256),
 		.DATA_WIDTH(COMPUTE_WIDTH * tpu_pkg_FP8_WIDTH),
 		.DEPTH(DEPTH),
 		.ADDR_WIDTH(tpu_pkg_WEIGHT_ADDR_WIDTH)
@@ -2720,7 +2720,7 @@ module tpu_core (
 	reg _sv2v_0;
 	parameter signed [31:0] COMPUTE_WIDTH = 2;
 	parameter signed [31:0] MAX_COLUMN_ROWS = COMPUTE_WIDTH;
-	parameter signed [31:0] WEIGHT_BUFFER_DEPTH = 256;
+	parameter signed [31:0] WEIGHT_BUFFER_DEPTH = 128;
 	parameter signed [31:0] UNIFIED_BUFFER_DEPTH = 32;
 	parameter signed [31:0] REGISTER_DEPTH = 16;
 	parameter signed [31:0] WEIGHT_REQ_FIFO_DEPTH = 4;
@@ -3337,7 +3337,7 @@ module tpu (
 	qspi_cs_n
 );
 	parameter signed [31:0] COMPUTE_WIDTH = 2;
-	parameter signed [31:0] WEIGHT_BUFFER_DEPTH = 256;
+	parameter signed [31:0] WEIGHT_BUFFER_DEPTH = 128;
 	parameter signed [31:0] UNIFIED_BUFFER_DEPTH = 32;
 	parameter signed [31:0] AXI_DATA_BYTES = 8;
 	parameter signed [31:0] AXI_ID_WIDTH = 4;
@@ -3589,6 +3589,17 @@ module sram_wrapper (
 	generate
 		if (MACRO_BYTES == 64) begin : gen_sram64
 			gf180mcu_fd_ip_sram__sram64x8m8wm1 mem(
+				.CLK(clk),
+				.CEN(cen_pin),
+				.GWEN(gwen_pin),
+				.WEN(8'h00),
+				.A(addr_pin),
+				.D(data_pin),
+				.Q(read_data)
+			);
+		end
+		else if (MACRO_BYTES == 256) begin : gen_sram256
+			gf180mcu_fd_ip_sram__sram256x8m8wm1 mem(
 				.CLK(clk),
 				.CEN(cen_pin),
 				.GWEN(gwen_pin),

@@ -32,7 +32,7 @@ module sram_wrapper #(
     supply0 vss;
 
     initial begin
-        assert (MACRO_BYTES == 64 || MACRO_BYTES == 512)
+        assert (MACRO_BYTES == 64 || MACRO_BYTES == 256 || MACRO_BYTES == 512)
             else $fatal(1, "Unsupported GF180 SRAM macro capacity");
     end
 `endif
@@ -60,7 +60,28 @@ module sram_wrapper #(
                         mem.mem[a] = 'x;
             end
 `endif
-        end else if (MACRO_BYTES == 512) begin : gen_sram512
+        end else if (MACRO_BYTES == 256) begin : gen_sram256
+            gf180mcu_fd_ip_sram__sram256x8m8wm1 mem (
+                .CLK(clk),
+                .CEN(cen_pin),
+                .GWEN(gwen_pin),
+                .WEN(8'h00),
+                .A(addr_pin),
+                .D(data_pin),
+                .Q(read_data)
+`ifndef SYNTHESIS
+                ,.VDD(vdd), .VSS(vss)
+`endif
+            );
+
+`ifndef SYNTHESIS
+            initial begin
+                #0.001;
+                if ($test$plusargs("uninit_sram") || $test$plusargs("uninit_accum_sram"))
+                    for (int a = 0; a < MACRO_BYTES; a++)
+                        mem.mem[a] = 'x;
+            end
+`endif        end else if (MACRO_BYTES == 512) begin : gen_sram512
             gf180mcu_fd_ip_sram__sram512x8m8wm1 mem (
                 .CLK(clk),
                 .CEN(cen_pin),

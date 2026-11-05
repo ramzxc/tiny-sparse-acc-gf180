@@ -18,7 +18,7 @@
   "//": "Keep the SRAM bank near the lower-left corner. Remove cell sites only in the boundary-facing strips; routing remains allowed.",
   "//": "The strip ends include the existing 10um macro halo. Leave the inward-facing channels unchanged.",
   "FP_OBSTRUCTIONS": [
-    [0, 0, 30, 524.88],
+    [0, 0, 30, 380.88],
     [0, 0, 941.86, 30]
   ],
 
@@ -122,32 +122,32 @@
         }
       }
     },
-    "gf180mcu_fd_ip_sram__sram512x8m8wm1": {
+    "gf180mcu_fd_ip_sram__sram256x8m8wm1": {
       "gds": [
-        "dir::macros/gf180mcu_fd_ip_sram__sram512x8m8wm1/gf180mcu_fd_ip_sram__sram512x8m8wm1.gds"
+        "dir::macros/gf180mcu_fd_ip_sram__sram256x8m8wm1/gf180mcu_fd_ip_sram__sram256x8m8wm1.gds"
       ],
       "lef": [
-        "dir::macros/gf180mcu_fd_ip_sram__sram512x8m8wm1/gf180mcu_fd_ip_sram__sram512x8m8wm1.lef"
+        "dir::macros/gf180mcu_fd_ip_sram__sram256x8m8wm1/gf180mcu_fd_ip_sram__sram256x8m8wm1.lef"
       ],
       "vh": [
-        "dir::macros/gf180mcu_fd_ip_sram__sram512x8m8wm1/gf180mcu_fd_ip_sram__sram512x8m8wm1.vh"
+        "dir::macros/gf180mcu_fd_ip_sram__sram256x8m8wm1/gf180mcu_fd_ip_sram__sram256x8m8wm1.vh"
       ],
       "spice": [
-        "dir::macros/gf180mcu_fd_ip_sram__sram512x8m8wm1/gf180mcu_fd_ip_sram__sram512x8m8wm1.cdl"
+        "dir::macros/gf180mcu_fd_ip_sram__sram256x8m8wm1/gf180mcu_fd_ip_sram__sram256x8m8wm1.cdl"
       ],
       "lib": {
         "*_tt_025C_3v30": [
-          "dir::macros/gf180mcu_fd_ip_sram__sram512x8m8wm1/gf180mcu_fd_ip_sram__sram512x8m8wm1__tt_025C_3v30.lib"
+          "dir::macros/gf180mcu_fd_ip_sram__sram256x8m8wm1/gf180mcu_fd_ip_sram__sram256x8m8wm1__tt_025C_3v30.lib"
         ],
         "*_ss_125C_3v00": [
-          "dir::macros/gf180mcu_fd_ip_sram__sram512x8m8wm1/gf180mcu_fd_ip_sram__sram512x8m8wm1__ss_125C_3v00.lib"
+          "dir::macros/gf180mcu_fd_ip_sram__sram256x8m8wm1/gf180mcu_fd_ip_sram__sram256x8m8wm1__ss_125C_3v00.lib"
         ],
         "*_ff_n40C_3v60": [
-          "dir::macros/gf180mcu_fd_ip_sram__sram512x8m8wm1/gf180mcu_fd_ip_sram__sram512x8m8wm1__ff_n40C_3v60.lib"
+          "dir::macros/gf180mcu_fd_ip_sram__sram256x8m8wm1/gf180mcu_fd_ip_sram__sram256x8m8wm1__ff_n40C_3v60.lib"
         ]
       },
       "instances": {
-        "core.tpu_core_tpu.weight_buffer_core.memory.storage.genblk1.gen_sram512.mem": {
+        "core.tpu_core_tpu.weight_buffer_core.memory.storage.genblk1.gen_sram256.mem": {
           "location": [
             30,
             30
@@ -158,6 +158,6 @@
     }
   },
   "PDN_MACRO_CONNECTIONS": [
-    ".*gen_sram(64|512)\\.mem VPWR VGND VDD VSS"
+    ".*gen_sram(64|256)\\.mem VPWR VGND VDD VSS"
   ]
 }
