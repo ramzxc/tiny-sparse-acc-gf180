@@ -228,73 +228,93 @@ package tpu_pkg;
     //                 //
     /////////////////////
 
-    function automatic fp16_type fp16_add(
-        input fp16_type a,
-        input fp16_type b
+    // Keep the discarded bits in a sticky bit for round-to-nearest-even.
+    // Width: carry + 11 significand bits + guard, round and sticky bits.
+    function automatic logic [14:0] fp16_shift_right_jam(
+        input logic [14:0] value,
+        input logic [4:0] distance
     );
-        logic sign_a, sign_b, sign_r;
-        logic [4:0] exp_a, exp_b;
-        logic [9:0] frac_a, frac_b;
-        longint unsigned sig_a, sig_b;
-        integer scale_a, scale_b, common_scale;
-        longint signed aligned_a, aligned_b, sum_signed;
-        longint unsigned magnitude;
-    begin
-        sign_a = a[15];
-        exp_a = a[14:10];
-        frac_a = a[9:0];
-        sign_b = b[15];
-        exp_b = b[14:10];
-        frac_b = b[9:0];
+        logic [14:0] shifted;
+        begin
+            shifted = value;
+            if (distance[4]) return {14'b0, |value};
+            if (distance[3]) shifted = {8'b0, shifted[14:9], |shifted[8:0]};
+            if (distance[2]) shifted = {4'b0, shifted[14:5], |shifted[4:0]};
+            if (distance[1]) shifted = {2'b0, shifted[14:3], |shifted[2:0]};
+            if (distance[0]) shifted = {1'b0, shifted[14:2], |shifted[1:0]};
+            return shifted;
+        end
+    endfunction
 
-        if ((exp_a == 5'h1F && frac_a != 0) ||
-            (exp_b == 5'h1F && frac_b != 0)) begin
-            fp16_add = FP16_QNAN;
-        end
-        else if ((exp_a == 5'h1F) && (exp_b == 5'h1F) && (sign_a != sign_b)) begin
-            fp16_add = FP16_QNAN;
-        end
-        else if (exp_a == 5'h1F) begin
-            fp16_add = {sign_a, 5'h1F, 10'h000};
-        end
-        else if (exp_b == 5'h1F) begin
-            fp16_add = {sign_b, 5'h1F, 10'h000};
-        end
-        else begin
-            if (exp_a == 0) begin
-                sig_a   = uint64_type'(frac_a);
-                scale_a = -24;
+    function automatic fp16_type fp16_add(input fp16_type a, b);
+        fp16_type larger, smaller;
+        logic [4:0] large_exp, small_exp;
+        logic [10:0] large_sig, small_sig;
+        logic [14:0] aligned, total;
+        logic [13:0] leading_scan;
+        logic [3:0] leading_zeros, left_shift;
+        logic [5:0] exponent;
+        logic [11:0] rounded;
+        begin
+            if ((a[14:10] == 31 && a[9:0] != 0) ||
+                (b[14:10] == 31 && b[9:0] != 0)) return FP16_QNAN;
+            if (a[14:10] == 31 && b[14:10] == 31 && a[15] != b[15])
+                return FP16_QNAN;
+            if (a[14:10] == 31) return a;
+            if (b[14:10] == 31) return b;
+
+            larger  = (a[14:0] >= b[14:0]) ? a : b;
+            smaller = (a[14:0] >= b[14:0]) ? b : a;
+            large_exp = (larger[14:10] == 0) ? 5'd1 : larger[14:10];
+            small_exp = (smaller[14:10] == 0) ? 5'd1 : smaller[14:10];
+            large_sig = {(larger[14:10] != 0), larger[9:0]};
+            small_sig = {(smaller[14:10] != 0), smaller[9:0]};
+
+            aligned = fp16_shift_right_jam({1'b0, small_sig, 3'b0}, large_exp - small_exp);
+            total = (larger[15] == smaller[15])
+                ? ({1'b0, large_sig, 3'b0} + aligned)
+                : ({1'b0, large_sig, 3'b0} - aligned);
+            if (total == 0) return {a[15] && b[15], 15'b0};
+
+            exponent = {1'b0, large_exp};
+            if (total[14]) begin
+                total = fp16_shift_right_jam(total, 5'd1);
+                exponent = exponent + 1'b1;
             end
-            else begin
-                sig_a   = 64'd1024 + uint64_type'(frac_a);
-                scale_a = integer'(exp_a) - 25;
+
+            // Count leading zeros with four small stages. Stop normalization
+            // at exponent 1 so subnormal results retain their proper scale.
+            leading_scan = total[13:0];
+            leading_zeros = 0;
+            if (leading_scan[13:6] == 0) begin
+                leading_scan = leading_scan << 8;
+                leading_zeros = leading_zeros + 4'd8;
             end
-
-            if (exp_b == 0) begin
-                sig_b   = uint64_type'(frac_b);
-                scale_b = -24;
+            if (leading_scan[13:10] == 0) begin
+                leading_scan = leading_scan << 4;
+                leading_zeros = leading_zeros + 4'd4;
             end
-            else begin
-                sig_b   = 64'd1024 + uint64_type'(frac_b);
-                scale_b = integer'(exp_b) - 25;
+            if (leading_scan[13:12] == 0) begin
+                leading_scan = leading_scan << 2;
+                leading_zeros = leading_zeros + 4'd2;
             end
+            if (!leading_scan[13]) leading_zeros = leading_zeros + 1'b1;
+            left_shift = ({2'b0, leading_zeros} < exponent)
+                ? leading_zeros : 4'(exponent - 1'b1);
+            total = total << left_shift;
+            exponent = exponent - {2'b0, left_shift};
 
-            common_scale = (scale_a < scale_b) ? scale_a : scale_b;
-            aligned_a = int64_type'(sig_a << (scale_a - common_scale));
-            aligned_b = int64_type'(sig_b << (scale_b - common_scale));
-            if (sign_a) aligned_a = -aligned_a;
-            if (sign_b) aligned_b = -aligned_b;
-
-            sum_signed = aligned_a + aligned_b;
-            sign_r = (sum_signed < 0) || ((sum_signed == 0) && sign_a && sign_b);
-            if (sum_signed < 0)
-                magnitude = uint64_type'(-sum_signed);
-            else
-                magnitude = uint64_type'(sum_signed);
-
-            fp16_add = fp16_pack_scaled(sign_r, magnitude, common_scale);
+            rounded = {1'b0, total[13:3]} +
+                12'(total[2] && (total[1] || total[0] || total[3]));
+            if (rounded[11]) begin
+                rounded = rounded >> 1;
+                exponent = exponent + 1'b1;
+            end
+            if (exponent >= 31) return {larger[15], 5'h1f, 10'b0};
+            if (exponent == 1 && !rounded[10])
+                return {larger[15], 5'b0, rounded[9:0]};
+            return {larger[15], exponent[4:0], rounded[9:0]};
         end
-    end
     endfunction
 
     //////////////////////////

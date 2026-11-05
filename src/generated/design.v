@@ -1279,162 +1279,139 @@ module accumulation_buffer (
 		.busy(mem_busy)
 	);
 	localparam [15:0] tpu_pkg_FP16_QNAN = 16'h7e00;
-	function automatic [15:0] tpu_pkg_fp16_pack_scaled;
-		input reg sign;
-		input reg [63:0] magnitude;
-		input integer scale;
-		integer msb;
-		integer exp_unbiased;
-		integer exp_field;
-		integer shift;
-		integer k;
-		reg [63:0] rounded;
-		reg [63:0] truncated;
-		reg [63:0] remainder;
-		reg [63:0] halfway;
-		reg [63:0] frac_value;
-		reg round_up;
-		if (magnitude == 0)
-			tpu_pkg_fp16_pack_scaled = {sign, 15'h0000};
-		else begin
-			msb = -1;
-			begin : sv2v_autoblock_1
-				reg signed [31:0] i;
-				for (i = 63; i >= 0; i = i - 1)
-					if ((msb < 0) && magnitude[i])
-						msb = i;
+	function automatic [14:0] tpu_pkg_fp16_shift_right_jam;
+		input reg [14:0] value;
+		input reg [4:0] distance;
+		reg [14:0] shifted;
+		reg [0:1] _sv2v_jump;
+		begin
+			_sv2v_jump = 2'b00;
+			shifted = value;
+			if (distance[4]) begin
+				tpu_pkg_fp16_shift_right_jam = {14'b00000000000000, |value};
+				_sv2v_jump = 2'b11;
 			end
-			exp_unbiased = msb + scale;
-			if (exp_unbiased > 15)
-				tpu_pkg_fp16_pack_scaled = {sign, 15'h7c00};
-			else if (exp_unbiased >= -14) begin
-				shift = msb - 10;
-				if (shift > 0) begin
-					truncated = magnitude >> shift;
-					remainder = magnitude - (truncated << shift);
-					halfway = 64'd1 << (shift - 1);
-					round_up = (remainder > halfway) || ((remainder == halfway) && truncated[0]);
-					rounded = truncated + round_up;
-				end
-				else
-					rounded = magnitude << -shift;
-				if (rounded >= 2048) begin
-					rounded = rounded >> 1;
-					exp_unbiased = exp_unbiased + 1;
-				end
-				if (exp_unbiased > 15)
-					tpu_pkg_fp16_pack_scaled = {sign, 15'h7c00};
-				else begin
-					exp_field = exp_unbiased + 15;
-					tpu_pkg_fp16_pack_scaled = {sign, exp_field[4:0], rounded[9:0]};
-				end
-			end
-			else begin
-				k = scale + 24;
-				if (k >= 0) begin
-					if (k >= 63)
-						frac_value = 64'hffffffffffffffff;
-					else
-						frac_value = magnitude << k;
-				end
-				else begin
-					shift = -k;
-					if (shift >= 64)
-						frac_value = 0;
-					else if (shift == 0)
-						frac_value = magnitude;
-					else begin
-						truncated = magnitude >> shift;
-						remainder = magnitude - (truncated << shift);
-						halfway = 64'd1 << (shift - 1);
-						round_up = (remainder > halfway) || ((remainder == halfway) && truncated[0]);
-						frac_value = truncated + round_up;
-					end
-				end
-				if (frac_value >= 1024)
-					tpu_pkg_fp16_pack_scaled = {sign, 15'h0400};
-				else
-					tpu_pkg_fp16_pack_scaled = {sign, 5'h00, frac_value[9:0]};
+			if (_sv2v_jump == 2'b00) begin
+				if (distance[3])
+					shifted = {8'b00000000, shifted[14:9], |shifted[8:0]};
+				if (distance[2])
+					shifted = {4'b0000, shifted[14:5], |shifted[4:0]};
+				if (distance[1])
+					shifted = {2'b00, shifted[14:3], |shifted[2:0]};
+				if (distance[0])
+					shifted = {1'b0, shifted[14:2], |shifted[1:0]};
+				tpu_pkg_fp16_shift_right_jam = shifted;
+				_sv2v_jump = 2'b11;
 			end
 		end
 	endfunction
-	function automatic [63:0] sv2v_cast_64;
-		input reg [63:0] inp;
-		sv2v_cast_64 = inp;
+	function automatic [3:0] sv2v_cast_4;
+		input reg [3:0] inp;
+		sv2v_cast_4 = inp;
 	endfunction
-	function automatic signed [31:0] sv2v_cast_32_signed;
-		input reg signed [31:0] inp;
-		sv2v_cast_32_signed = inp;
-	endfunction
-	function automatic signed [63:0] sv2v_cast_64_signed;
-		input reg signed [63:0] inp;
-		sv2v_cast_64_signed = inp;
+	function automatic [11:0] sv2v_cast_12;
+		input reg [11:0] inp;
+		sv2v_cast_12 = inp;
 	endfunction
 	function automatic [15:0] tpu_pkg_fp16_add;
 		input reg [15:0] a;
 		input reg [15:0] b;
-		reg sign_a;
-		reg sign_b;
-		reg sign_r;
-		reg [4:0] exp_a;
-		reg [4:0] exp_b;
-		reg [9:0] frac_a;
-		reg [9:0] frac_b;
-		reg [63:0] sig_a;
-		reg [63:0] sig_b;
-		integer scale_a;
-		integer scale_b;
-		integer common_scale;
-		reg signed [63:0] aligned_a;
-		reg signed [63:0] aligned_b;
-		reg signed [63:0] sum_signed;
-		reg [63:0] magnitude;
+		reg [15:0] larger;
+		reg [15:0] smaller;
+		reg [4:0] large_exp;
+		reg [4:0] small_exp;
+		reg [10:0] large_sig;
+		reg [10:0] small_sig;
+		reg [14:0] aligned;
+		reg [14:0] total;
+		reg [13:0] leading_scan;
+		reg [3:0] leading_zeros;
+		reg [3:0] left_shift;
+		reg [5:0] exponent;
+		reg [11:0] rounded;
+		reg [0:1] _sv2v_jump;
 		begin
-			sign_a = a[15];
-			exp_a = a[14:10];
-			frac_a = a[9:0];
-			sign_b = b[15];
-			exp_b = b[14:10];
-			frac_b = b[9:0];
-			if (((exp_a == 5'h1f) && (frac_a != 0)) || ((exp_b == 5'h1f) && (frac_b != 0)))
+			_sv2v_jump = 2'b00;
+			if (((a[14:10] == 31) && (a[9:0] != 0)) || ((b[14:10] == 31) && (b[9:0] != 0))) begin
 				tpu_pkg_fp16_add = tpu_pkg_FP16_QNAN;
-			else if (((exp_a == 5'h1f) && (exp_b == 5'h1f)) && (sign_a != sign_b))
-				tpu_pkg_fp16_add = tpu_pkg_FP16_QNAN;
-			else if (exp_a == 5'h1f)
-				tpu_pkg_fp16_add = {sign_a, 15'h7c00};
-			else if (exp_b == 5'h1f)
-				tpu_pkg_fp16_add = {sign_b, 15'h7c00};
-			else begin
-				if (exp_a == 0) begin
-					sig_a = sv2v_cast_64(frac_a);
-					scale_a = -24;
+				_sv2v_jump = 2'b11;
+			end
+			if (_sv2v_jump == 2'b00) begin
+				if (((a[14:10] == 31) && (b[14:10] == 31)) && (a[15] != b[15])) begin
+					tpu_pkg_fp16_add = tpu_pkg_FP16_QNAN;
+					_sv2v_jump = 2'b11;
 				end
-				else begin
-					sig_a = 64'd1024 + sv2v_cast_64(frac_a);
-					scale_a = sv2v_cast_32_signed(exp_a) - 25;
+				if (_sv2v_jump == 2'b00) begin
+					if (a[14:10] == 31) begin
+						tpu_pkg_fp16_add = a;
+						_sv2v_jump = 2'b11;
+					end
+					if (_sv2v_jump == 2'b00) begin
+						if (b[14:10] == 31) begin
+							tpu_pkg_fp16_add = b;
+							_sv2v_jump = 2'b11;
+						end
+						if (_sv2v_jump == 2'b00) begin
+							larger = (a[14:0] >= b[14:0] ? a : b);
+							smaller = (a[14:0] >= b[14:0] ? b : a);
+							large_exp = (larger[14:10] == 0 ? 5'd1 : larger[14:10]);
+							small_exp = (smaller[14:10] == 0 ? 5'd1 : smaller[14:10]);
+							large_sig = {larger[14:10] != 0, larger[9:0]};
+							small_sig = {smaller[14:10] != 0, smaller[9:0]};
+							aligned = tpu_pkg_fp16_shift_right_jam({1'b0, small_sig, 3'b000}, large_exp - small_exp);
+							total = (larger[15] == smaller[15] ? {1'b0, large_sig, 3'b000} + aligned : {1'b0, large_sig, 3'b000} - aligned);
+							if (total == 0) begin
+								tpu_pkg_fp16_add = {a[15] && b[15], 15'b000000000000000};
+								_sv2v_jump = 2'b11;
+							end
+							if (_sv2v_jump == 2'b00) begin
+								exponent = {1'b0, large_exp};
+								if (total[14]) begin
+									total = tpu_pkg_fp16_shift_right_jam(total, 5'd1);
+									exponent = exponent + 1'b1;
+								end
+								leading_scan = total[13:0];
+								leading_zeros = 0;
+								if (leading_scan[13:6] == 0) begin
+									leading_scan = leading_scan << 8;
+									leading_zeros = leading_zeros + 4'd8;
+								end
+								if (leading_scan[13:10] == 0) begin
+									leading_scan = leading_scan << 4;
+									leading_zeros = leading_zeros + 4'd4;
+								end
+								if (leading_scan[13:12] == 0) begin
+									leading_scan = leading_scan << 2;
+									leading_zeros = leading_zeros + 4'd2;
+								end
+								if (!leading_scan[13])
+									leading_zeros = leading_zeros + 1'b1;
+								left_shift = ({2'b00, leading_zeros} < exponent ? leading_zeros : sv2v_cast_4(exponent - 1'b1));
+								total = total << left_shift;
+								exponent = exponent - {2'b00, left_shift};
+								rounded = {1'b0, total[13:3]} + sv2v_cast_12(total[2] && ((total[1] || total[0]) || total[3]));
+								if (rounded[11]) begin
+									rounded = rounded >> 1;
+									exponent = exponent + 1'b1;
+								end
+								if (exponent >= 31) begin
+									tpu_pkg_fp16_add = {larger[15], 15'h7c00};
+									_sv2v_jump = 2'b11;
+								end
+								if (_sv2v_jump == 2'b00) begin
+									if ((exponent == 1) && !rounded[10]) begin
+										tpu_pkg_fp16_add = {larger[15], 5'b00000, rounded[9:0]};
+										_sv2v_jump = 2'b11;
+									end
+									if (_sv2v_jump == 2'b00) begin
+										tpu_pkg_fp16_add = {larger[15], exponent[4:0], rounded[9:0]};
+										_sv2v_jump = 2'b11;
+									end
+								end
+							end
+						end
+					end
 				end
-				if (exp_b == 0) begin
-					sig_b = sv2v_cast_64(frac_b);
-					scale_b = -24;
-				end
-				else begin
-					sig_b = 64'd1024 + sv2v_cast_64(frac_b);
-					scale_b = sv2v_cast_32_signed(exp_b) - 25;
-				end
-				common_scale = (scale_a < scale_b ? scale_a : scale_b);
-				aligned_a = sv2v_cast_64_signed(sig_a << (scale_a - common_scale));
-				aligned_b = sv2v_cast_64_signed(sig_b << (scale_b - common_scale));
-				if (sign_a)
-					aligned_a = -aligned_a;
-				if (sign_b)
-					aligned_b = -aligned_b;
-				sum_signed = aligned_a + aligned_b;
-				sign_r = (sum_signed < 0) || (((sum_signed == 0) && sign_a) && sign_b);
-				if (sum_signed < 0)
-					magnitude = sv2v_cast_64(-sum_signed);
-				else
-					magnitude = sv2v_cast_64(sum_signed);
-				tpu_pkg_fp16_add = tpu_pkg_fp16_pack_scaled(sign_r, magnitude, common_scale);
 			end
 		end
 	endfunction
