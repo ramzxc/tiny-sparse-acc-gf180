@@ -15,7 +15,7 @@
   "//": "Users have reported that values up to 80 worked well for them.",
   "PL_TARGET_DENSITY_PCT": 70,
 
-  "//": "Temporary 32-byte standard-cell memory experiment: no SRAM placement or routing obstructions.",
+  "//": "Single 64-byte weight SRAM experiment; other buffers stay in standard cells.",
 
   "//": "Keep intermediate DRC coordinates for diagnosing routing convergence.",
   "DRT_SAVE_DRC_REPORT_ITERS": 10,
@@ -78,5 +78,45 @@
   "MAGIC_DEF_LABELS": 0,
 
   "//": "Only export pin area in LEF (without any connected nets)",
-  "MAGIC_WRITE_LEF_PINONLY": 1
+  "MAGIC_WRITE_LEF_PINONLY": 1,
+  "PDN_HORIZONTAL_LAYER": "Metal3",
+  "MACROS": {
+    "gf180mcu_fd_ip_sram__sram64x8m8wm1": {
+      "gds": [
+        "dir::macros/gf180mcu_fd_ip_sram__sram64x8m8wm1/gf180mcu_fd_ip_sram__sram64x8m8wm1.gds"
+      ],
+      "lef": [
+        "dir::macros/gf180mcu_fd_ip_sram__sram64x8m8wm1/gf180mcu_fd_ip_sram__sram64x8m8wm1.lef"
+      ],
+      "vh": [
+        "dir::macros/gf180mcu_fd_ip_sram__sram64x8m8wm1/gf180mcu_fd_ip_sram__sram64x8m8wm1.vh"
+      ],
+      "spice": [
+        "dir::macros/gf180mcu_fd_ip_sram__sram64x8m8wm1/gf180mcu_fd_ip_sram__sram64x8m8wm1.cdl"
+      ],
+      "lib": {
+        "*_tt_025C_3v30": [
+          "dir::macros/gf180mcu_fd_ip_sram__sram64x8m8wm1/gf180mcu_fd_ip_sram__sram64x8m8wm1__tt_025C_3v30.lib"
+        ],
+        "*_ss_125C_3v00": [
+          "dir::macros/gf180mcu_fd_ip_sram__sram64x8m8wm1/gf180mcu_fd_ip_sram__sram64x8m8wm1__ss_125C_3v00.lib"
+        ],
+        "*_ff_n40C_3v60": [
+          "dir::macros/gf180mcu_fd_ip_sram__sram64x8m8wm1/gf180mcu_fd_ip_sram__sram64x8m8wm1__ff_n40C_3v60.lib"
+        ]
+      },
+      "instances": {
+        "core.tpu_core_tpu.weight_buffer_core.memory.storage.gen_sram64.mem": {
+          "location": [
+            30,
+            30
+          ],
+          "orientation": "N"
+        }
+      }
+    }
+  },
+  "PDN_MACRO_CONNECTIONS": [
+    ".*weight_buffer_core\\.memory\\.storage\\.gen_sram64\\.mem VPWR VGND VDD VSS"
+  ]
 }

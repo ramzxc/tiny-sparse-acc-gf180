@@ -735,7 +735,7 @@ module weight_buffer (
 	output wire load_write_ready;
 	localparam signed [31:0] tpu_pkg_FP8_WIDTH = 8;
 	sram_ctrl #(
-		.MACRO_BYTES(DEPTH * ((COMPUTE_WIDTH * tpu_pkg_FP8_WIDTH) / 8)),
+		.MACRO_BYTES(64),
 		.DATA_WIDTH(COMPUTE_WIDTH * tpu_pkg_FP8_WIDTH),
 		.DEPTH(DEPTH),
 		.ADDR_WIDTH(tpu_pkg_WEIGHT_ADDR_WIDTH)
@@ -3578,14 +3578,37 @@ module sram_wrapper (
 	input wire [$clog2(MACRO_BYTES) - 1:0] addr;
 	input wire [7:0] write_data;
 	output reg [7:0] read_data;
-	reg [7:0] mem [0:MACRO_BYTES - 1];
-	always @(posedge clk)
-		if (enable) begin
-			if (write_enable)
-				mem[addr] <= write_data;
-			else
-				read_data <= mem[addr];
+	generate
+		if (MACRO_BYTES == 64) begin : gen_sram64
+			wire cen_pin;
+			wire gwen_pin;
+			wire [5:0] addr_pin;
+			wire [7:0] data_pin;
+			assign cen_pin = !enable;
+			assign gwen_pin = !write_enable;
+			assign addr_pin = addr;
+			assign data_pin = write_data;
+			gf180mcu_fd_ip_sram__sram64x8m8wm1 mem(
+				.CLK(clk),
+				.CEN(cen_pin),
+				.GWEN(gwen_pin),
+				.WEN(8'h00),
+				.A(addr_pin),
+				.D(data_pin),
+				.Q(read_data)
+			);
 		end
+		else begin : gen_flops
+			reg [7:0] mem [0:MACRO_BYTES - 1];
+			always @(posedge clk)
+				if (enable) begin
+					if (write_enable)
+						mem[addr] <= write_data;
+					else
+						read_data <= mem[addr];
+				end
+		end
+	endgenerate
 endmodule
 module sram_ctrl (
 	clk,
