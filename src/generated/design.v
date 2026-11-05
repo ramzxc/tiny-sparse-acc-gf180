@@ -1165,7 +1165,7 @@ module unified_buffer (
 	end
 	localparam signed [31:0] tpu_pkg_FP8_WIDTH = 8;
 	sram_ctrl #(
-		.MACRO_BYTES(DEPTH * ((COMPUTE_WIDTH * tpu_pkg_FP8_WIDTH) / 8)),
+		.MACRO_BYTES(64),
 		.DATA_WIDTH(COMPUTE_WIDTH * tpu_pkg_FP8_WIDTH),
 		.DEPTH(DEPTH),
 		.ADDR_WIDTH(tpu_pkg_BUFFER_ADDR_WIDTH)
@@ -1258,7 +1258,7 @@ module accumulation_buffer (
 	assign busy = (state_cs != 3'd0) || mem_busy;
 	assign sram_write_enable = mem_wvalid && mem_wready;
 	sram_ctrl #(
-		.MACRO_BYTES(REGISTER_DEPTH * ((COMPUTE_WIDTH * tpu_pkg_FP16_WIDTH) / 8)),
+		.MACRO_BYTES(64),
 		.DATA_WIDTH(32),
 		.DEPTH(REGISTER_DEPTH),
 		.ADDR_WIDTH(tpu_pkg_ACCUMULATOR_ADDR_WIDTH)

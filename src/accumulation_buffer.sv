@@ -1,4 +1,4 @@
-// Temporary no-SRAM experiment: four FP16 rows, one shared FP16 adder.
+// One 64-byte SRAM with four active FP16 rows and one shared FP16 adder.
 // The core widens FP8 VPU writes and rounds activation reads; DMA stays FP16.
 module accumulation_buffer
     import tpu_pkg::*;
@@ -53,7 +53,7 @@ module accumulation_buffer
     assign sram_write_enable = mem_wvalid && mem_wready;
 
     sram_ctrl #(
-        .MACRO_BYTES(REGISTER_DEPTH * (COMPUTE_WIDTH * FP16_WIDTH / 8)),
+        .MACRO_BYTES(64),
         .DATA_WIDTH(32),
         .DEPTH(REGISTER_DEPTH),
         .ADDR_WIDTH(ACCUMULATOR_ADDR_WIDTH)

@@ -15,7 +15,7 @@
   "//": "Users have reported that values up to 80 worked well for them.",
   "PL_TARGET_DENSITY_PCT": 70,
 
-  "//": "Single 64-byte weight SRAM experiment; other buffers stay in standard cells.",
+  "//": "Three 64-byte SRAMs, four active rows per buffer, no extra routing obstructions.",
 
   "//": "Keep intermediate DRC coordinates for diagnosing routing convergence.",
   "DRT_SAVE_DRC_REPORT_ITERS": 10,
@@ -112,11 +112,25 @@
             30
           ],
           "orientation": "N"
+        },
+        "core.tpu_core_tpu.unified_buffer_core.memory.storage.gen_sram64.mem": {
+          "location": [
+            500,
+            30
+          ],
+          "orientation": "N"
+        },
+        "core.tpu_core_tpu.accumulation_buffer.memory.storage.gen_sram64.mem": {
+          "location": [
+            500,
+            300
+          ],
+          "orientation": "N"
         }
       }
     }
   },
   "PDN_MACRO_CONNECTIONS": [
-    ".*weight_buffer_core\\.memory\\.storage\\.gen_sram64\\.mem VPWR VGND VDD VSS"
+    ".*(weight_buffer_core|unified_buffer_core|accumulation_buffer)\\.memory\\.storage\\.gen_sram64\\.mem VPWR VGND VDD VSS"
   ]
 }

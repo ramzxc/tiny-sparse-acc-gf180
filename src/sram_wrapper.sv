@@ -1,5 +1,6 @@
 `timescale 1ns/1ps
-// Routing experiment: one 64-byte SRAM for weights; smaller buffers use flops.
+// Routing experiment: all three buffers use 64-byte SRAM macros.
+// The small standard-cell fallback remains available for comparison.
 // Preserve synchronous reads, output hold, and byte-write timing.
 // No power-up contents or reset clearing are assumed.
 module sram_wrapper #(

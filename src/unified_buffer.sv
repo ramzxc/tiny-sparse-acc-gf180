@@ -259,7 +259,7 @@ module unified_buffer
 
 
     sram_ctrl #(
-        .MACRO_BYTES(DEPTH * (COMPUTE_WIDTH * FP8_WIDTH / 8)),
+        .MACRO_BYTES(64),
         .DATA_WIDTH(COMPUTE_WIDTH * FP8_WIDTH),
         .DEPTH(DEPTH),
         .ADDR_WIDTH(BUFFER_ADDR_WIDTH)
