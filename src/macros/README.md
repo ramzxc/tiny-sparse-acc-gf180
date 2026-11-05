@@ -23,6 +23,5 @@ the left-edge sliver where the previous floorplan left only 14 um between
 endcaps, less than the 16.24 um width of a `dffq_1` cell.
 
 This experimental branch uses a 256-byte weight macro (431.86 x 340.88 um),
-128 FP8 vector rows, and 384 bytes of total SRAM. The 512-byte views are retained
-for wrapper compatibility but are not instantiated in this configuration.
+128 FP8 vector rows, and 384 bytes of total SRAM. The historical 512-byte views are retained but are not used in this configuration.
 Programs must tile weight loads to at most 128 rows.

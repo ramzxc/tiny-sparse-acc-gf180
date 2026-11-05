@@ -3609,17 +3609,6 @@ module sram_wrapper (
 				.Q(read_data)
 			);
 		end
-		else if (MACRO_BYTES == 512) begin : gen_sram512
-			gf180mcu_fd_ip_sram__sram512x8m8wm1 mem(
-				.CLK(clk),
-				.CEN(cen_pin),
-				.GWEN(gwen_pin),
-				.WEN(8'h00),
-				.A(addr_pin),
-				.D(data_pin),
-				.Q(read_data)
-			);
-		end
 	endgenerate
 endmodule
 module sram_ctrl (
