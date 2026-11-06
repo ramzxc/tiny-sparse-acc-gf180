@@ -1,4 +1,4 @@
-// Mode-0 transaction engine, SCK=clk/2. Commands/addresses use single SPI;
+// Mode-0 transaction engine, SCK=clk/2. Headers can use SPI or QPI;
 // payload can use one or four data pins. No flash-specific state in this layer.
 // Streams pause with SCK low. tx_end closes a stream only at a byte boundary.
 module qspi_flash_phy (
@@ -10,7 +10,7 @@ module qspi_flash_phy (
     input  logic        cmd_has_addr,
     input  logic [3:0]  cmd_dummy,
     input  logic [1:0]  cmd_dir,         // 0: command only, 1: read, 2: write
-    input  logic        cmd_quad,
+    input  logic        cmd_quad, cmd_header_quad,
     input  logic [15:0] cmd_read_count,
     input  logic [7:0]  tx_data,
     input  logic        tx_valid, tx_last, tx_end,
@@ -38,7 +38,7 @@ module qspi_flash_phy (
     logic [5:0] left;
     logic [3:0] dummy_cycles;
     logic [1:0] direction;
-    logic quad, last_byte;
+    logic quad, header_quad, last_byte;
     logic [15:0] reads_left;
 
     assign cmd_ready = !rst && state == IDLE;
@@ -49,7 +49,13 @@ module qspi_flash_phy (
     always_comb begin
         dq_out = 4'b1100;
         dq_oe  = 4'b1101;
-        if (state == HEADER) dq_out[0] = header_shift[31];
+        if (state == HEADER) begin
+            if (header_quad) begin
+                dq_out = header_shift[31:28];
+                dq_oe = 4'b1111;
+            end else dq_out[0] = header_shift[31];
+        end
+        if (state == DUMMY && quad) dq_oe = 4'b0000;
         if (state == RX_BITS || state == RX_WAIT) begin
             if (quad) dq_oe = 4'b0000;
         end
@@ -73,6 +79,7 @@ module qspi_flash_phy (
             dummy_cycles <= 0;
             direction <= 0;
             quad <= 0;
+            header_quad <= 0;
             last_byte <= 0;
             reads_left <= 0;
         end else begin
@@ -82,7 +89,9 @@ module qspi_flash_phy (
                 IDLE:
                     if (cmd_valid) begin
                         header_shift <= cmd_has_addr ? {cmd_opcode, cmd_addr} : {cmd_opcode, 24'b0};
-                        left <= cmd_has_addr ? 6'd32 : 6'd8;
+                        left <= cmd_header_quad ? (cmd_has_addr ? 6'd8 : 6'd2)
+                                                : (cmd_has_addr ? 6'd32 : 6'd8);
+                        header_quad <= cmd_header_quad;
                         dummy_cycles <= cmd_dummy;
                         direction <= cmd_dir;
                         quad <= cmd_quad;
@@ -114,7 +123,7 @@ module qspi_flash_phy (
                                 end
                             end
                         end else begin
-                            header_shift <= header_shift << 1;
+                            header_shift <= header_shift << (header_quad ? 4 : 1);
                             left <= left - 1'b1;
                         end
                     end

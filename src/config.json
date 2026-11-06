@@ -15,7 +15,7 @@
   "//": "Users have reported that values up to 80 worked well for them.",
   "PL_TARGET_DENSITY_PCT": 70,
 
-  "//": "Three 64-byte SRAMs, four active rows per buffer, no extra routing obstructions.",
+  "//": "External PSRAM backs all buffers; no on-chip SRAM macros or obstructions.",
 
   "//": "Keep intermediate DRC coordinates for diagnosing routing convergence.",
   "DRT_SAVE_DRC_REPORT_ITERS": 10,
@@ -25,7 +25,7 @@
 
   "//": "CLOCK_PERIOD - Increase this in case you are getting setup time violations.",
   "//": "The value is in nanoseconds, so 20ns == 50MHz.",
-  "CLOCK_PERIOD": 1000,
+  "CLOCK_PERIOD": 100,
 
   "//": "Hold slack margin - Increase them in case you are getting hold violations.",
   "PL_RESIZER_HOLD_SLACK_MARGIN": 0.1,
@@ -78,59 +78,5 @@
   "MAGIC_DEF_LABELS": 0,
 
   "//": "Only export pin area in LEF (without any connected nets)",
-  "MAGIC_WRITE_LEF_PINONLY": 1,
-  "PDN_HORIZONTAL_LAYER": "Metal3",
-  "MACROS": {
-    "gf180mcu_fd_ip_sram__sram64x8m8wm1": {
-      "gds": [
-        "dir::macros/gf180mcu_fd_ip_sram__sram64x8m8wm1/gf180mcu_fd_ip_sram__sram64x8m8wm1.gds"
-      ],
-      "lef": [
-        "dir::macros/gf180mcu_fd_ip_sram__sram64x8m8wm1/gf180mcu_fd_ip_sram__sram64x8m8wm1.lef"
-      ],
-      "vh": [
-        "dir::macros/gf180mcu_fd_ip_sram__sram64x8m8wm1/gf180mcu_fd_ip_sram__sram64x8m8wm1.vh"
-      ],
-      "spice": [
-        "dir::macros/gf180mcu_fd_ip_sram__sram64x8m8wm1/gf180mcu_fd_ip_sram__sram64x8m8wm1.cdl"
-      ],
-      "lib": {
-        "*_tt_025C_3v30": [
-          "dir::macros/gf180mcu_fd_ip_sram__sram64x8m8wm1/gf180mcu_fd_ip_sram__sram64x8m8wm1__tt_025C_3v30.lib"
-        ],
-        "*_ss_125C_3v00": [
-          "dir::macros/gf180mcu_fd_ip_sram__sram64x8m8wm1/gf180mcu_fd_ip_sram__sram64x8m8wm1__ss_125C_3v00.lib"
-        ],
-        "*_ff_n40C_3v60": [
-          "dir::macros/gf180mcu_fd_ip_sram__sram64x8m8wm1/gf180mcu_fd_ip_sram__sram64x8m8wm1__ff_n40C_3v60.lib"
-        ]
-      },
-      "instances": {
-        "core.tpu_core_tpu.weight_buffer_core.memory.storage.gen_sram64.mem": {
-          "location": [
-            30,
-            30
-          ],
-          "orientation": "N"
-        },
-        "core.tpu_core_tpu.unified_buffer_core.memory.storage.gen_sram64.mem": {
-          "location": [
-            500,
-            30
-          ],
-          "orientation": "N"
-        },
-        "core.tpu_core_tpu.accumulation_buffer.memory.storage.gen_sram64.mem": {
-          "location": [
-            500,
-            300
-          ],
-          "orientation": "N"
-        }
-      }
-    }
-  },
-  "PDN_MACRO_CONNECTIONS": [
-    ".*(weight_buffer_core|unified_buffer_core|accumulation_buffer)\\.memory\\.storage\\.gen_sram64\\.mem VPWR VGND VDD VSS"
-  ]
+  "MAGIC_WRITE_LEF_PINONLY": 1
 }

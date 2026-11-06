@@ -8,6 +8,12 @@ module unified_buffer
     parameter int COMPUTE_WIDTH = 2,
     parameter int DEPTH         = 4
 )(
+    output psram_req_type psram_req,
+    output logic          psram_req_valid,
+    input  logic          psram_req_ready,
+    input  logic [31:0]   psram_rsp_data,
+    input  logic          psram_rsp_valid,
+
     input logic clk,
     input logic rst,
 
@@ -258,12 +264,18 @@ module unified_buffer
 
 
 
-    sram_ctrl #(
-        .MACRO_BYTES(64),
+    psram_buffer_ctrl #(
+        .BASE_ADDR(24'h010000),
         .DATA_WIDTH(COMPUTE_WIDTH * FP8_WIDTH),
         .DEPTH(DEPTH),
         .ADDR_WIDTH(BUFFER_ADDR_WIDTH)
     ) memory (
+        .psram_req       (psram_req),
+        .psram_req_valid (psram_req_valid),
+        .psram_req_ready (psram_req_ready),
+        .psram_rsp_data  (psram_rsp_data),
+        .psram_rsp_valid (psram_rsp_valid),
+
         .clk(clk),
         .rst(rst),
         .read_req_addr(internal_read_addr),

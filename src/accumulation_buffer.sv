@@ -1,10 +1,16 @@
-// One 64-byte SRAM with four active FP16 rows and one shared FP16 adder.
+// PSRAM-backed FP16 rows with one shared FP16 adder.
 // The core widens FP8 VPU writes and rounds activation reads; DMA stays FP16.
 module accumulation_buffer
     import tpu_pkg::*;
 #(
     parameter int COMPUTE_WIDTH = 2, REGISTER_DEPTH = 4
 ) (
+    output psram_req_type psram_req,
+    output logic          psram_req_valid,
+    input  logic          psram_req_ready,
+    input  logic [31:0]   psram_rsp_data,
+    input  logic          psram_rsp_valid,
+
     input  logic                        clk, rst,
     input  accumulator_addr_type        write_addr,
     input  fp16_type [COMPUTE_WIDTH-1:0] data_in,
@@ -52,12 +58,18 @@ module accumulation_buffer
     assign busy = state_cs != IDLE || mem_busy;
     assign sram_write_enable = mem_wvalid && mem_wready;
 
-    sram_ctrl #(
-        .MACRO_BYTES(64),
+    psram_buffer_ctrl #(
+        .BASE_ADDR(24'h020000),
         .DATA_WIDTH(32),
         .DEPTH(REGISTER_DEPTH),
         .ADDR_WIDTH(ACCUMULATOR_ADDR_WIDTH)
     ) memory (
+        .psram_req       (psram_req),
+        .psram_req_valid (psram_req_valid),
+        .psram_req_ready (psram_req_ready),
+        .psram_rsp_data  (psram_rsp_data),
+        .psram_rsp_valid (psram_rsp_valid),
+
         .clk           (clk),
         .rst           (rst),
         .read_req_addr (choose_write ? write_addr : read_req_addr),

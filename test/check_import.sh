@@ -6,7 +6,7 @@ python3 - <<'PYCODE'
 from pathlib import Path
 import json, subprocess
 files = ['src/' + Path(f).name for f in json.loads(Path('test/rtl_import_sha256.json').read_text())]
-models = sorted(str(p) for p in Path('test/models').glob('*.v'))
+models = ['test/qspi_psram_model.sv']
 command = ['verilator', '--lint-only', '--timing', '-Wno-fatal', '--top-module',
            'tb_tt_um_tiny_sparse_acc_ramzxc', *files, *models,
            'test/qspi_nor_model.sv', 'test/tb_tt_um_tiny_sparse_acc_ramzxc.sv']
@@ -22,11 +22,22 @@ command = ['verilator', '--binary', '--timing', '--assert', '-Wno-fatal', '-j', 
            'test/tb_tt_um_tiny_sparse_acc_ramzxc.sv']
 with Path('test/output/import_build.log').open('w') as log:
     subprocess.run(command, stdout=log, stderr=subprocess.STDOUT, check=True)
-result = subprocess.run(['test/sim_build/import/sim_import', '+uninit_sram'],
+result = subprocess.run(['test/sim_build/import/sim_import'],
                         stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
                         timeout=120)
 Path('test/output/import_sim.log').write_text(result.stdout)
 print(result.stdout)
 if result.returncode or 'TT WRAPPER PASS' not in result.stdout:
     raise SystemExit('UART/QSPI integration test failed')
+command = ['verilator', '--binary', '--timing', '--assert', '-Wno-fatal', '-j', '2',
+           '--top-module', 'tb_psram_bus', '--Mdir', 'test/sim_build/psram',
+           '-o', 'sim_psram', *files, *models, 'test/tb_psram_bus.sv']
+with Path('test/output/psram_build.log').open('w') as log:
+    subprocess.run(command, stdout=log, stderr=subprocess.STDOUT, check=True)
+result = subprocess.run(['test/sim_build/psram/sim_psram'], capture_output=True,
+                        text=True, timeout=30)
+Path('test/output/psram_sim.log').write_text(result.stdout + result.stderr)
+print(result.stdout)
+if result.returncode or 'PSRAM BUS PASS' not in result.stdout:
+    raise SystemExit('PSRAM bus test failed')
 PYCODE

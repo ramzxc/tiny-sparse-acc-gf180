@@ -24,8 +24,12 @@ module tpu
     output logic [2:0] flash_error_code,
     input logic [3:0] qspi_dq_in,
     output logic [3:0] qspi_dq_out,qspi_dq_oe,
-    output logic qspi_sck,qspi_cs_n
+    output logic qspi_sck,qspi_cs_n,psram_cs_n
 );
+
+    psram_req_type [2:0] psram_req;
+    logic [2:0] psram_req_valid, psram_req_ready, psram_rsp_valid;
+    logic [2:0][31:0] psram_rsp_data;
 
     // ------------------------------------------------------------------
     // Instruction FIFO -> TPU core
@@ -132,6 +136,12 @@ module tpu
         .UNIFIED_BUFFER_DEPTH  (UNIFIED_BUFFER_DEPTH),
         .REGISTER_DEPTH        (REGISTER_DEPTH)
     ) tpu_core_tpu (
+        .psram_req       (psram_req),
+        .psram_req_valid (psram_req_valid),
+        .psram_req_ready (psram_req_ready),
+        .psram_rsp_data  (psram_rsp_data),
+        .psram_rsp_valid (psram_rsp_valid),
+
         .clk                          (clk),
         .rst                          (rst),
         .inst_port                    (inst),
@@ -243,10 +253,16 @@ module tpu
     );
 
     // ------------------------------------------------------------------
-    // Flash protocol adapter
+    // Shared Flash / PSRAM bus
     // ------------------------------------------------------------------
 
-    qspi_flash_adapter flash_adapter (
+    qspi_memory_bus memory_bus (
+        .psram_req       (psram_req),
+        .psram_req_valid (psram_req_valid),
+        .psram_req_ready (psram_req_ready),
+        .psram_rsp_data  (psram_rsp_data),
+        .psram_rsp_valid (psram_rsp_valid),
+        .psram_cs_n      (psram_cs_n),
         .clk                  (clk),
         .rst                  (rst),
         .dma_read_cmd_addr    (dma_read_cmd_addr),

@@ -707,6 +707,11 @@ module dma (
 	initial _sv2v_0 = 0;
 endmodule
 module weight_buffer (
+	psram_req,
+	psram_req_valid,
+	psram_req_ready,
+	psram_rsp_data,
+	psram_rsp_valid,
 	clk,
 	rst,
 	read_req_addr,
@@ -721,6 +726,11 @@ module weight_buffer (
 );
 	parameter signed [31:0] COMPUTE_WIDTH = 2;
 	parameter signed [31:0] DEPTH = 4;
+	output wire [57:0] psram_req;
+	output wire psram_req_valid;
+	input wire psram_req_ready;
+	input wire [31:0] psram_rsp_data;
+	input wire psram_rsp_valid;
 	input wire clk;
 	input wire rst;
 	localparam signed [31:0] tpu_pkg_WEIGHT_ADDR_WIDTH = 24;
@@ -734,12 +744,17 @@ module weight_buffer (
 	input wire load_write_valid;
 	output wire load_write_ready;
 	localparam signed [31:0] tpu_pkg_FP8_WIDTH = 8;
-	sram_ctrl #(
-		.MACRO_BYTES(64),
+	psram_buffer_ctrl #(
+		.BASE_ADDR(24'h000000),
 		.DATA_WIDTH(COMPUTE_WIDTH * tpu_pkg_FP8_WIDTH),
 		.DEPTH(DEPTH),
 		.ADDR_WIDTH(tpu_pkg_WEIGHT_ADDR_WIDTH)
 	) memory(
+		.psram_req(psram_req),
+		.psram_req_valid(psram_req_valid),
+		.psram_req_ready(psram_req_ready),
+		.psram_rsp_data(psram_rsp_data),
+		.psram_rsp_valid(psram_rsp_valid),
 		.clk(clk),
 		.rst(rst),
 		.read_req_addr(read_req_addr),
@@ -986,6 +1001,11 @@ module sparsity_ctrl (
 			endcase
 endmodule
 module unified_buffer (
+	psram_req,
+	psram_req_valid,
+	psram_req_ready,
+	psram_rsp_data,
+	psram_rsp_valid,
 	clk,
 	rst,
 	vpu_read_req_addr,
@@ -1024,6 +1044,11 @@ module unified_buffer (
 	reg _sv2v_0;
 	parameter signed [31:0] COMPUTE_WIDTH = 2;
 	parameter signed [31:0] DEPTH = 4;
+	output wire [57:0] psram_req;
+	output wire psram_req_valid;
+	input wire psram_req_ready;
+	input wire [31:0] psram_rsp_data;
+	input wire psram_rsp_valid;
 	input wire clk;
 	input wire rst;
 	localparam signed [31:0] tpu_pkg_BUFFER_ADDR_WIDTH = 16;
@@ -1164,12 +1189,17 @@ module unified_buffer (
 			endcase
 	end
 	localparam signed [31:0] tpu_pkg_FP8_WIDTH = 8;
-	sram_ctrl #(
-		.MACRO_BYTES(64),
+	psram_buffer_ctrl #(
+		.BASE_ADDR(24'h010000),
 		.DATA_WIDTH(COMPUTE_WIDTH * tpu_pkg_FP8_WIDTH),
 		.DEPTH(DEPTH),
 		.ADDR_WIDTH(tpu_pkg_BUFFER_ADDR_WIDTH)
 	) memory(
+		.psram_req(psram_req),
+		.psram_req_valid(psram_req_valid),
+		.psram_req_ready(psram_req_ready),
+		.psram_rsp_data(psram_rsp_data),
+		.psram_rsp_valid(psram_rsp_valid),
 		.clk(clk),
 		.rst(rst),
 		.read_req_addr(internal_read_addr),
@@ -1193,6 +1223,11 @@ module unified_buffer (
 	initial _sv2v_0 = 0;
 endmodule
 module accumulation_buffer (
+	psram_req,
+	psram_req_valid,
+	psram_req_ready,
+	psram_rsp_data,
+	psram_rsp_valid,
 	clk,
 	rst,
 	write_addr,
@@ -1210,6 +1245,11 @@ module accumulation_buffer (
 );
 	parameter signed [31:0] COMPUTE_WIDTH = 2;
 	parameter signed [31:0] REGISTER_DEPTH = 4;
+	output wire [57:0] psram_req;
+	output wire psram_req_valid;
+	input wire psram_req_ready;
+	input wire [31:0] psram_rsp_data;
+	input wire psram_rsp_valid;
 	input wire clk;
 	input wire rst;
 	localparam signed [31:0] tpu_pkg_ACCUMULATOR_ADDR_WIDTH = 8;
@@ -1257,12 +1297,17 @@ module accumulation_buffer (
 	assign read_rsp_valid = !rst && (state_cs == 3'd2);
 	assign busy = (state_cs != 3'd0) || mem_busy;
 	assign sram_write_enable = mem_wvalid && mem_wready;
-	sram_ctrl #(
-		.MACRO_BYTES(64),
+	psram_buffer_ctrl #(
+		.BASE_ADDR(24'h020000),
 		.DATA_WIDTH(32),
 		.DEPTH(REGISTER_DEPTH),
 		.ADDR_WIDTH(tpu_pkg_ACCUMULATOR_ADDR_WIDTH)
 	) memory(
+		.psram_req(psram_req),
+		.psram_req_valid(psram_req_valid),
+		.psram_req_ready(psram_req_ready),
+		.psram_rsp_data(psram_rsp_data),
+		.psram_rsp_valid(psram_rsp_valid),
 		.clk(clk),
 		.rst(rst),
 		.read_req_addr((choose_write ? write_addr : read_req_addr)),
@@ -2680,6 +2725,11 @@ module inst_decoder (
 	initial _sv2v_0 = 0;
 endmodule
 module tpu_core (
+	psram_req,
+	psram_req_valid,
+	psram_req_ready,
+	psram_rsp_data,
+	psram_rsp_valid,
 	clk,
 	rst,
 	inst_port,
@@ -2731,6 +2781,11 @@ module tpu_core (
 	parameter signed [31:0] CACHE_WAY_COUNT = 32;
 	parameter [2:0] CACHE_POLICY = 3'd3;
 	parameter [0:0] SPARSITY_EN = 1'b1;
+	output wire [173:0] psram_req;
+	output wire [2:0] psram_req_valid;
+	input wire [2:0] psram_req_ready;
+	input wire [95:0] psram_rsp_data;
+	input wire [2:0] psram_rsp_valid;
 	input wire clk;
 	input wire rst;
 	localparam signed [31:0] tpu_pkg_INSTRUCTION_WIDTH = 64;
@@ -2974,6 +3029,11 @@ module tpu_core (
 		.COMPUTE_WIDTH(COMPUTE_WIDTH),
 		.DEPTH(WEIGHT_BUFFER_DEPTH)
 	) weight_buffer_core(
+		.psram_req(psram_req[0+:58]),
+		.psram_req_valid(psram_req_valid[0]),
+		.psram_req_ready(psram_req_ready[0]),
+		.psram_rsp_data(psram_rsp_data[0+:32]),
+		.psram_rsp_valid(psram_rsp_valid[0]),
 		.clk(clk),
 		.rst(rst),
 		.read_req_addr(weight_req_addr),
@@ -2990,6 +3050,11 @@ module tpu_core (
 		.COMPUTE_WIDTH(COMPUTE_WIDTH),
 		.DEPTH(UNIFIED_BUFFER_DEPTH)
 	) unified_buffer_core(
+		.psram_req(psram_req[58+:58]),
+		.psram_req_valid(psram_req_valid[1]),
+		.psram_req_ready(psram_req_ready[1]),
+		.psram_rsp_data(psram_rsp_data[32+:32]),
+		.psram_rsp_valid(psram_rsp_valid[1]),
 		.clk(clk),
 		.rst(rst),
 		.vpu_read_req_addr(vpu_buffer_req_addr),
@@ -3262,6 +3327,11 @@ module tpu_core (
 		.COMPUTE_WIDTH(COMPUTE_WIDTH),
 		.REGISTER_DEPTH(REGISTER_DEPTH)
 	) accumulation_buffer(
+		.psram_req(psram_req[116+:58]),
+		.psram_req_valid(psram_req_valid[2]),
+		.psram_req_ready(psram_req_ready[2]),
+		.psram_rsp_data(psram_rsp_data[64+:32]),
+		.psram_rsp_valid(psram_rsp_valid[2]),
 		.clk(clk),
 		.rst(rst),
 		.write_addr(acc_buf_write_addr),
@@ -3334,7 +3404,8 @@ module tpu (
 	qspi_dq_out,
 	qspi_dq_oe,
 	qspi_sck,
-	qspi_cs_n
+	qspi_cs_n,
+	psram_cs_n
 );
 	parameter signed [31:0] COMPUTE_WIDTH = 2;
 	parameter signed [31:0] WEIGHT_BUFFER_DEPTH = 4;
@@ -3362,6 +3433,12 @@ module tpu (
 	output wire [3:0] qspi_dq_oe;
 	output wire qspi_sck;
 	output wire qspi_cs_n;
+	output wire psram_cs_n;
+	wire [173:0] psram_req;
+	wire [2:0] psram_req_valid;
+	wire [2:0] psram_req_ready;
+	wire [2:0] psram_rsp_valid;
+	wire [95:0] psram_rsp_data;
 	wire [((((tpu_pkg_INSTRUCTION_WIDTH - tpu_pkg_LENGTH_WIDTH) - tpu_pkg_OPCODE_WIDTH) + tpu_pkg_LENGTH_WIDTH) + tpu_pkg_OPCODE_WIDTH) - 1:0] inst;
 	wire inst_pop;
 	wire core_busy;
@@ -3437,6 +3514,11 @@ module tpu (
 		.UNIFIED_BUFFER_DEPTH(UNIFIED_BUFFER_DEPTH),
 		.REGISTER_DEPTH(REGISTER_DEPTH)
 	) tpu_core_tpu(
+		.psram_req(psram_req),
+		.psram_req_valid(psram_req_valid),
+		.psram_req_ready(psram_req_ready),
+		.psram_rsp_data(psram_rsp_data),
+		.psram_rsp_valid(psram_rsp_valid),
 		.clk(clk),
 		.rst(rst),
 		.inst_port(inst),
@@ -3530,7 +3612,13 @@ module tpu (
 		.acc_write_valid(dma_acc_write_valid),
 		.acc_write_ready(dma_acc_write_ready)
 	);
-	qspi_flash_adapter flash_adapter(
+	qspi_memory_bus memory_bus(
+		.psram_req(psram_req),
+		.psram_req_valid(psram_req_valid),
+		.psram_req_ready(psram_req_ready),
+		.psram_rsp_data(psram_rsp_data),
+		.psram_rsp_valid(psram_rsp_valid),
+		.psram_cs_n(psram_cs_n),
 		.clk(clk),
 		.rst(rst),
 		.dma_read_cmd_addr(dma_read_cmd_addr),
@@ -3563,189 +3651,6 @@ module tpu (
 		.qspi_cs_n(qspi_cs_n)
 	);
 endmodule
-module sram_wrapper (
-	clk,
-	enable,
-	write_enable,
-	addr,
-	write_data,
-	read_data
-);
-	parameter signed [31:0] MACRO_BYTES = 8;
-	input wire clk;
-	input wire enable;
-	input wire write_enable;
-	input wire [$clog2(MACRO_BYTES) - 1:0] addr;
-	input wire [7:0] write_data;
-	output reg [7:0] read_data;
-	generate
-		if (MACRO_BYTES == 64) begin : gen_sram64
-			wire cen_pin;
-			wire gwen_pin;
-			wire [5:0] addr_pin;
-			wire [7:0] data_pin;
-			assign cen_pin = !enable;
-			assign gwen_pin = !write_enable;
-			assign addr_pin = addr;
-			assign data_pin = write_data;
-			gf180mcu_fd_ip_sram__sram64x8m8wm1 mem(
-				.CLK(clk),
-				.CEN(cen_pin),
-				.GWEN(gwen_pin),
-				.WEN(8'h00),
-				.A(addr_pin),
-				.D(data_pin),
-				.Q(read_data)
-			);
-		end
-		else begin : gen_flops
-			reg [7:0] mem [0:MACRO_BYTES - 1];
-			always @(posedge clk)
-				if (enable) begin
-					if (write_enable)
-						mem[addr] <= write_data;
-					else
-						read_data <= mem[addr];
-				end
-		end
-	endgenerate
-endmodule
-module sram_ctrl (
-	clk,
-	rst,
-	read_req_addr,
-	read_req_valid,
-	read_req_ready,
-	read_rsp_data,
-	read_rsp_valid,
-	read_rsp_ready,
-	write_addr,
-	write_data,
-	write_valid,
-	write_ready,
-	write_done,
-	busy
-);
-	reg _sv2v_0;
-	parameter signed [31:0] MACRO_BYTES = 8;
-	parameter signed [31:0] DATA_WIDTH = 16;
-	parameter signed [31:0] DEPTH = MACRO_BYTES / (DATA_WIDTH / 8);
-	parameter signed [31:0] ADDR_WIDTH = $clog2(MACRO_BYTES / (DATA_WIDTH / 8));
-	input wire clk;
-	input wire rst;
-	input wire [ADDR_WIDTH - 1:0] read_req_addr;
-	input wire read_req_valid;
-	output wire read_req_ready;
-	output reg [DATA_WIDTH - 1:0] read_rsp_data;
-	output reg read_rsp_valid;
-	input wire read_rsp_ready;
-	input wire [ADDR_WIDTH - 1:0] write_addr;
-	input wire [DATA_WIDTH - 1:0] write_data;
-	input wire write_valid;
-	output wire write_ready;
-	output reg write_done;
-	output wire busy;
-	localparam signed [31:0] MACRO_ADDR_WIDTH = $clog2(MACRO_BYTES);
-	localparam signed [31:0] WORD_BYTES = DATA_WIDTH / 8;
-	localparam signed [31:0] BYTE_INDEX_WIDTH = $clog2(WORD_BYTES);
-	localparam signed [31:0] WORD_ADDR_WIDTH = MACRO_ADDR_WIDTH - BYTE_INDEX_WIDTH;
-	reg [1:0] state;
-	wire read_fire;
-	wire write_fire;
-	wire last_byte;
-	reg [WORD_ADDR_WIDTH - 1:0] saved_addr;
-	reg [DATA_WIDTH - 1:0] saved_data;
-	reg [BYTE_INDEX_WIDTH - 1:0] byte_index;
-	reg [MACRO_ADDR_WIDTH - 1:0] macro_addr;
-	wire [7:0] macro_data;
-	wire [7:0] macro_write_data;
-	wire macro_enable;
-	wire macro_write;
-	assign busy = state != 2'd0;
-	assign read_req_ready = (!rst && (state == 2'd0)) && (!read_rsp_valid || read_rsp_ready);
-	assign write_ready = !rst && (state == 2'd0);
-	assign read_fire = read_req_valid && read_req_ready;
-	assign write_fire = write_valid && write_ready;
-	function automatic signed [BYTE_INDEX_WIDTH - 1:0] sv2v_cast_142B7_signed;
-		input reg signed [BYTE_INDEX_WIDTH - 1:0] inp;
-		sv2v_cast_142B7_signed = inp;
-	endfunction
-	assign last_byte = byte_index == sv2v_cast_142B7_signed(WORD_BYTES - 1);
-	assign macro_enable = !rst && (((read_fire || write_fire) || ((state == 2'd1) && !last_byte)) || (state == 2'd2));
-	assign macro_write = write_fire || (state == 2'd2);
-	assign macro_write_data = (state == 2'd2 ? saved_data[byte_index * 8+:8] : write_data[7:0]);
-	function automatic [BYTE_INDEX_WIDTH - 1:0] sv2v_cast_142B7;
-		input reg [BYTE_INDEX_WIDTH - 1:0] inp;
-		sv2v_cast_142B7 = inp;
-	endfunction
-	always @(*) begin
-		if (_sv2v_0)
-			;
-		if (state == 2'd1)
-			macro_addr = {saved_addr, sv2v_cast_142B7(byte_index + 1'b1)};
-		else if (state == 2'd2)
-			macro_addr = {saved_addr, byte_index};
-		else if (write_fire)
-			macro_addr = {write_addr[WORD_ADDR_WIDTH - 1:0], {BYTE_INDEX_WIDTH {1'b0}}};
-		else
-			macro_addr = {read_req_addr[WORD_ADDR_WIDTH - 1:0], {BYTE_INDEX_WIDTH {1'b0}}};
-	end
-	sram_wrapper #(.MACRO_BYTES(MACRO_BYTES)) storage(
-		.clk(clk),
-		.enable(macro_enable),
-		.write_enable(macro_write),
-		.addr(macro_addr),
-		.write_data(macro_write_data),
-		.read_data(macro_data)
-	);
-	always @(posedge clk)
-		if (rst) begin
-			state <= 2'd0;
-			saved_addr <= 1'sb0;
-			saved_data <= 1'sb0;
-			byte_index <= 1'sb0;
-			read_rsp_data <= 1'sb0;
-			read_rsp_valid <= 1'b0;
-			write_done <= 1'b0;
-		end
-		else begin
-			write_done <= 1'b0;
-			if (read_rsp_valid && read_rsp_ready)
-				read_rsp_valid <= 1'b0;
-			case (state)
-				2'd0:
-					if (read_fire) begin
-						saved_addr <= read_req_addr[WORD_ADDR_WIDTH - 1:0];
-						byte_index <= 1'sb0;
-						state <= 2'd1;
-					end
-					else if (write_fire) begin
-						saved_addr <= write_addr[WORD_ADDR_WIDTH - 1:0];
-						saved_data <= write_data;
-						byte_index <= sv2v_cast_142B7_signed(1);
-						state <= 2'd2;
-					end
-				2'd1: begin
-					read_rsp_data[byte_index * 8+:8] <= macro_data;
-					if (last_byte) begin
-						read_rsp_valid <= 1'b1;
-						state <= 2'd0;
-					end
-					else
-						byte_index <= byte_index + 1'b1;
-				end
-				2'd2:
-					if (last_byte) begin
-						write_done <= 1'b1;
-						state <= 2'd0;
-					end
-					else
-						byte_index <= byte_index + 1'b1;
-				default: state <= 2'd0;
-			endcase
-		end
-	initial _sv2v_0 = 0;
-endmodule
 module qspi_flash_phy (
 	clk,
 	rst,
@@ -3757,6 +3662,7 @@ module qspi_flash_phy (
 	cmd_dummy,
 	cmd_dir,
 	cmd_quad,
+	cmd_header_quad,
 	cmd_read_count,
 	tx_data,
 	tx_valid,
@@ -3784,6 +3690,7 @@ module qspi_flash_phy (
 	input wire [3:0] cmd_dummy;
 	input wire [1:0] cmd_dir;
 	input wire cmd_quad;
+	input wire cmd_header_quad;
 	input wire [15:0] cmd_read_count;
 	input wire [7:0] tx_data;
 	input wire tx_valid;
@@ -3806,6 +3713,7 @@ module qspi_flash_phy (
 	reg [3:0] dummy_cycles;
 	reg [1:0] direction;
 	reg quad;
+	reg header_quad;
 	reg last_byte;
 	reg [15:0] reads_left;
 	assign cmd_ready = !rst && (state == 3'd0);
@@ -3817,8 +3725,16 @@ module qspi_flash_phy (
 			;
 		dq_out = 4'b1100;
 		dq_oe = 4'b1101;
-		if (state == 3'd1)
-			dq_out[0] = header_shift[31];
+		if (state == 3'd1) begin
+			if (header_quad) begin
+				dq_out = header_shift[31:28];
+				dq_oe = 4'b1111;
+			end
+			else
+				dq_out[0] = header_shift[31];
+		end
+		if ((state == 3'd2) && quad)
+			dq_oe = 4'b0000;
 		if ((state == 3'd3) || (state == 3'd4)) begin
 			if (quad)
 				dq_oe = 4'b0000;
@@ -3844,6 +3760,7 @@ module qspi_flash_phy (
 			dummy_cycles <= 0;
 			direction <= 0;
 			quad <= 0;
+			header_quad <= 0;
 			last_byte <= 0;
 			reads_left <= 0;
 		end
@@ -3853,7 +3770,8 @@ module qspi_flash_phy (
 				3'd0:
 					if (cmd_valid) begin
 						header_shift <= (cmd_has_addr ? {cmd_opcode, cmd_addr} : {cmd_opcode, 24'b000000000000000000000000});
-						left <= (cmd_has_addr ? 6'd32 : 6'd8);
+						left <= (cmd_header_quad ? (cmd_has_addr ? 6'd8 : 6'd2) : (cmd_has_addr ? 6'd32 : 6'd8));
+						header_quad <= cmd_header_quad;
 						dummy_cycles <= cmd_dummy;
 						direction <= cmd_dir;
 						quad <= cmd_quad;
@@ -3887,7 +3805,7 @@ module qspi_flash_phy (
 							end
 						end
 						else begin
-							header_shift <= header_shift << 1;
+							header_shift <= header_shift << (header_quad ? 4 : 1);
 							left <= left - 1'b1;
 						end
 					end
@@ -4010,11 +3928,15 @@ module qspi_flash_adapter (
 	busy,
 	error,
 	error_code,
-	qspi_dq_in,
-	qspi_dq_out,
-	qspi_dq_oe,
-	qspi_sck,
-	qspi_cs_n
+	bus_cmd,
+	bus_cmd_valid,
+	bus_cmd_ready,
+	bus_tx,
+	bus_tx_ready,
+	bus_rx_data,
+	bus_rx_valid,
+	bus_rx_ready,
+	bus_done
 );
 	reg _sv2v_0;
 	parameter signed [31:0] POLL_LIMIT = 1048576;
@@ -4043,11 +3965,15 @@ module qspi_flash_adapter (
 	output wire busy;
 	output wire error;
 	output reg [2:0] error_code;
-	input wire [3:0] qspi_dq_in;
-	output wire [3:0] qspi_dq_out;
-	output wire [3:0] qspi_dq_oe;
-	output wire qspi_sck;
-	output wire qspi_cs_n;
+	output wire [56:0] bus_cmd;
+	output wire bus_cmd_valid;
+	input wire bus_cmd_ready;
+	output wire [10:0] bus_tx;
+	input wire bus_tx_ready;
+	input wire [7:0] bus_rx_data;
+	input wire bus_rx_valid;
+	output wire bus_rx_ready;
+	input wire bus_done;
 	localparam signed [31:0] POLL_BITS = $clog2(POLL_LIMIT + 1);
 	reg [4:0] state;
 	reg [4:0] poll_return;
@@ -4081,13 +4007,13 @@ module qspi_flash_adapter (
 	wire [32:0] write_end;
 	assign read_end = {1'b0, dma_read_cmd_addr} + (({25'b0000000000000000000000000, dma_read_cmd_len} + 33'd1) << 3);
 	assign write_end = {1'b0, dma_write_cmd_addr} + (({25'b0000000000000000000000000, dma_write_cmd_len} + 33'd1) << 3);
-	assign error = state == 5'd17;
+	assign error = state == 5'd18;
 	assign busy = state != 5'd6;
 	assign available = !rst && !error;
 	assign dma_read_cmd_ready = !rst && (state == 5'd6);
 	assign dma_write_cmd_ready = (!rst && (state == 5'd6)) && !dma_read_cmd_valid;
-	assign dma_write_data_ready = !rst && (state == 5'd10);
-	assign dma_write_rsp_valid = !rst && (state == 5'd16);
+	assign dma_write_data_ready = !rst && (state == 5'd11);
+	assign dma_write_rsp_valid = !rst && (state == 5'd17);
 	always @(*) begin
 		if (_sv2v_0)
 			;
@@ -4121,54 +4047,36 @@ module qspi_flash_adapter (
 				phy_dummy = 8;
 				phy_dir = 1;
 				phy_quad = 1;
-				phy_count = {4'b0000, beats_left, 3'b000};
+				phy_count = 16'd8;
 			end
 			5'd8: phy_rx_ready = 1;
-			5'd12: begin
+			5'd13: begin
 				phy_valid = 1;
 				phy_opcode = 8'h32;
 				phy_has_addr = 1;
 				phy_dir = 2;
 				phy_quad = 1;
 			end
-			5'd13: begin
+			5'd14: begin
 				phy_tx_valid = 1;
-				phy_tx_last = addr[7:0] == 8'hff;
+				phy_tx_last = (addr[7:0] == 8'hff) || (bytes_left == 1);
 			end
-			5'd11:
+			5'd12:
 				if (program_open && (((bytes_left == 0) && (beats_left == 0)) || ((bytes_left != 0) && !write_mask[0])))
 					phy_tx_end = 1;
 			default:
 				;
 		endcase
 	end
-	qspi_flash_phy phy(
-		.clk(clk),
-		.rst(rst || error),
-		.cmd_valid(phy_valid),
-		.cmd_ready(phy_ready),
-		.cmd_opcode(phy_opcode),
-		.cmd_addr(addr),
-		.cmd_has_addr(phy_has_addr),
-		.cmd_dummy(phy_dummy),
-		.cmd_dir(phy_dir),
-		.cmd_quad(phy_quad),
-		.cmd_read_count(phy_count),
-		.tx_data(phy_tx_data),
-		.tx_valid(phy_tx_valid),
-		.tx_last(phy_tx_last),
-		.tx_end(phy_tx_end),
-		.tx_ready(phy_tx_ready),
-		.rx_data(phy_rx_data),
-		.rx_valid(phy_rx_valid),
-		.rx_ready(phy_rx_ready),
-		.done(phy_done),
-		.dq_in(qspi_dq_in),
-		.dq_out(qspi_dq_out),
-		.dq_oe(qspi_dq_oe),
-		.sck(qspi_sck),
-		.cs_n(qspi_cs_n)
-	);
+	assign bus_cmd = {phy_opcode, addr, phy_has_addr, 1'b0, phy_dummy, phy_dir, phy_quad, phy_count};
+	assign bus_cmd_valid = phy_valid;
+	assign phy_ready = bus_cmd_ready;
+	assign bus_tx = {phy_tx_valid, phy_tx_data, phy_tx_last, phy_tx_end};
+	assign phy_tx_ready = bus_tx_ready;
+	assign phy_rx_data = bus_rx_data;
+	assign phy_rx_valid = bus_rx_valid;
+	assign bus_rx_ready = phy_rx_ready;
+	assign phy_done = bus_done;
 	function automatic signed [POLL_BITS - 1:0] sv2v_cast_826D0_signed;
 		input reg signed [POLL_BITS - 1:0] inp;
 		sv2v_cast_826D0_signed = inp;
@@ -4203,7 +4111,7 @@ module qspi_flash_adapter (
 						if (!status_reg[0])
 							state <= poll_return;
 						else if (poll_count == sv2v_cast_826D0_signed(POLL_LIMIT - 1)) begin
-							state <= 5'd17;
+							state <= 5'd18;
 							error_code <= 3'd3;
 							dma_read_data_valid <= 0;
 						end
@@ -4227,18 +4135,18 @@ module qspi_flash_adapter (
 						status_reg <= phy_rx_data;
 					if (phy_done) begin
 						if (!status_reg[1]) begin
-							state <= 5'd17;
+							state <= 5'd18;
 							error_code <= 3'd4;
 							dma_read_data_valid <= 0;
 						end
 						else
-							state <= 5'd12;
+							state <= 5'd13;
 					end
 				end
 				5'd6:
 					if (dma_read_cmd_valid) begin
 						if (read_end > 33'h001000000) begin
-							state <= 5'd17;
+							state <= 5'd18;
 							error_code <= 3'd1;
 							dma_read_data_valid <= 0;
 						end
@@ -4251,7 +4159,7 @@ module qspi_flash_adapter (
 					end
 					else if (dma_write_cmd_valid) begin
 						if (write_end > 33'h001000000) begin
-							state <= 5'd17;
+							state <= 5'd18;
 							error_code <= 3'd1;
 							dma_read_data_valid <= 0;
 						end
@@ -4259,7 +4167,7 @@ module qspi_flash_adapter (
 							addr <= dma_write_cmd_addr[23:0];
 							beats_left <= {1'b0, dma_write_cmd_len} + 9'd1;
 							program_open <= 0;
-							state <= 5'd10;
+							state <= 5'd11;
 						end
 					end
 				5'd7:
@@ -4269,7 +4177,6 @@ module qspi_flash_adapter (
 					if (phy_rx_valid) begin
 						dma_read_data[read_byte * 8+:8] <= phy_rx_data;
 						if (read_byte == 7) begin
-							dma_read_data_valid <= 1;
 							dma_read_data_last <= beats_left == 1;
 							beats_left <= beats_left - 1'b1;
 							read_byte <= 0;
@@ -4279,14 +4186,20 @@ module qspi_flash_adapter (
 							read_byte <= read_byte + 1'b1;
 					end
 				5'd9:
-					if (dma_read_data_ready) begin
-						dma_read_data_valid <= 0;
-						state <= (dma_read_data_last ? 5'd6 : 5'd8);
+					if (phy_done) begin
+						dma_read_data_valid <= 1;
+						addr <= addr + 24'd8;
+						state <= 5'd10;
 					end
 				5'd10:
+					if (dma_read_data_ready) begin
+						dma_read_data_valid <= 0;
+						state <= (dma_read_data_last ? 5'd6 : 5'd7);
+					end
+				5'd11:
 					if (dma_write_data_valid) begin
 						if (dma_write_data_last != (beats_left == 1)) begin
-							state <= 5'd17;
+							state <= 5'd18;
 							error_code <= 3'd2;
 							dma_read_data_valid <= 0;
 						end
@@ -4295,24 +4208,24 @@ module qspi_flash_adapter (
 							write_mask <= dma_write_strb;
 							bytes_left <= 8;
 							beats_left <= beats_left - 1'b1;
-							state <= 5'd11;
+							state <= 5'd12;
 						end
 					end
-				5'd11:
+				5'd12:
 					if (bytes_left == 0) begin
 						if (beats_left != 0)
-							state <= 5'd10;
+							state <= 5'd11;
 						else if (program_open) begin
-							poll_return <= 5'd16;
-							state <= 5'd15;
+							poll_return <= 5'd17;
+							state <= 5'd16;
 						end
 						else
-							state <= 5'd16;
+							state <= 5'd17;
 					end
 					else if (!write_mask[0]) begin
 						if (program_open) begin
-							poll_return <= 5'd11;
-							state <= 5'd15;
+							poll_return <= 5'd12;
+							state <= 5'd16;
 						end
 						else begin
 							addr <= addr + 1'b1;
@@ -4322,44 +4235,44 @@ module qspi_flash_adapter (
 						end
 					end
 					else if (program_open)
-						state <= 5'd13;
+						state <= 5'd14;
 					else
 						state <= 5'd2;
-				5'd12:
+				5'd13:
 					if (phy_ready) begin
 						program_open <= 1;
-						state <= 5'd13;
+						state <= 5'd14;
 					end
-				5'd13:
+				5'd14:
 					if (phy_tx_ready) begin
 						addr <= addr + 1'b1;
 						bytes_left <= bytes_left - 1'b1;
 						write_buf <= write_buf >> 8;
 						write_mask <= write_mask >> 1;
-						state <= 5'd14;
+						state <= 5'd15;
 					end
-				5'd14:
-					if (phy_done) begin
-						program_open <= 0;
-						state <= 5'd0;
-						poll_return <= 5'd11;
-						poll_count <= 0;
-					end
-					else if (phy_tx_ready)
-						state <= 5'd11;
 				5'd15:
 					if (phy_done) begin
 						program_open <= 0;
 						state <= 5'd0;
+						poll_return <= 5'd12;
 						poll_count <= 0;
 					end
+					else if (phy_tx_ready)
+						state <= 5'd12;
 				5'd16:
+					if (phy_done) begin
+						program_open <= 0;
+						state <= 5'd0;
+						poll_count <= 0;
+					end
+				5'd17:
 					if (dma_write_rsp_ready)
 						state <= 5'd6;
-				5'd17:
+				5'd18:
 					;
 				default: begin
-					state <= 5'd17;
+					state <= 5'd18;
 					error_code <= 3'd3;
 					dma_read_data_valid <= 0;
 				end
@@ -4524,6 +4437,7 @@ module tt_um_tiny_sparse_acc_ramzxc (
 	wire [3:0] dq_oe;
 	wire sck;
 	wire cs_n;
+	wire psram_cs_n;
 	wire uart_tx;
 	wire [7:0] rx_data;
 	wire rx_valid;
@@ -4546,7 +4460,7 @@ module tt_um_tiny_sparse_acc_ramzxc (
 		.tx_ready(tx_ready),
 		.tx(uart_tx)
 	);
-	assign uio_out = {2'b11, dq_out[3:2], sck, dq_out[1:0], cs_n};
+	assign uio_out = {1'b1, psram_cs_n, dq_out[3:2], sck, dq_out[1:0], cs_n};
 	assign uio_oe = {2'b11, dq_oe[3:2], 1'b1, dq_oe[1:0], 1'b1};
 	assign uo_out = {flash_error_code, uart_tx, sync_seen, flash_busy, available, host_ready};
 	always @(posedge clk)
@@ -4665,7 +4579,483 @@ module tt_um_tiny_sparse_acc_ramzxc (
 		.qspi_dq_out(dq_out),
 		.qspi_dq_oe(dq_oe),
 		.qspi_sck(sck),
+		.psram_cs_n(psram_cs_n),
 		.qspi_cs_n(cs_n)
 	);
 endmodule
 `default_nettype wire
+module psram_buffer_ctrl (
+	clk,
+	rst,
+	read_req_addr,
+	read_req_valid,
+	read_req_ready,
+	read_rsp_data,
+	read_rsp_valid,
+	read_rsp_ready,
+	write_addr,
+	write_data,
+	write_valid,
+	write_ready,
+	write_done,
+	busy,
+	psram_req,
+	psram_req_valid,
+	psram_req_ready,
+	psram_rsp_data,
+	psram_rsp_valid
+);
+	parameter [23:0] BASE_ADDR = 0;
+	parameter signed [31:0] DATA_WIDTH = 16;
+	parameter signed [31:0] DEPTH = 4;
+	parameter signed [31:0] ADDR_WIDTH = 16;
+	input wire clk;
+	input wire rst;
+	input wire [ADDR_WIDTH - 1:0] read_req_addr;
+	input wire read_req_valid;
+	output wire read_req_ready;
+	output reg [DATA_WIDTH - 1:0] read_rsp_data;
+	output reg read_rsp_valid;
+	input wire read_rsp_ready;
+	input wire [ADDR_WIDTH - 1:0] write_addr;
+	input wire [DATA_WIDTH - 1:0] write_data;
+	input wire write_valid;
+	output wire write_ready;
+	output reg write_done;
+	output wire busy;
+	output reg [57:0] psram_req;
+	output wire psram_req_valid;
+	input wire psram_req_ready;
+	input wire [31:0] psram_rsp_data;
+	input wire psram_rsp_valid;
+	localparam signed [31:0] WORD_BYTES = DATA_WIDTH / 8;
+	reg [1:0] state;
+	assign busy = state != 2'd0;
+	assign read_req_ready = (!rst && (state == 2'd0)) && (!read_rsp_valid || read_rsp_ready);
+	assign write_ready = !rst && (state == 2'd0);
+	assign psram_req_valid = !rst && (state == 2'd1);
+	function automatic [23:0] sv2v_cast_24;
+		input reg [23:0] inp;
+		sv2v_cast_24 = inp;
+	endfunction
+	function automatic signed [23:0] sv2v_cast_24_signed;
+		input reg signed [23:0] inp;
+		sv2v_cast_24_signed = inp;
+	endfunction
+	function automatic [31:0] sv2v_cast_32;
+		input reg [31:0] inp;
+		sv2v_cast_32 = inp;
+	endfunction
+	always @(posedge clk)
+		if (rst) begin
+			state <= 2'd0;
+			psram_req <= 1'sb0;
+			read_rsp_data <= 1'sb0;
+			read_rsp_valid <= 0;
+			write_done <= 0;
+		end
+		else begin
+			write_done <= 0;
+			if (read_rsp_valid && read_rsp_ready)
+				read_rsp_valid <= 0;
+			case (state)
+				2'd0:
+					if (read_req_valid && read_req_ready) begin
+						psram_req[57] <= 0;
+						psram_req[56] <= DATA_WIDTH == 32;
+						psram_req[55-:24] <= BASE_ADDR + (sv2v_cast_24(read_req_addr) * sv2v_cast_24_signed(WORD_BYTES));
+						psram_req[31-:32] <= 1'sb0;
+						state <= 2'd1;
+					end
+					else if (write_valid && write_ready) begin
+						psram_req[57] <= 1;
+						psram_req[56] <= DATA_WIDTH == 32;
+						psram_req[55-:24] <= BASE_ADDR + (sv2v_cast_24(write_addr) * sv2v_cast_24_signed(WORD_BYTES));
+						psram_req[31-:32] <= sv2v_cast_32(write_data);
+						state <= 2'd1;
+					end
+				2'd1:
+					if (psram_req_ready)
+						state <= 2'd2;
+				2'd2:
+					if (psram_rsp_valid) begin
+						if (psram_req[57])
+							write_done <= 1;
+						else begin
+							read_rsp_data <= psram_rsp_data[DATA_WIDTH - 1:0];
+							read_rsp_valid <= 1;
+						end
+						state <= 2'd0;
+					end
+				default: state <= 2'd0;
+			endcase
+		end
+endmodule
+module psram_ctrl (
+	clk,
+	rst,
+	req,
+	req_valid,
+	req_ready,
+	rsp_data,
+	rsp_valid,
+	bus_cmd,
+	bus_cmd_valid,
+	bus_cmd_ready,
+	bus_tx,
+	bus_tx_ready,
+	bus_rx_data,
+	bus_rx_valid,
+	bus_rx_ready,
+	bus_done
+);
+	reg _sv2v_0;
+	input wire clk;
+	input wire rst;
+	input wire [173:0] req;
+	input wire [2:0] req_valid;
+	output reg [2:0] req_ready;
+	output reg [95:0] rsp_data;
+	output reg [2:0] rsp_valid;
+	output reg [56:0] bus_cmd;
+	output reg bus_cmd_valid;
+	input wire bus_cmd_ready;
+	output reg [10:0] bus_tx;
+	input wire bus_tx_ready;
+	input wire [7:0] bus_rx_data;
+	input wire bus_rx_valid;
+	output reg bus_rx_ready;
+	input wire bus_done;
+	reg [1:0] state;
+	reg [57:0] saved_req;
+	reg [1:0] owner;
+	reg [1:0] next_owner;
+	reg [1:0] selected;
+	reg [1:0] byte_index;
+	reg found;
+	reg [31:0] read_data;
+	always @(*) begin
+		if (_sv2v_0)
+			;
+		found = 0;
+		selected = next_owner;
+		req_ready = 1'sb0;
+		case (next_owner)
+			0:
+				if (req_valid[0]) begin
+					found = 1;
+					selected = 0;
+				end
+				else if (req_valid[1]) begin
+					found = 1;
+					selected = 1;
+				end
+				else if (req_valid[2]) begin
+					found = 1;
+					selected = 2;
+				end
+			1:
+				if (req_valid[1]) begin
+					found = 1;
+					selected = 1;
+				end
+				else if (req_valid[2]) begin
+					found = 1;
+					selected = 2;
+				end
+				else if (req_valid[0]) begin
+					found = 1;
+					selected = 0;
+				end
+			default:
+				if (req_valid[2]) begin
+					found = 1;
+					selected = 2;
+				end
+				else if (req_valid[0]) begin
+					found = 1;
+					selected = 0;
+				end
+				else if (req_valid[1]) begin
+					found = 1;
+					selected = 1;
+				end
+		endcase
+		if ((!rst && (state == 2'd0)) && found)
+			req_ready[selected] = 1;
+	end
+	always @(*) begin
+		if (_sv2v_0)
+			;
+		bus_cmd = 1'sb0;
+		bus_cmd[56-:8] = (saved_req[57] ? 8'h02 : 8'h0b);
+		bus_cmd[48-:24] = saved_req[55-:24];
+		bus_cmd[24] = 1;
+		bus_cmd[23] = 1;
+		bus_cmd[22-:4] = (saved_req[57] ? 0 : 4);
+		bus_cmd[18-:2] = (saved_req[57] ? 2 : 1);
+		bus_cmd[16] = 1;
+		bus_cmd[15-:16] = (saved_req[56] ? 4 : 2);
+		bus_cmd_valid = !rst && (state == 2'd1);
+		bus_tx = 1'sb0;
+		bus_tx[10] = (state == 2'd2) && saved_req[57];
+		bus_tx[9-:8] = saved_req[0 + (byte_index * 8)+:8];
+		bus_tx[1] = byte_index == (saved_req[56] ? 3 : 1);
+		bus_rx_ready = (state == 2'd2) && !saved_req[57];
+		rsp_data = {3 {read_data}};
+	end
+	always @(posedge clk)
+		if (rst) begin
+			state <= 2'd0;
+			saved_req <= 1'sb0;
+			owner <= 0;
+			next_owner <= 0;
+			byte_index <= 0;
+			read_data <= 0;
+			rsp_valid <= 0;
+		end
+		else begin
+			rsp_valid <= 0;
+			case (state)
+				2'd0:
+					if (found) begin
+						saved_req <= req[selected * 58+:58];
+						owner <= selected;
+						next_owner <= (selected == 2 ? 0 : selected + 1'b1);
+						byte_index <= 0;
+						read_data <= 0;
+						state <= 2'd1;
+					end
+				2'd1:
+					if (bus_cmd_ready)
+						state <= 2'd2;
+				2'd2: begin
+					if (bus_rx_valid && bus_rx_ready) begin
+						read_data[byte_index * 8+:8] <= bus_rx_data;
+						byte_index <= byte_index + 1'b1;
+					end
+					if (bus_tx[10] && bus_tx_ready)
+						byte_index <= byte_index + 1'b1;
+					if (bus_done) begin
+						rsp_valid[owner] <= 1;
+						state <= 2'd0;
+					end
+				end
+				default: state <= 2'd0;
+			endcase
+		end
+	initial _sv2v_0 = 0;
+endmodule
+module qspi_memory_bus (
+	clk,
+	rst,
+	dma_read_cmd_addr,
+	dma_read_cmd_len,
+	dma_read_cmd_valid,
+	dma_read_cmd_ready,
+	dma_read_data,
+	dma_read_data_last,
+	dma_read_data_valid,
+	dma_read_data_ready,
+	dma_write_cmd_addr,
+	dma_write_cmd_len,
+	dma_write_cmd_valid,
+	dma_write_cmd_ready,
+	dma_write_data,
+	dma_write_strb,
+	dma_write_data_last,
+	dma_write_data_valid,
+	dma_write_data_ready,
+	dma_write_rsp_valid,
+	dma_write_rsp_ready,
+	available,
+	busy,
+	error,
+	error_code,
+	psram_req,
+	psram_req_valid,
+	psram_req_ready,
+	psram_rsp_data,
+	psram_rsp_valid,
+	qspi_dq_in,
+	qspi_dq_out,
+	qspi_dq_oe,
+	qspi_sck,
+	qspi_cs_n,
+	psram_cs_n
+);
+	reg _sv2v_0;
+	input wire clk;
+	input wire rst;
+	input wire [31:0] dma_read_cmd_addr;
+	input wire [7:0] dma_read_cmd_len;
+	input wire dma_read_cmd_valid;
+	output wire dma_read_cmd_ready;
+	output wire [63:0] dma_read_data;
+	output wire dma_read_data_last;
+	output wire dma_read_data_valid;
+	input wire dma_read_data_ready;
+	input wire [31:0] dma_write_cmd_addr;
+	input wire [7:0] dma_write_cmd_len;
+	input wire dma_write_cmd_valid;
+	output wire dma_write_cmd_ready;
+	input wire [63:0] dma_write_data;
+	input wire [7:0] dma_write_strb;
+	input wire dma_write_data_last;
+	input wire dma_write_data_valid;
+	output wire dma_write_data_ready;
+	output wire dma_write_rsp_valid;
+	input wire dma_write_rsp_ready;
+	output wire available;
+	output wire busy;
+	output wire error;
+	output wire [2:0] error_code;
+	input wire [173:0] psram_req;
+	input wire [2:0] psram_req_valid;
+	output wire [2:0] psram_req_ready;
+	output wire [95:0] psram_rsp_data;
+	output wire [2:0] psram_rsp_valid;
+	input wire [3:0] qspi_dq_in;
+	output wire [3:0] qspi_dq_out;
+	output wire [3:0] qspi_dq_oe;
+	output wire qspi_sck;
+	output wire qspi_cs_n;
+	output wire psram_cs_n;
+	wire [113:0] commands;
+	wire [21:0] tx;
+	wire [1:0] cmd_valid;
+	reg [1:0] cmd_ready;
+	reg [1:0] tx_ready;
+	reg [1:0] rx_valid;
+	wire [1:0] rx_ready;
+	reg [1:0] done;
+	wire [7:0] rx_data;
+	reg active;
+	reg owner;
+	reg prefer_ram;
+	wire selected;
+	wire phy_ready;
+	wire phy_tx_ready;
+	wire phy_rx_valid;
+	wire phy_done;
+	wire phy_cs_n;
+	wire [56:0] selected_cmd;
+	wire [10:0] selected_tx;
+	assign selected = (active ? owner : cmd_valid[1] && (!cmd_valid[0] || prefer_ram));
+	assign selected_cmd = commands[selected * 57+:57];
+	assign selected_tx = tx[selected * 11+:11];
+	assign qspi_cs_n = (active && !owner ? phy_cs_n : 1'b1);
+	assign psram_cs_n = (active && owner ? phy_cs_n : 1'b1);
+	always @(*) begin
+		if (_sv2v_0)
+			;
+		cmd_ready = 0;
+		tx_ready = 0;
+		rx_valid = 0;
+		done = 0;
+		if (!active && !rst)
+			cmd_ready[selected] = phy_ready;
+		if (active && !rst) begin
+			tx_ready[owner] = phy_tx_ready;
+			rx_valid[owner] = phy_rx_valid;
+			done[owner] = phy_done;
+		end
+	end
+	always @(posedge clk)
+		if (rst) begin
+			active <= 0;
+			owner <= 0;
+			prefer_ram <= 0;
+		end
+		else if ((!active && cmd_valid[selected]) && phy_ready) begin
+			active <= 1;
+			owner <= selected;
+		end
+		else if (active && phy_done) begin
+			active <= 0;
+			prefer_ram <= !owner;
+		end
+	qspi_flash_phy phy(
+		.clk(clk),
+		.rst(rst),
+		.cmd_valid(!active && cmd_valid[selected]),
+		.cmd_ready(phy_ready),
+		.cmd_opcode(selected_cmd[56-:8]),
+		.cmd_addr(selected_cmd[48-:24]),
+		.cmd_has_addr(selected_cmd[24]),
+		.cmd_dummy(selected_cmd[22-:4]),
+		.cmd_dir(selected_cmd[18-:2]),
+		.cmd_quad(selected_cmd[16]),
+		.cmd_header_quad(selected_cmd[23]),
+		.cmd_read_count(selected_cmd[15-:16]),
+		.tx_data(selected_tx[9-:8]),
+		.tx_valid(active && selected_tx[10]),
+		.tx_last(selected_tx[1]),
+		.tx_end(active && selected_tx[0]),
+		.tx_ready(phy_tx_ready),
+		.rx_data(rx_data),
+		.rx_valid(phy_rx_valid),
+		.rx_ready(active && rx_ready[owner]),
+		.done(phy_done),
+		.dq_in(qspi_dq_in),
+		.dq_out(qspi_dq_out),
+		.dq_oe(qspi_dq_oe),
+		.sck(qspi_sck),
+		.cs_n(phy_cs_n)
+	);
+	qspi_flash_adapter flash_adapter(
+		.clk(clk),
+		.rst(rst),
+		.dma_read_cmd_addr(dma_read_cmd_addr),
+		.dma_read_cmd_len(dma_read_cmd_len),
+		.dma_read_cmd_valid(dma_read_cmd_valid),
+		.dma_read_cmd_ready(dma_read_cmd_ready),
+		.dma_read_data(dma_read_data),
+		.dma_read_data_last(dma_read_data_last),
+		.dma_read_data_valid(dma_read_data_valid),
+		.dma_read_data_ready(dma_read_data_ready),
+		.dma_write_cmd_addr(dma_write_cmd_addr),
+		.dma_write_cmd_len(dma_write_cmd_len),
+		.dma_write_cmd_valid(dma_write_cmd_valid),
+		.dma_write_cmd_ready(dma_write_cmd_ready),
+		.dma_write_data(dma_write_data),
+		.dma_write_strb(dma_write_strb),
+		.dma_write_data_last(dma_write_data_last),
+		.dma_write_data_valid(dma_write_data_valid),
+		.dma_write_data_ready(dma_write_data_ready),
+		.dma_write_rsp_valid(dma_write_rsp_valid),
+		.dma_write_rsp_ready(dma_write_rsp_ready),
+		.available(available),
+		.busy(busy),
+		.error(error),
+		.error_code(error_code),
+		.bus_cmd(commands[0+:57]),
+		.bus_cmd_valid(cmd_valid[0]),
+		.bus_cmd_ready(cmd_ready[0]),
+		.bus_tx(tx[0+:11]),
+		.bus_tx_ready(tx_ready[0]),
+		.bus_rx_data(rx_data),
+		.bus_rx_valid(rx_valid[0]),
+		.bus_rx_ready(rx_ready[0]),
+		.bus_done(done[0])
+	);
+	psram_ctrl ram_controller(
+		.clk(clk),
+		.rst(rst),
+		.req(psram_req),
+		.req_valid(psram_req_valid),
+		.req_ready(psram_req_ready),
+		.rsp_data(psram_rsp_data),
+		.rsp_valid(psram_rsp_valid),
+		.bus_cmd(commands[57+:57]),
+		.bus_cmd_valid(cmd_valid[1]),
+		.bus_cmd_ready(cmd_ready[1]),
+		.bus_tx(tx[11+:11]),
+		.bus_tx_ready(tx_ready[1]),
+		.bus_rx_data(rx_data),
+		.bus_rx_valid(rx_valid[1]),
+		.bus_rx_ready(rx_ready[1]),
+		.bus_done(done[1])
+	);
+	initial _sv2v_0 = 0;
+endmodule

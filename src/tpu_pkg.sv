@@ -79,6 +79,32 @@ package tpu_pkg;
     //                        //
     ////////////////////////////
 
+    // One outstanding word request per buffer. Addresses are PSRAM byte addresses.
+    typedef struct packed {
+        logic        write;
+        logic        wide;       // 0: two bytes, 1: four bytes
+        logic [23:0] addr;
+        logic [31:0] data;
+    } psram_req_type;
+
+    typedef struct packed {
+        logic [7:0]  opcode;
+        logic [23:0] addr;
+        logic        has_addr;
+        logic        header_quad;
+        logic [3:0]  dummy;
+        logic [1:0]  direction;
+        logic        quad;
+        logic [15:0] count;
+    } qspi_cmd_type;
+
+    typedef struct packed {
+        logic       valid;
+        logic [7:0] data;
+        logic       last;
+        logic       end_stream;
+    } qspi_tx_type;
+
     // Byte type is used only by the byte-addressable DRAM model and beat packers.
     typedef logic [BYTE_WIDTH-1:0] byte_type;
 

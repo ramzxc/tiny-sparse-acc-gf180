@@ -24,6 +24,12 @@ module tpu_core
     parameter repl_policy_e CACHE_POLICY       = POLICY_CUSTOM,
     parameter bit SPARSITY_EN                  = 1'b1
 )(
+    output psram_req_type [2:0] psram_req,
+    output logic [2:0]          psram_req_valid,
+    input  logic [2:0]          psram_req_ready,
+    input  logic [2:0][31:0]    psram_rsp_data,
+    input  logic [2:0]          psram_rsp_valid,
+
     input logic clk,
     input logic rst,
 
@@ -320,6 +326,12 @@ module tpu_core
         .COMPUTE_WIDTH (COMPUTE_WIDTH),
         .DEPTH        (WEIGHT_BUFFER_DEPTH)
     ) weight_buffer_core (
+        .psram_req       (psram_req[0]),
+        .psram_req_valid (psram_req_valid[0]),
+        .psram_req_ready (psram_req_ready[0]),
+        .psram_rsp_data  (psram_rsp_data[0]),
+        .psram_rsp_valid (psram_rsp_valid[0]),
+
         .clk              (clk),
         .rst              (rst),
         .read_req_addr    (weight_req_addr),
@@ -341,6 +353,12 @@ module tpu_core
         .COMPUTE_WIDTH (COMPUTE_WIDTH),
         .DEPTH         (UNIFIED_BUFFER_DEPTH)
     ) unified_buffer_core (
+        .psram_req       (psram_req[1]),
+        .psram_req_valid (psram_req_valid[1]),
+        .psram_req_ready (psram_req_ready[1]),
+        .psram_rsp_data  (psram_rsp_data[1]),
+        .psram_rsp_valid (psram_rsp_valid[1]),
+
         .clk                   (clk),
         .rst                   (rst),
         .vpu_read_req_addr     (vpu_buffer_req_addr),
@@ -474,6 +492,12 @@ module tpu_core
         .COMPUTE_WIDTH   (COMPUTE_WIDTH),
         .REGISTER_DEPTH  (REGISTER_DEPTH)
     ) accumulation_buffer (
+        .psram_req       (psram_req[2]),
+        .psram_req_valid (psram_req_valid[2]),
+        .psram_req_ready (psram_req_ready[2]),
+        .psram_rsp_data  (psram_rsp_data[2]),
+        .psram_rsp_valid (psram_rsp_valid[2]),
+
         .clk                  (clk),
         .rst                  (rst),
         .write_addr           (acc_buf_write_addr),

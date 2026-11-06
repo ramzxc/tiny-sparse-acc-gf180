@@ -5,7 +5,7 @@ project:
   discord:      "ramzxc"      # Your discord username, for communication and automatically assigning you a Tapeout role (optional)
   description:  "tiny-acc"      # One line description of what your project does
   language:     "SystemVerilog" # other examples include SystemVerilog, Amaranth, VHDL, etc
-  clock_hz:     1000000        # Clock frequency in Hz (or 0 if not applicable)
+  clock_hz:     10000000        # Clock frequency in Hz (or 0 if not applicable)
 
   # How many tiles your design occupies? A single tile is about 340x160 uM.
   tiles: "1x1"          # Valid values: 1x1, 1x2, 2x2, 3x2, 4x2, 3x4 or 4x4
@@ -50,7 +50,7 @@ pinout:
   uio[3]: "Flash SCK"
   uio[4]: "Flash IO2"
   uio[5]: "Flash IO3"
-  uio[6]: "PSRAM CS_n 0 (high)"
+  uio[6]: "PSRAM CS_n 0"
   uio[7]: "PSRAM CS_n 1 (high)"
 
 # Do not change!

@@ -14,10 +14,11 @@
   "rtl/inst_decoder.sv": "0ee0fbd77776089ef29b3eee8a27c555656f78cd946e7d5ce4a71ee06e83a488",
   "rtl/tpu_core.sv": "0099d2c78296075addd3eeeb974726d99f7fa1e078b5d81556b2569bcc1ec694",
   "rtl/tpu.sv": "77d2dd3723e41e83f7394115e63462ece7a037047ec931d29e4a1a3f16cf751f",
-  "rtl/sram_wrapper.sv": "080e81dcbb5688899b2f97d4e6b3bfa7cea06c252caf89c2d640e46e9449bb6b",
-  "rtl/sram_ctrl.sv": "c1a048c2449ffabb1b1bdc9a1910dafd7ce10e5ab4a47198e575f908b82180a8",
   "rtl/qspi_flash_phy.sv": "294aee2a8d10a9b310cf8023dad42b936a25cca6fef9f9acba483cf1738ab356",
   "rtl/qspi_flash_adapter.sv": "e34e8e5fba31ca0f3a5351faf55e2e55a170a509efe01466a72f3e6bed9be9eb",
   "rtl/uart_byte.sv": "b652962c3e22fb1e8a9d5b4936d3b3040aa8ecf76bae180a6c72b56b293536ab",
-  "rtl/tt_um_tiny_sparse_acc_ramzxc.sv": "6557d03a6897a7227f3689ceb222f54e533b6026afcdbb31b3afb2300d22bf20"
+  "rtl/tt_um_tiny_sparse_acc_ramzxc.sv": "6557d03a6897a7227f3689ceb222f54e533b6026afcdbb31b3afb2300d22bf20",
+  "rtl/psram_buffer_ctrl.sv": "eb26b239bdb354895b1027f3681dffff71f9c65e514f6a12c1632e1b94511728",
+  "rtl/psram_ctrl.sv": "089c498196757e09fb81ad9424c844a6b57300238bfcc67de8272d1981128705",
+  "rtl/qspi_memory_bus.sv": "4f88ff98dd41d157a5b49a54a83f1da959360d1518b59b34e412e2b0544fcfc3"
 }

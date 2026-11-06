@@ -33,7 +33,7 @@ module tt_um_tiny_sparse_acc_ramzxc (
     wire fifo_empty, fifo_full, synchronize, available, flash_busy, flash_error;
     wire [2:0] flash_error_code;
     wire [3:0] dq_out, dq_oe;
-    wire sck, cs_n, uart_tx;
+    wire sck, cs_n, psram_cs_n, uart_tx;
     wire [7:0] rx_data;
     wire rx_valid, rx_error, tx_ready;
 
@@ -59,8 +59,8 @@ module tt_um_tiny_sparse_acc_ramzxc (
         .tx       (uart_tx)
     );
 
-    // Keep unused PSRAM chips deselected. Flash data mapping: IO3,IO2,IO1,IO0.
-    assign uio_out = {2'b11, dq_out[3:2], sck, dq_out[1:0], cs_n};
+    // Shared Pmod bus: CS0 Flash, CS1 PSRAM, CS2 unused.
+    assign uio_out = {1'b1, psram_cs_n, dq_out[3:2], sck, dq_out[1:0], cs_n};
     assign uio_oe = {2'b11, dq_oe[3:2], 1'b1, dq_oe[1:0], 1'b1};
     assign uo_out = {flash_error_code, uart_tx, sync_seen, flash_busy, available, host_ready};
 
@@ -177,6 +177,7 @@ module tt_um_tiny_sparse_acc_ramzxc (
         .qspi_dq_out       (dq_out),
         .qspi_dq_oe        (dq_oe),
         .qspi_sck          (sck),
+        .psram_cs_n (psram_cs_n),
         .qspi_cs_n         (cs_n)
     );
 endmodule

@@ -2,8 +2,11 @@
 // Board prepares QE/erased storage before releasing reset. 6Bh read, 32h program.
 // Host owns allocation/erase: writes require previously erased storage.
 // DMA interface is unchanged (64-bit little-endian beats, len=beats-1).
-// No automatic erase, no PSRAM, and no flash instruction-fetch client.
-module qspi_flash_adapter #(
+// No automatic erase or flash instruction-fetch client.
+// Close CS after every DMA beat so PSRAM can share the physical bus.
+module qspi_flash_adapter
+    import tpu_pkg::*;
+#(
     parameter int POLL_LIMIT = 1048576
 ) (
     input  logic        clk, rst,
@@ -26,9 +29,15 @@ module qspi_flash_adapter #(
     input  logic        dma_write_rsp_ready,
     output logic        available, busy, error,
     output logic [2:0]  error_code,            // 1=address, 2=LAST, 3=poll timeout, 4=WEL
-    input  logic [3:0]  qspi_dq_in,
-    output logic [3:0]  qspi_dq_out, qspi_dq_oe,
-    output logic        qspi_sck, qspi_cs_n
+    output qspi_cmd_type bus_cmd,
+    output logic        bus_cmd_valid,
+    input  logic        bus_cmd_ready,
+    output qspi_tx_type bus_tx,
+    input  logic        bus_tx_ready,
+    input  logic [7:0]  bus_rx_data,
+    input  logic        bus_rx_valid,
+    output logic        bus_rx_ready,
+    input  logic        bus_done
 );
     localparam int POLL_BITS = $clog2(POLL_LIMIT + 1);
     typedef enum logic [4:0] {
@@ -41,6 +50,7 @@ module qspi_flash_adapter #(
         IDLE,
         READ_START,
         READ_DATA,
+        READ_CLOSE,
         READ_HOLD,
         WRITE_GET,
         WRITE_SCAN,
@@ -114,7 +124,7 @@ module qspi_flash_adapter #(
                 phy_dummy = 8;
                 phy_dir = 1;
                 phy_quad = 1;
-                phy_count = {4'b0, beats_left, 3'b0};
+                phy_count = 16'd8;
             end
 
             READ_DATA: phy_rx_ready = 1;
@@ -129,7 +139,7 @@ module qspi_flash_adapter #(
 
             WRITE_SEND: begin
                 phy_tx_valid = 1;
-                phy_tx_last  = addr[7:0] == 8'hff;
+                phy_tx_last  = addr[7:0] == 8'hff || bytes_left == 1;
             end
 
             WRITE_SCAN:
@@ -140,33 +150,16 @@ module qspi_flash_adapter #(
         endcase
     end
 
-    qspi_flash_phy phy (
-        .clk           (clk),
-        .rst           (rst || error),
-        .cmd_valid     (phy_valid),
-        .cmd_ready     (phy_ready),
-        .cmd_opcode    (phy_opcode),
-        .cmd_addr      (addr),
-        .cmd_has_addr  (phy_has_addr),
-        .cmd_dummy     (phy_dummy),
-        .cmd_dir       (phy_dir),
-        .cmd_quad      (phy_quad),
-        .cmd_read_count(phy_count),
-        .tx_data       (phy_tx_data),
-        .tx_valid      (phy_tx_valid),
-        .tx_last       (phy_tx_last),
-        .tx_end        (phy_tx_end),
-        .tx_ready      (phy_tx_ready),
-        .rx_data       (phy_rx_data),
-        .rx_valid      (phy_rx_valid),
-        .rx_ready      (phy_rx_ready),
-        .done          (phy_done),
-        .dq_in         (qspi_dq_in),
-        .dq_out        (qspi_dq_out),
-        .dq_oe         (qspi_dq_oe),
-        .sck           (qspi_sck),
-        .cs_n          (qspi_cs_n)
-    );
+    assign bus_cmd = {phy_opcode, addr, phy_has_addr, 1'b0,
+                      phy_dummy, phy_dir, phy_quad, phy_count};
+    assign bus_cmd_valid = phy_valid;
+    assign phy_ready = bus_cmd_ready;
+    assign bus_tx = {phy_tx_valid, phy_tx_data, phy_tx_last, phy_tx_end};
+    assign phy_tx_ready = bus_tx_ready;
+    assign phy_rx_data = bus_rx_data;
+    assign phy_rx_valid = bus_rx_valid;
+    assign bus_rx_ready = phy_rx_ready;
+    assign phy_done = bus_done;
 
     always_ff @(posedge clk) begin
         if (rst) begin
@@ -253,18 +246,24 @@ module qspi_flash_adapter #(
                     if (phy_rx_valid) begin
                         dma_read_data[read_byte*8+:8] <= phy_rx_data;
                         if (read_byte == 7) begin
-                            dma_read_data_valid <= 1;
                             dma_read_data_last <= beats_left == 1;
                             beats_left <= beats_left - 1'b1;
                             read_byte <= 0;
-                            state <= READ_HOLD;
+                            state <= READ_CLOSE;
                         end else read_byte <= read_byte + 1'b1;
+                    end
+
+                READ_CLOSE:
+                    if (phy_done) begin
+                        dma_read_data_valid <= 1;
+                        addr <= addr + 24'd8;
+                        state <= READ_HOLD;
                     end
 
                 READ_HOLD:
                     if (dma_read_data_ready) begin
                         dma_read_data_valid <= 0;
-                        state <= dma_read_data_last ? IDLE : READ_DATA;
+                        state <= dma_read_data_last ? IDLE : READ_START;
                     end
 
                 WRITE_GET:
