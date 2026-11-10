@@ -3,7 +3,7 @@
 `include "../defs/mem_defs.vh"
 `include "../defs/micro_defs.vh"
 
-// One A[M,K] * B[K,N] job at a time; two output rows per tile.
+// One A[M,K] * B[K,N] job at a time; one output element per tile.
 // No instruction queue here: inst_out remains stable until inst_out_rdy.
 module micro_ctrl (
     input clk,
@@ -63,15 +63,14 @@ module micro_ctrl (
     wire [`MEM_ADDR_WIDTH-1:0] req_weight_addr = weight_start[`MEM_ADDR_WIDTH-1:0];
     wire [`MEM_ADDR_WIDTH-1:0] req_input_addr = input_start[`MEM_ADDR_WIDTH-1:0];
     wire [`MEM_ADDR_WIDTH-1:0] req_output_addr = output_start[`MEM_ADDR_WIDTH-1:0];
-    wire [`MICRO_DIM_WIDTH:0] padded_rows =
-        {1'b0, req_rows} + {{`MICRO_DIM_WIDTH{1'b0}}, req_rows[0]};
-    wire [`MICRO_DIM_WIDTH:0] padded_cols =
-        {1'b0, req_cols} + {{`MICRO_DIM_WIDTH{1'b0}}, req_cols[0]};
+    wire [`MICRO_DIM_WIDTH:0] row_stride =
+        {1'b0, req_rows};
+    wire [`MICRO_DIM_WIDTH:0] col_stride =
+        {1'b0, req_cols};
 
     wire valid_vector_fields = !req_elementwise || (inst_in[61:60] == 0 && inst_in[46:36] == 0 && req_activation <= `ACT_STEP);
     wire valid_request = valid_vector_fields && req_rows != 0 && req_cols != 0 && req_vectors != 0 &&
         !weight_start[`MEM_ADDR_WIDTH] && !input_start[`MEM_ADDR_WIDTH] && !output_start[`MEM_ADDR_WIDTH] &&
-        !req_weight_addr[0] && !req_input_addr[0] && !req_output_addr[0] &&
         ((req_weight_addr & `SRAM_REGION_MASK) == (req_elementwise ? `UNIFIED_BASE_ADDR : `WEIGHT_BASE_ADDR)) &&
         ((req_input_addr & `SRAM_REGION_MASK) == `UNIFIED_BASE_ADDR) &&
         ((req_output_addr & `SRAM_REGION_MASK) == `UNIFIED_BASE_ADDR);
@@ -101,8 +100,8 @@ module micro_ctrl (
             CLEAR_SYNC:  inst_out = {`EXE_SYNC, 9'b0};
             SET_INPUT: inst_out = address_high
                 ? {`SET_SRC_HI, 1'b0, input_addr[24:13]}
-                : {`SET_SRC_LO, input_addr[12:1], 1'b0};
-            LOAD_INPUT:  inst_out = {`SRAM_TO_VPU, 7'b0, input_addr[0], !elementwise};
+                : {`SET_SRC_LO, input_addr[12:0]};
+            LOAD_INPUT:  inst_out = {`SRAM_TO_VPU, 9'b0};
             INPUT_SYNC:  inst_out = {`MEM_SYNC, 9'b0};
             SET_WEIGHT: begin
                 inst_out = address_high
@@ -166,8 +165,8 @@ module micro_ctrl (
                     end else begin
                         rows <= req_rows; cols <= req_cols; vectors <= req_vectors;
                         column <= 0; row <= 0; vector_index <= 0;
-                        column_stride <= padded_rows;
-                        input_stride <= req_elementwise ? padded_rows : padded_cols;
+                        column_stride <= row_stride;
+                        input_stride <= req_elementwise ? row_stride : col_stride;
                         input_base <= req_input_addr;
                         input_addr <= req_input_addr;
                         output_addr <= req_output_addr;
@@ -252,7 +251,7 @@ module micro_ctrl (
                 STORE: if (accepted) state <= STORE_SYNC;
                 STORE_SYNC: if (accepted) state <= NEXT_TILE;
                 NEXT_TILE: begin
-                    if (row + 9'd2 >= {1'b0, rows}) begin
+                    if (row + 9'd1 >= {1'b0, rows}) begin
                         if (vector_index == vectors - 1'b1) begin
                             done <= 1;
                             state <= IDLE;
@@ -262,18 +261,18 @@ module micro_ctrl (
                             row <= 0; column <= 0;
                             input_base <= input_base + `MEM_ADDR_WIDTH'(input_stride);
                             input_addr <= input_base + `MEM_ADDR_WIDTH'(input_stride);
-                            output_addr <= output_addr + 2;
+                            output_addr <= output_addr + 1;
                             weight_tile <= weight_base;
                             weight_addr <= {1'b0, weight_base};
                             state <= CLEAR;
                         end
                     end else begin
-                        row <= row + 2;
+                        row <= row + 1;
                         column <= 0;
-                        input_addr <= elementwise ? input_addr + 2 : input_base;
-                        output_addr <= output_addr + 2;
-                        weight_tile <= weight_tile + 2;
-                        weight_addr <= {1'b0, weight_tile} + 2;
+                        input_addr <= elementwise ? input_addr + 1 : input_base;
+                        output_addr <= output_addr + 1;
+                        weight_tile <= weight_tile + 1;
+                        weight_addr <= {1'b0, weight_tile} + 1;
                         state <= CLEAR;
                     end
                 end
@@ -284,8 +283,8 @@ module micro_ctrl (
 
 `ifndef SYNTHESIS
     initial begin
-        if (`DATA_WIDTH != 8 || `COMPUTE_WIDTH != 2 || `MICRO_DIM_WIDTH != 8)
-            $fatal(1, "Matrix engine currently uses two FP8 lanes and 8-bit dimensions");
+        if (`DATA_WIDTH != 8 || `COMPUTE_WIDTH != 1 || `MICRO_DIM_WIDTH != 8)
+            $fatal(1, "Matrix engine currently uses one FP8 lane and 8-bit dimensions");
     end
 `endif
 endmodule

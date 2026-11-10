@@ -10,14 +10,14 @@ module tb_egru_layer;
     wire done,error;
     wire mem_itf_rdy,read_en,write_en,copy_en,read_data_val;
     wire [24:0] src_addr,dst_addr;
-    wire [15:0] read_data,write_data;
+    wire [7:0] read_data,write_data;
     reg [63:0] host_inst=0;
     reg host_inst_val=0;
     wire host_rdy;
     micro_core_fixture core (.*);
     wire qspi_req_val,qspi_req_rdy,qspi_req_write,qspi_read_data_val;
     wire [24:0] qspi_req_addr;
-    wire [15:0] qspi_req_data,qspi_read_data;
+    wire [7:0] qspi_req_data,qspi_read_data;
     mem_itf itf (.clk(clk),.rst_n(rst_n),.rdy(mem_itf_rdy),
         .read_en(read_en),.write_en(write_en),.copy_en(copy_en),
         .src_addr(src_addr),.dst_addr(dst_addr),.write_data(write_data),

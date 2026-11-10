@@ -94,21 +94,21 @@ module tb_uart_microcode;
         instruction(7'd5, `UNIFIED_BASE_ADDR+25'd256);
         instruction(`ACT_TO_SRAM, 0);
         instruction(`MEM_SYNC, 0);
-        if ({ram_b.mem[257],ram_b.mem[256]} !== 16'h4c44)
+        if (ram_b.mem[256] !== 8'h44)
             $fatal(1, "Direct microcode multiply/store mismatch");
         instruction(`EXECUTE, 6); // MUL + accumulate: 6,12
         instruction(`EXE_SYNC, 0);
         instruction(7'd5, `UNIFIED_BASE_ADDR+25'd258);
         instruction(`ACT_TO_SRAM, 0);
         instruction(`MEM_SYNC, 0);
-        if ({ram_b.mem[259],ram_b.mem[258]} !== 16'h544c)
+        if (ram_b.mem[258] !== 8'h4c)
             $fatal(1, "Direct microcode accumulation mismatch");
         instruction(`ACTIVATE, 25'd16); // hard sigmoid: 1,1
         instruction(`EXE_SYNC, 0);
         instruction(7'd5, `UNIFIED_BASE_ADDR+25'd260);
         instruction(`ACT_TO_SRAM, 0);
         instruction(`MEM_SYNC, 0);
-        if ({ram_b.mem[261],ram_b.mem[260]} !== 16'h3838)
+        if (ram_b.mem[260] !== 8'h38)
             $fatal(1, "Direct microcode activation mismatch");
         if (rx_words != 26 || error || done) $fatal(1, "Direct protocol mismatch");
         $display("PASS UART16 microcode: 26 instructions, memory loads, multiply, accumulation, activation, PSRAM stores and sync");

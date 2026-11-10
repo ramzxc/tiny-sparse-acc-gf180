@@ -10,13 +10,13 @@ module tb_mem_ctrl;
     reg mem_inst_in_val=0;
     wire mem_rdy, mem_itf_rdy, read_en, write_en, copy_en, read_data_val;
     wire [24:0] src_addr,dst_addr;
-    wire [15:0] read_data,write_data,weight_data,input_data,act_res_in;
+    wire [7:0] read_data,write_data,weight_data,input_data,act_res_in;
     wire weight_data_val,input_data_val;
     mem_ctrl dut (.*);
 
     wire qspi_req_val,qspi_req_rdy,qspi_req_write,qspi_read_data_val;
     wire [24:0] qspi_req_addr;
-    wire [15:0] qspi_req_data,qspi_read_data;
+    wire [7:0] qspi_req_data,qspi_read_data;
     mem_itf itf (.clk(clk),.rst_n(rst_n),.rdy(mem_itf_rdy),
         .read_en(read_en),.write_en(write_en),.copy_en(copy_en),
         .src_addr(src_addr),.dst_addr(dst_addr),.write_data(write_data),
@@ -50,7 +50,7 @@ module tb_mem_ctrl;
 
     reg [`EXE_INST_WIDTH-1:0] exe_inst_in=0;
     reg exe_inst_in_val=0;
-    wire [15:0] vpu_res_out;
+    wire [7:0] vpu_res_out;
     wire [2:0] act_op_out;
     wire vpu_res_out_val,act_res_out_val;
     vpu compute (.*);
@@ -106,11 +106,11 @@ module tb_mem_ctrl;
             if(!mem_itf_rdy) $fatal(1,"Early memory completion");
         end
     endtask
-    task automatic execute(input [5:0] control,input [15:0] result);
+    task automatic execute(input [5:0] control,input [7:0] result);
         begin
             @(negedge clk);exe_inst_in={`EXE_MODE_COMPUTE,1'b0,control};exe_inst_in_val=1;
             @(negedge clk);exe_inst_in_val=0;
-            repeat(3) @(negedge clk);
+            repeat(1) @(negedge clk);
             if(!act_res_out_val || act_res_in !== result) $fatal(1,"Compute/activation expected %h got %h",result,act_res_in);
             @(negedge clk);
             if(act_res_out_val || act_res_in !== result) $fatal(1,"Held activation result");
@@ -145,15 +145,15 @@ module tb_mem_ctrl;
         issue(`MEM_CMD_SET_DST_LO,`WEIGHT_BASE_ADDR+25'h20);
         if(transactions!=0 || !mem_rdy) $fatal(1,"SET accessed memory");
         issue(`MEM_CMD_FLASH_TO_SRAM,0);finish_mem();
-        if({ram_a.mem[33],ram_a.mem[32]} !== 16'h4440) $fatal(1,"Flash to weight");
+        if(ram_a.mem[32] !== 8'h40) $fatal(1,"Flash to weight");
         issue(`MEM_CMD_SET_SRC_LO,2);
         issue(`MEM_CMD_SET_DST_LO,`UNIFIED_BASE_ADDR+25'h40);
         issue(`MEM_CMD_FLASH_TO_SRAM,0);finish_mem();
-        if({ram_b.mem[65],ram_b.mem[64]} !== 16'h4a48) $fatal(1,"Flash to unified");
+        if(ram_b.mem[64] !== 8'h48) $fatal(1,"Flash to unified");
 
         issue(`MEM_CMD_SET_SRC_LO,`WEIGHT_BASE_ADDR+25'h20);
         issue(`MEM_CMD_SRAM_TO_VPU,0);finish_mem();
-        if(weight_loads!=1 || input_loads!=0 || compute.weights !== 16'h4440) $fatal(1,"Weight load/ready timing");
+        if(weight_loads!=1 || input_loads!=0 || compute.weights !== 8'h40) $fatal(1,"Weight load/ready timing");
         issue(`MEM_CMD_SET_SRC_LO,`UNIFIED_BASE_ADDR+25'h40);
         allow_qspi=0;
         issue(`MEM_CMD_SRAM_TO_VPU,0);
@@ -162,23 +162,23 @@ module tb_mem_ctrl;
             if(mem_rdy || input_loads!=0) $fatal(1,"Read stall");
         end
         allow_qspi=1;finish_mem();
-        if(input_loads!=1 || compute.inputs !== 16'h4a48 || compute.weights !== 16'h4440)
+        if(input_loads!=1 || compute.inputs !== 8'h48 || compute.weights !== 8'h40)
             $fatal(1,"Input load/weight persistence");
-        // MUL: (4*2,5*3)=(8,15). Then accumulate -> (16,30).
-        execute({`ACT_NONE,1'b0,`EXE_OP_MUL},16'h5750);
-        execute({`ACT_NONE,1'b1,`EXE_OP_MUL},16'h5f58);
+        // MUL: 4*2=8. Then accumulate -> 16.
+        execute({`ACT_NONE,1'b0,`EXE_OP_MUL},8'h50);
+        execute({`ACT_NONE,1'b1,`EXE_OP_MUL},8'h58);
         issue(`MEM_CMD_SET_DST_LO,`UNIFIED_BASE_ADDR+25'h60);
         issue(`MEM_CMD_ACT_TO_SRAM,0);finish_mem();
-        if({ram_b.mem[97],ram_b.mem[96]} !== 16'h5f58) $fatal(1,"Activation store");
+        if(ram_b.mem[96] !== 8'h58) $fatal(1,"Activation store");
         // No automatic address increment; another store overwrites the same word.
-        execute({`ACT_RELU,1'b0,`EXE_OP_SUB},16'h4040);
+        execute({`ACT_RELU,1'b0,`EXE_OP_SUB},8'h40);
         issue(`MEM_CMD_ACT_TO_SRAM,0);finish_mem();
-        if({ram_b.mem[97],ram_b.mem[96]} !== 16'h4040 || dst_addr !== (`UNIFIED_BASE_ADDR+25'h60))
+        if(ram_b.mem[96] !== 8'h40 || dst_addr !== (`UNIFIED_BASE_ADDR+25'h60))
             $fatal(1,"Persistent destination");
         issue(`MEM_CMD_SET_SRC_LO,`UNIFIED_BASE_ADDR+25'h60);
         issue(`MEM_CMD_SET_DST_LO,25'h100);
         issue(`MEM_CMD_SRAM_TO_FLASH,0);finish_mem();
-        if({flash.mem[257],flash.mem[256]} !== 16'h4040) $fatal(1,"SRAM to flash");
+        if(flash.mem[256] !== 8'h40) $fatal(1,"SRAM to flash");
 
         // Reset a pending request before QSPI accepts it.
         allow_qspi=0;
@@ -192,7 +192,7 @@ module tb_mem_ctrl;
         rst_n=1;allow_qspi=1;
         issue(`MEM_CMD_SET_SRC_LO,`WEIGHT_BASE_ADDR+25'h20);
         issue(`MEM_CMD_SRAM_TO_VPU,0);finish_mem();
-        if(compute.weights !== 16'h4440) $fatal(1,"Reset recovery");
+        if(compute.weights !== 8'h40) $fatal(1,"Reset recovery");
         start_transactions=transactions;
         issue(3'd7,0);
         repeat(3) @(negedge clk);

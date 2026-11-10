@@ -19,8 +19,8 @@ module micro_core_fixture (
     output copy_en,
     output [`MEM_ADDR_WIDTH-1:0] src_addr,
     output [`MEM_ADDR_WIDTH-1:0] dst_addr,
-    output [`DATA_WIDTH*2-1:0] write_data,
-    input [`DATA_WIDTH*2-1:0] read_data,
+    output [`DATA_WIDTH-1:0] write_data,
+    input [`DATA_WIDTH-1:0] read_data,
     input read_data_val
 );
     wire [`INST_WIDTH-1:0] inst;
@@ -50,7 +50,7 @@ module micro_core_fixture (
         .inst_in_val(host_inst_val), .inst_in_rdy(host_rdy),
         .done(done), .error(error),
         .inst_out(inst), .inst_out_val(inst_val), .inst_out_rdy(core_rdy),
-        .input_is_zero(input_data[6:0] == 0 && input_data[14:8] == 0), .input_data_val(input_data_val)
+        .input_is_zero(input_data[6:0] == 0), .input_data_val(input_data_val)
     );
 
     decoder decode (

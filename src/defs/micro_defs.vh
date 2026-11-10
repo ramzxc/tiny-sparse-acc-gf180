@@ -31,11 +31,9 @@
 `define HOST_INPUT_BASE  `UNIFIED_BASE_ADDR
 `define HOST_OUTPUT_BASE `UNIFIED_BASE_ADDR
 
-// Dense column-major storage, padded to an even number of rows per column:
-// A column stride = round_up_even(M); B stride = round_up_even(K);
-// C stride = round_up_even(M). Dimensions are 1..255. No bias.
-// B and C storage ranges must not overlap. Padding bytes must be allocated;
-// padding in A should be zero; output padding values are ignored by software.
+// Packed column-major bytes: A/C column stride = M; B column stride = K.
+// Dimensions are 1..255. No bias. Odd addresses need no padding.
+// B and C storage ranges must not overlap.
 // sparse treats FP8 +0/-0 as absent terms even if the skipped weight is NaN.
 // Vector [63]=1. [62]=sparse MUL, [61:60]=0, [59:52]=length,
 // [51:50]=operation, [49:47]=activation(0..4), [46:36]=0.

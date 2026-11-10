@@ -2,7 +2,7 @@
 `define ACC_DEFS_VH
 
 `define DATA_WIDTH 8
-`define COMPUTE_WIDTH 2
+`define COMPUTE_WIDTH 1
 
 // External job: 64 bits, UART sends eight bytes, low byte first.
 `define HOST_INST_WIDTH 64

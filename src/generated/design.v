@@ -36,8 +36,8 @@ module tt_um_tiny_sparse_acc_ramzxc (
 	wire read_data_val;
 	wire [24:0] src_addr;
 	wire [24:0] dst_addr;
-	wire [15:0] read_data;
-	wire [15:0] write_data;
+	wire [7:0] read_data;
+	wire [7:0] write_data;
 	localparam HOST_WIDTH = 16;
 	wire [15:0] rx_inst;
 	wire [15:0] host_inst;
@@ -76,10 +76,10 @@ module tt_um_tiny_sparse_acc_ramzxc (
 	wire mem_inst_val;
 	wire [8:0] exe_inst;
 	wire exe_inst_val;
-	wire [15:0] weight_data;
-	wire [15:0] input_data;
-	wire [15:0] vpu_result;
-	wire [15:0] act_result;
+	wire [7:0] weight_data;
+	wire [7:0] input_data;
+	wire [7:0] vpu_result;
+	wire [7:0] act_result;
 	wire weight_data_val;
 	wire input_data_val;
 	wire vpu_result_val;
@@ -159,8 +159,8 @@ module tt_um_tiny_sparse_acc_ramzxc (
 	wire qspi_req_write;
 	wire qspi_read_data_val;
 	wire [24:0] qspi_req_addr;
-	wire [15:0] qspi_req_data;
-	wire [15:0] qspi_read_data;
+	wire [7:0] qspi_req_data;
+	wire [7:0] qspi_read_data;
 	mem_itf itf(
 		.clk(clk),
 		.rst_n(internal_rst_n),
@@ -527,10 +527,10 @@ module micro_ctrl (
 	wire [24:0] req_weight_addr = weight_start[24:0];
 	wire [24:0] req_input_addr = input_start[24:0];
 	wire [24:0] req_output_addr = output_start[24:0];
-	wire [8:0] padded_rows = {1'b0, req_rows} + {{8 {1'b0}}, req_rows[0]};
-	wire [8:0] padded_cols = {1'b0, req_cols} + {{8 {1'b0}}, req_cols[0]};
+	wire [8:0] row_stride = {1'b0, req_rows};
+	wire [8:0] col_stride = {1'b0, req_cols};
 	wire valid_vector_fields = !req_elementwise || (((inst_in[61:60] == 0) && (inst_in[46:36] == 0)) && (req_activation <= 3'd4));
-	wire valid_request = (((((((((((valid_vector_fields && (req_rows != 0)) && (req_cols != 0)) && (req_vectors != 0)) && !weight_start[25]) && !input_start[25]) && !output_start[25]) && !req_weight_addr[0]) && !req_input_addr[0]) && !req_output_addr[0]) && ((req_weight_addr & 25'h1800000) == (req_elementwise ? 25'h1800000 : 25'h1000000))) && ((req_input_addr & 25'h1800000) == 25'h1800000)) && ((req_output_addr & 25'h1800000) == 25'h1800000);
+	wire valid_request = ((((((((valid_vector_fields && (req_rows != 0)) && (req_cols != 0)) && (req_vectors != 0)) && !weight_start[25]) && !input_start[25]) && !output_start[25]) && ((req_weight_addr & 25'h1800000) == (req_elementwise ? 25'h1800000 : 25'h1000000))) && ((req_input_addr & 25'h1800000) == 25'h1800000)) && ((req_output_addr & 25'h1800000) == 25'h1800000);
 	reg [25:0] input_end;
 	reg [25:0] output_end;
 	wire [25:0] next_input_end = input_end + sv2v_cast_26(input_stride);
@@ -547,8 +547,8 @@ module micro_ctrl (
 		case (state)
 			CLEAR: inst_out = 16'h4200;
 			CLEAR_SYNC: inst_out = 16'h7800;
-			SET_INPUT: inst_out = (address_high ? {4'hc, input_addr[24:13]} : {3'd4, input_addr[12:1], 1'b0});
-			LOAD_INPUT: inst_out = {14'h0080, input_addr[0], !elementwise};
+			SET_INPUT: inst_out = (address_high ? {4'hc, input_addr[24:13]} : {3'd4, input_addr[12:0]});
+			LOAD_INPUT: inst_out = 16'h0200;
 			INPUT_SYNC: inst_out = 16'h7a00;
 			SET_WEIGHT: begin
 				inst_out = (address_high ? {4'hc, weight_addr[24:13]} : {3'd4, weight_addr[12:0]});
@@ -625,8 +625,8 @@ module micro_ctrl (
 							column <= 0;
 							row <= 0;
 							vector_index <= 0;
-							column_stride <= padded_rows;
-							input_stride <= (req_elementwise ? padded_rows : padded_cols);
+							column_stride <= row_stride;
+							input_stride <= (req_elementwise ? row_stride : col_stride);
 							input_base <= req_input_addr;
 							input_addr <= req_input_addr;
 							output_addr <= req_output_addr;
@@ -737,7 +737,7 @@ module micro_ctrl (
 					if (accepted)
 						state <= NEXT_TILE;
 				NEXT_TILE:
-					if ((row + 9'd2) >= {1'b0, rows}) begin
+					if ((row + 9'd1) >= {1'b0, rows}) begin
 						if (vector_index == (vectors - 1'b1)) begin
 							done <= 1;
 							state <= IDLE;
@@ -748,19 +748,19 @@ module micro_ctrl (
 							column <= 0;
 							input_base <= input_base + sv2v_cast_25(input_stride);
 							input_addr <= input_base + sv2v_cast_25(input_stride);
-							output_addr <= output_addr + 2;
+							output_addr <= output_addr + 1;
 							weight_tile <= weight_base;
 							weight_addr <= {1'b0, weight_base};
 							state <= CLEAR;
 						end
 					end
 					else begin
-						row <= row + 2;
+						row <= row + 1;
 						column <= 0;
-						input_addr <= (elementwise ? input_addr + 2 : input_base);
-						output_addr <= output_addr + 2;
-						weight_tile <= weight_tile + 2;
-						weight_addr <= {1'b0, weight_tile} + 2;
+						input_addr <= (elementwise ? input_addr + 1 : input_base);
+						output_addr <= output_addr + 1;
+						weight_tile <= weight_tile + 1;
+						weight_addr <= {1'b0, weight_tile} + 1;
 						state <= CLEAR;
 					end
 				default: state <= IDLE;
@@ -849,86 +849,79 @@ module mem_ctrl (
 	output reg copy_en;
 	output reg [24:0] src_addr;
 	output reg [24:0] dst_addr;
-	output wire [15:0] write_data;
-	input [15:0] read_data;
+	output wire [7:0] write_data;
+	input [7:0] read_data;
 	input read_data_val;
-	output wire [15:0] weight_data;
+	output wire [7:0] weight_data;
 	output wire weight_data_val;
-	output wire [15:0] input_data;
+	output wire [7:0] input_data;
 	output wire input_data_val;
-	input [15:0] act_res_in;
-	localparam [1:0] IDLE = 0;
-	localparam [1:0] SEND = 1;
-	localparam [1:0] WAIT = 2;
-	reg [1:0] state;
-	reg [2:0] command;
-	reg scalar_load;
-	reg high_byte;
+	input [7:0] act_res_in;
+	localparam [2:0] IDLE = 0;
+	localparam [2:0] SEND_READ = 1;
+	localparam [2:0] SEND_WRITE = 2;
+	localparam [2:0] SEND_COPY = 3;
+	localparam [2:0] WAIT_READ = 4;
+	localparam [2:0] WAIT_OTHER = 5;
+	reg [2:0] state;
 	reg force_weight;
 	wire [2:0] incoming_command = mem_inst_in[15:13];
-	wire [12:0] address_part = mem_inst_in[12:0];
-	wire load_vpu = ((rst_n && (state == WAIT)) && (command == 3'd1)) && read_data_val;
+	wire accept = (state == IDLE) && mem_inst_in_val;
+	wire address_write = accept && incoming_command[2];
+	wire transfer = accept && !incoming_command[2];
+	wire [12:0] address_value = mem_inst_in[12:0] & {13 {rst_n}};
+	wire load_vpu = (rst_n && (state == WAIT_READ)) && read_data_val;
 	assign mem_rdy = state == IDLE;
 	assign write_data = act_res_in;
 	assign weight_data = read_data;
-	wire [7:0] scalar_data = (high_byte ? read_data[8+:8] : read_data[0+:8]);
-	assign input_data = (scalar_load ? {2 {scalar_data}} : read_data);
+	assign input_data = read_data;
 	assign weight_data_val = load_vpu && (force_weight || ((src_addr & 25'h1800000) == 25'h1000000));
 	assign input_data_val = (load_vpu && !force_weight) && ((src_addr & 25'h1800000) == 25'h1800000);
 	always @(*) begin
-		read_en = 0;
-		write_en = 0;
-		copy_en = 0;
-		if (rst_n && (state == SEND))
-			case (command)
-				3'd0, 3'd3: copy_en = 1;
-				3'd1: read_en = 1;
-				3'd2: write_en = 1;
-				default:
-					;
-			endcase
+		read_en = rst_n && (state == SEND_READ);
+		write_en = rst_n && (state == SEND_WRITE);
+		copy_en = rst_n && (state == SEND_COPY);
 	end
-	always @(posedge clk)
+	always @(posedge clk) begin
+		if (!rst_n || ((address_write && !incoming_command[0]) && !incoming_command[1]))
+			src_addr[12:0] <= address_value;
+		if (!rst_n || ((address_write && !incoming_command[0]) && incoming_command[1]))
+			src_addr[24:13] <= address_value[11:0];
+		if (!rst_n || ((address_write && incoming_command[0]) && !incoming_command[1]))
+			dst_addr[12:0] <= address_value;
+		if (!rst_n || ((address_write && incoming_command[0]) && incoming_command[1]))
+			dst_addr[24:13] <= address_value[11:0];
 		if (!rst_n) begin
 			state <= IDLE;
-			command <= 0;
-			scalar_load <= 0;
-			high_byte <= 0;
 			force_weight <= 0;
-			src_addr <= 0;
-			dst_addr <= 0;
 		end
-		else
+		else begin
+			if (transfer)
+				force_weight <= mem_inst_in[2];
 			case (state)
 				IDLE:
-					if (mem_inst_in_val)
+					if (transfer)
 						case (incoming_command)
-							3'd4: src_addr[12:0] <= address_part;
-							3'd6: src_addr[24:13] <= address_part[11:0];
-							3'd5: dst_addr[12:0] <= address_part;
-							3'd7: dst_addr[24:13] <= address_part[11:0];
-							3'd0, 3'd3, 3'd1, 3'd2: begin
-								command <= incoming_command;
-								scalar_load <= mem_inst_in[0];
-								high_byte <= mem_inst_in[1];
-								force_weight <= mem_inst_in[2];
-								state <= SEND;
-							end
-							default:
-								;
+							3'd1: state <= SEND_READ;
+							3'd2: state <= SEND_WRITE;
+							default: state <= SEND_COPY;
 						endcase
-				SEND:
+				SEND_READ:
 					if (mem_itf_rdy)
-						state <= WAIT;
-				WAIT:
-					if (command == 3'd1) begin
-						if (read_data_val)
-							state <= IDLE;
-					end
-					else if (mem_itf_rdy)
+						state <= WAIT_READ;
+				SEND_WRITE, SEND_COPY:
+					if (mem_itf_rdy)
+						state <= WAIT_OTHER;
+				WAIT_READ:
+					if (read_data_val)
+						state <= IDLE;
+				WAIT_OTHER:
+					if (mem_itf_rdy)
 						state <= IDLE;
 				default: state <= IDLE;
 			endcase
+		end
+	end
 endmodule
 module vpu (
 	clk,
@@ -947,11 +940,11 @@ module vpu (
 	input rst_n;
 	input [8:0] exe_inst_in;
 	input exe_inst_in_val;
-	input [15:0] weight_data;
+	input [7:0] weight_data;
 	input weight_data_val;
-	input [15:0] input_data;
+	input [7:0] input_data;
 	input input_data_val;
-	output reg [15:0] vpu_res_out;
+	output reg [7:0] vpu_res_out;
 	output reg [2:0] act_op_out;
 	output reg vpu_res_out_val;
 	localparam [7:0] FP8_ZERO = 8'h00;
@@ -1210,22 +1203,18 @@ module vpu (
 			end
 		end
 	endfunction
-	reg [15:0] weights;
-	reg [15:0] inputs;
-	reg second_lane;
-	reg [7:0] saved_input;
-	reg [7:0] saved_weight;
-	reg [3:0] saved_control;
+	reg [7:0] weights;
+	reg [7:0] inputs;
 	wire [1:0] mode = exe_inst_in[8:7];
-	wire [1:0] operation = (second_lane ? saved_control[1:0] : exe_inst_in[1:0]);
-	wire accumulate = (second_lane ? saved_control[2] : exe_inst_in[2]);
-	wire sparse = (second_lane ? saved_control[3] : exe_inst_in[6]);
+	wire [1:0] operation = exe_inst_in[1:0];
+	wire accumulate = exe_inst_in[2];
+	wire sparse = exe_inst_in[6];
 	wire multiply = operation == 2'd2;
 	wire reverse_sub = operation == 2'd3;
 	wire subtract = (operation == 2'd1) || reverse_sub;
-	wire [7:0] x = (second_lane ? saved_input : inputs[0+:8]);
-	wire [7:0] w = (second_lane ? saved_weight : weights[0+:8]);
-	wire [7:0] sum = (second_lane ? vpu_res_out[8+:8] : vpu_res_out[0+:8]);
+	wire [7:0] x = inputs;
+	wire [7:0] w = weights;
+	wire [7:0] sum = vpu_res_out;
 	wire [7:0] product = fp8_mul(x, w);
 	wire [7:0] add_a = (multiply ? product : (reverse_sub ? w : x));
 	wire [7:0] operand_b = (reverse_sub ? x : w);
@@ -1235,10 +1224,6 @@ module vpu (
 	wire [7:0] mac_result = ((sparse && multiply) && (x[6:0] == 0) ? (accumulate ? sum : FP8_ZERO) : arithmetic_result);
 	always @(posedge clk)
 		if (!rst_n) begin
-			second_lane <= 0;
-			saved_input <= 0;
-			saved_weight <= 0;
-			saved_control <= 0;
 			weights <= 0;
 			inputs <= 0;
 			vpu_res_out <= 0;
@@ -1250,33 +1235,16 @@ module vpu (
 				weights <= weight_data;
 			if (input_data_val)
 				inputs <= input_data;
-			vpu_res_out_val <= 0;
-			if (second_lane) begin
-				vpu_res_out[8+:8] <= mac_result;
-				vpu_res_out_val <= 1;
-				second_lane <= 0;
-			end
-			else if (exe_inst_in_val && (mode == 2'd1)) begin
-				vpu_res_out <= 0;
-				act_op_out <= 3'd0;
-				vpu_res_out_val <= 1;
-			end
-			else if (exe_inst_in_val && (mode == 2'd2)) begin
-				act_op_out <= exe_inst_in[5:3];
-				vpu_res_out_val <= 1;
-			end
-			else if (exe_inst_in_val && (mode == 2'd3)) begin
-				vpu_res_out <= inputs;
-				act_op_out <= exe_inst_in[5:3];
-				vpu_res_out_val <= 1;
-			end
-			else if (exe_inst_in_val && (mode == 2'd0)) begin
-				vpu_res_out[0+:8] <= mac_result;
-				saved_input <= inputs[8+:8];
-				saved_weight <= weights[8+:8];
-				saved_control <= {exe_inst_in[6], exe_inst_in[2], exe_inst_in[1:0]};
-				act_op_out <= exe_inst_in[5:3];
-				second_lane <= 1;
+			vpu_res_out_val <= exe_inst_in_val;
+			if (exe_inst_in_val) begin
+				act_op_out <= (mode == 2'd1 ? 3'd0 : exe_inst_in[5:3]);
+				case (mode)
+					2'd1: vpu_res_out <= 0;
+					2'd3: vpu_res_out <= inputs;
+					2'd0: vpu_res_out <= mac_result;
+					default:
+						;
+				endcase
 			end
 		end
 endmodule
@@ -1289,12 +1257,13 @@ module act (
 	act_res_out,
 	act_res_out_val
 );
+	reg _sv2v_0;
 	input clk;
 	input rst_n;
-	input [15:0] vpu_res_in;
+	input [7:0] vpu_res_in;
 	input [2:0] act_op_in;
 	input vpu_res_in_val;
-	output reg [15:0] act_res_out;
+	output reg [7:0] act_res_out;
 	output reg act_res_out_val;
 	localparam [7:0] FP8_ZERO = 8'h00;
 	localparam [7:0] FP8_QNAN = 8'h7f;
@@ -1355,13 +1324,12 @@ module act (
 			end
 		end
 	endfunction
-	reg second_lane;
-	reg [7:0] saved_input;
-	reg [2:0] saved_op;
-	wire [7:0] x = (second_lane ? saved_input : vpu_res_in[0+:8]);
-	wire [2:0] operation = (second_lane ? saved_op : act_op_in);
+	wire [7:0] x = vpu_res_in;
+	wire [2:0] operation = act_op_in;
 	reg [7:0] result;
-	always @(*)
+	always @(*) begin
+		if (_sv2v_0)
+			;
 		case (operation)
 			3'd1: result = (fp8_is_nan(x[6:0]) ? FP8_QNAN : (x[7] ? FP8_ZERO : x));
 			3'd2: result = fp8_sigmoid(x);
@@ -1369,28 +1337,18 @@ module act (
 			3'd4: result = (fp8_is_nan(x[6:0]) ? FP8_QNAN : (!x[7] && (x[6:0] != 0) ? 8'h38 : FP8_ZERO));
 			default: result = x;
 		endcase
+	end
 	always @(posedge clk)
 		if (!rst_n) begin
-			second_lane <= 0;
-			saved_input <= 0;
-			saved_op <= 0;
 			act_res_out <= 0;
 			act_res_out_val <= 0;
 		end
 		else begin
-			act_res_out_val <= 0;
-			if (second_lane) begin
-				act_res_out[8+:8] <= result;
-				act_res_out_val <= 1;
-				second_lane <= 0;
-			end
-			else if (vpu_res_in_val) begin
-				act_res_out[0+:8] <= result;
-				saved_input <= vpu_res_in[8+:8];
-				saved_op <= act_op_in;
-				second_lane <= 1;
-			end
+			act_res_out_val <= vpu_res_in_val;
+			if (vpu_res_in_val)
+				act_res_out <= result;
 		end
+	initial _sv2v_0 = 0;
 endmodule
 module mem_itf (
 	clk,
@@ -1420,15 +1378,15 @@ module mem_itf (
 	output reg rdy;
 	input [24:0] src_addr;
 	input [24:0] dst_addr;
-	input [15:0] write_data;
-	output wire [15:0] read_data;
+	input [7:0] write_data;
+	output wire [7:0] read_data;
 	output reg read_data_val;
 	output reg qspi_req_val;
 	input qspi_req_rdy;
 	output reg qspi_req_write;
 	output wire [24:0] qspi_req_addr;
-	output reg [15:0] qspi_req_data;
-	input [15:0] qspi_read_data;
+	output reg [7:0] qspi_req_data;
+	input [7:0] qspi_read_data;
 	input qspi_read_data_val;
 	localparam [1:0] IDLE = 2'd0;
 	localparam [1:0] SEND = 2'd1;
@@ -1504,8 +1462,8 @@ module qspi_ctrl (
 	output wire req_rdy;
 	input req_write;
 	input [24:0] req_addr;
-	input [15:0] req_data;
-	output wire [15:0] read_data;
+	input [7:0] req_data;
+	output wire [7:0] read_data;
 	output reg read_data_val;
 	output reg sck;
 	output reg flash_sc_n;
@@ -1532,15 +1490,17 @@ module qspi_ctrl (
 	reg [2:0] operation;
 	reg [1:0] chip;
 	reg write_reg;
-	reg [15:0] data_shift;
+	reg [7:0] data_shift;
 	reg [1:0] status_shift;
 	reg [4:0] cycles_left;
-	assign read_data = {data_shift[7:0], data_shift[15:8]};
+	assign read_data = data_shift;
 	wire is_ram = chip[1];
 	wire [7:0] memory_opcode = (is_ram ? (write_reg ? 8'h02 : 8'h0b) : (write_reg ? 8'h32 : 8'h6b));
 	wire [23:0] address = (is_ram ? {1'b0, req_addr[22:0]} : req_addr[23:0]);
+	wire [2:0] address_nibble_index = (is_ram ? cycles_left[2:0] : cycles_left[4:2]);
+	wire [3:0] address_nibble = address[{address_nibble_index, 2'b00}+:4];
 	wire [7:0] command = (operation == MEMORY ? memory_opcode : (operation == WRITE_ENABLE ? 8'h06 : 8'h05));
-	assign req_rdy = (rst_n && (state == IDLE)) && !req_addr[0];
+	assign req_rdy = rst_n && (state == IDLE);
 	always @(*) begin
 		dq_out = 4'b1100;
 		dq_oe = 4'b0000;
@@ -1556,16 +1516,16 @@ module qspi_ctrl (
 				end
 			ADDR:
 				if (is_ram) begin
-					dq_out = address[{cycles_left[2:0], 2'b00}+:4];
+					dq_out = address_nibble;
 					dq_oe = 4'b1111;
 				end
 				else begin
-					dq_out[0] = address[cycles_left];
+					dq_out[0] = address_nibble[cycles_left[1:0]];
 					dq_oe = 4'b1101;
 				end
 			DATA:
 				if (write_reg) begin
-					dq_out = data_shift[15:12];
+					dq_out = data_shift[7-:4];
 					dq_oe = 4'b1111;
 				end
 			STATUS: dq_oe = 4'b1101;
@@ -1595,7 +1555,7 @@ module qspi_ctrl (
 					if (req_val && req_rdy) begin
 						chip <= req_addr[24:23];
 						write_reg <= req_write;
-						data_shift <= {req_data[7:0], req_data[15:8]};
+						data_shift <= req_data;
 						operation <= (req_addr[24] ? MEMORY : WAIT_READY);
 						state <= SELECT;
 					end
@@ -1611,7 +1571,7 @@ module qspi_ctrl (
 					sck <= !sck;
 					if (!sck) begin
 						if ((state == DATA) && !write_reg)
-							data_shift <= {data_shift[11:0], dq_in};
+							data_shift <= {data_shift[3:0], dq_in};
 						if (state == STATUS)
 							status_shift <= {status_shift[0], dq_in[1]};
 					end
@@ -1620,7 +1580,7 @@ module qspi_ctrl (
 						case (state)
 							DATA:
 								if (write_reg)
-									data_shift <= {data_shift[11:0], 4'b0000};
+									data_shift <= {data_shift[3:0], 4'b0000};
 							default:
 								;
 						endcase
@@ -1640,7 +1600,7 @@ module qspi_ctrl (
 								end
 							ADDR:
 								if (write_reg) begin
-									cycles_left <= 3;
+									cycles_left <= 1;
 									state <= DATA;
 								end
 								else begin
@@ -1648,7 +1608,7 @@ module qspi_ctrl (
 									state <= DUMMY;
 								end
 							DUMMY: begin
-								cycles_left <= 3;
+								cycles_left <= 1;
 								state <= DATA;
 							end
 							DATA: state <= DESELECT;

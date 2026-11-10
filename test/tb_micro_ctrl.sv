@@ -15,7 +15,7 @@ module tb_micro_ctrl;
     reg [1:0] req_act_op;
     wire mem_itf_rdy,read_en,write_en,copy_en,read_data_val;
     wire [24:0] src_addr,dst_addr;
-    wire [15:0] read_data,write_data;
+    wire [7:0] read_data,write_data;
     reg [63:0] host_inst=0;
     reg host_inst_val=0;
     wire host_rdy;
@@ -23,7 +23,7 @@ module tb_micro_ctrl;
     micro_core_fixture core (.*);
     wire qspi_req_val,qspi_req_rdy,qspi_req_write,qspi_read_data_val;
     wire [24:0] qspi_req_addr;
-    wire [15:0] qspi_req_data,qspi_read_data;
+    wire [7:0] qspi_req_data,qspi_read_data;
     mem_itf itf (.clk(clk),.rst_n(rst_n),.rdy(mem_itf_rdy),
         .read_en(read_en),.write_en(write_en),.copy_en(copy_en),
         .src_addr(src_addr),.dst_addr(dst_addr),.write_data(write_data),
@@ -80,8 +80,7 @@ module tb_micro_ctrl;
                 else $fatal(1,"Unexpected Flash access");
             end
             if(core.exe_inst_val && core.inst[15:9]==`EXECUTE) macs++;
-            if(core.mem_inst_val && core.inst[15:9]==`SRAM_TO_VPU &&
-                core.inst[`MEM_SCALAR_BIT] && core.exe_active) overlap_loads++;
+            if(core.mem_inst_val && core.inst[15:13]==`SET_SRC_LO && core.exe_active) overlap_loads++;
         end
     end
     task automatic send_command(input [63:0] word_value);
@@ -132,12 +131,12 @@ module tb_micro_ctrl;
         for(integer test_no=0;test_no<count;test_no++) begin
             n=$fscanf(fd,"%d %d %d %d %d %d",rows,cols,vectors,activation,sparse,nnz);
             if(n!=6) $fatal(1,"Bad vector header");
-            stride=((rows+1)/2)*2;
+            stride=rows;
             for(integer i=0;i<512;i++) begin ram_a.mem[i]=8'ha5;ram_b.mem[i]=8'ha5;end
             for(integer i=0;i<stride*cols;i++) begin
                 n=$fscanf(fd,"%h",value);ram_a.mem[32+i]=8'(value);
             end
-            for(integer i=0;i<((cols+1)/2)*2*vectors;i++) begin
+            for(integer i=0;i<cols*vectors;i++) begin
                 n=$fscanf(fd,"%h",value);ram_b.mem[128+i]=8'(value);
             end
             for(integer i=0;i<stride*vectors;i++) n=$fscanf(fd,"%h",expected_result[i]);
@@ -160,16 +159,16 @@ module tb_micro_ctrl;
                 if(ram_b.mem[256+i] !== 8'(expected_result[i]))
                     $fatal(1,"Matrix case=%0d row=%0d expected=%h got=%h",test_no,i,8'(expected_result[i]),ram_b.mem[256+i]);
             if(ram_b.mem[255] !== 8'ha5 || ram_b.mem[256+stride*vectors] !== 8'ha5) $fatal(1,"Store overrun");
-            if(weight_reads != (stride/2)*(sparse ? nnz : cols*vectors) || macs != weight_reads ||
-                input_reads != (stride/2)*cols*vectors || stores != (stride/2)*vectors)
+            if(weight_reads != stride*(sparse ? nnz : cols*vectors) || macs != weight_reads ||
+                input_reads != stride*cols*vectors || stores != stride*vectors)
                 $fatal(1,"Wrong traffic w=%0d x=%0d stores=%0d macs=%0d",weight_reads,input_reads,stores,macs);
             if(sparse) sparse_reads+=weight_reads;else dense_reads+=weight_reads;
             @(negedge clk);
             if(done) $fatal(1,"Repeated done");
         end
         $fclose(fd);
-        if(require_overlap && overlap_loads==0) $fatal(1,"No input load overlapped execution");
-        $display("MATVEC cycles=%0d overlapped input requests=%0d",total_cycles,overlap_loads);
+        if(require_overlap && overlap_loads==0) $fatal(1,"No address setup overlapped execution");
+        $display("MATVEC cycles=%0d overlapped address setups=%0d",total_cycles,overlap_loads);
         // Invalid high-level requests must produce an error without side effects.
         req_reserved=0;req_rows=2;req_cols=2;req_vectors=1;req_act_op=0;req_sparse_en=0;
         req_weight_addr=`WEIGHT_BASE_ADDR+32;
@@ -178,7 +177,6 @@ module tb_micro_ctrl;
         req_rows=0;invalid_request();req_rows=2;
         req_reserved=1;invalid_request();req_reserved=0;
         req_vectors=0;invalid_request();req_vectors=1;
-        req_weight_addr=req_weight_addr+1;invalid_request();req_weight_addr=req_weight_addr-1;
         req_output_addr=req_input_addr;invalid_request();req_output_addr=`UNIFIED_BASE_ADDR+256;
         // A later B column overlapping C must also be rejected before access.
         req_input_addr=`UNIFIED_BASE_ADDR+128;req_cols=4;req_vectors=40;

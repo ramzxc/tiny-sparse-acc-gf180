@@ -65,8 +65,8 @@
 `define ACT_TANH    3'd3
 `define ACT_STEP    3'd4
 
-// SRAM_TO_VPU: payload[0]=scalar broadcast, payload[1]=select high byte.
-// For scalar loads SRC is an aligned Unified address; both lanes receive x[k].
+// SRAM_TO_VPU: payload[1:0] are reserved/ignored in the single-byte design.
+// Historical bit definitions are retained for source compatibility.
 `define MEM_SCALAR_BIT 0
 `define MEM_HIGH_BYTE_BIT 1
 // Route a Unified read into the weight register for vector operand A.

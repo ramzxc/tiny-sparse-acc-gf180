@@ -9,9 +9,9 @@ module tb_qspi_ctrl #(
     reg rst_n = 0;
     reg req_val = 0, req_write = 0;
     reg [24:0] req_addr = 0;
-    reg [15:0] req_data = 0;
+    reg [7:0] req_data = 0;
     wire req_rdy, read_data_val, sck, flash_cs, ram_a_cs, ram_b_cs;
-    wire [15:0] read_data;
+    wire [7:0] read_data;
     wire [3:0] dq_out, dq_oe, flash_in, a_in, b_in;
     // Delays represent an illustrative outbound pad/mux delay and inbound
     // memory+pad delay, not a substitute for board/PDK timing signoff.
@@ -65,7 +65,7 @@ module tb_qspi_ctrl #(
         last_sck_edge = $time;
     end
 
-    task automatic access(input bit wr, input [24:0] addr, input [15:0] value);
+    task automatic access(input bit wr, input [24:0] addr, input [7:0] value);
         integer timeout_count;
         begin
             @(negedge clk);
@@ -74,7 +74,7 @@ module tb_qspi_ctrl #(
             req_data = value;
             req_val = 1;
             #1;
-            if (!req_rdy) $fatal(1, "Not ready for aligned request");
+            if (!req_rdy) $fatal(1, "Not ready for byte request");
             @(posedge clk);
             @(negedge clk);
             req_val = 0;
@@ -107,42 +107,42 @@ module tb_qspi_ctrl #(
     initial begin
         repeat (3) @(negedge clk);
         rst_n = 1;
-        access(1, 25'h1000000, 16'h1234);
-        access(1, 25'h1800000, 16'habcd);
-        if (ram_a.mem[0] !== 8'h34 || ram_a.mem[1] !== 8'h12 || ram_b.mem[0] !== 8'hcd)
+        access(1, 25'h1000000, 8'h34);
+        access(1, 25'h1800000, 8'hcd);
+        if (ram_a.mem[0] !== 8'h34 || ram_b.mem[0] !== 8'hcd)
             $fatal(1, "Wrong bank or byte ordering");
-        access(0, 25'h1000000, 16'h1234);
-        access(0, 25'h1800000, 16'habcd);
+        access(0, 25'h1000000, 8'h34);
+        access(0, 25'h1800000, 8'hcd);
         for (integer i = 0; i < 16; i++) begin
-            access(1, 25'h1000020 + 2*i, 16'h9e37 ^ (i*7919));
-            access(0, 25'h1000020 + 2*i, 16'h9e37 ^ (i*7919));
-            access(1, 25'h1800020 + 2*i, 16'hf081 ^ (i*997));
-            access(0, 25'h1800020 + 2*i, 16'hf081 ^ (i*997));
+            access(1, 25'h1000020 + 2*i, 8'h37 ^ (i*7919));
+            access(0, 25'h1000020 + 2*i, 8'h37 ^ (i*7919));
+            access(1, 25'h1800020 + 2*i, 8'h81 ^ (i*997));
+            access(0, 25'h1800020 + 2*i, 8'h81 ^ (i*997));
         end
-        access(0, 25'h0000000, 16'hffff);
-        access(1, 25'h00000fe, 16'h1023); // Last aligned word in a Flash page.
-        access(0, 25'h00000fe, 16'h1023);
-        access(1, 25'h0000100, 16'h4567);
-        access(0, 25'h0000100, 16'h4567);
-        if (flash.mem[254] !== 8'h23 || flash.mem[255] !== 8'h10)
+        access(0, 25'h0000000, 8'hff);
+        access(1, 25'h00000fe, 8'h23); // Last aligned word in a Flash page.
+        access(0, 25'h00000fe, 8'h23);
+        access(1, 25'h0000100, 8'h67);
+        access(0, 25'h0000100, 8'h67);
+        if (flash.mem[254] !== 8'h23)
             $fatal(1, "Flash byte ordering");
 
         // Retry WREN if the device did not set WEL; do not falsely complete.
         reject_wren = 1;
         fork
-            access(1, 25'h0000102, 16'h0081);
+            access(1, 25'h0000102, 8'h81);
             begin
                 repeat (300) @(negedge clk);
                 if (read_data_val) $fatal(1, "Completion while WREN rejected");
                 reject_wren = 0;
             end
         join
-        access(0, 25'h0000102, 16'h0081);
+        access(0, 25'h0000102, 8'h81);
 
         // Flash busy after an earlier operation: read must wait.
         stuck_busy = 1;
         fork
-            access(0, 25'h0000100, 16'h4567);
+            access(0, 25'h0000100, 8'h67);
             begin
                 repeat (200) @(negedge clk);
                 if (read_data_val) $fatal(1, "Read completed while Flash busy");
@@ -150,16 +150,17 @@ module tb_qspi_ctrl #(
             end
         join
 
-        @(negedge clk);
-        req_addr = 1;
-        req_val = 1;
-        repeat (5) begin
-            @(negedge clk);
-            if (req_rdy || !flash_cs || !ram_a_cs || !ram_b_cs)
-                $fatal(1, "Odd address accepted");
-        end
-        req_val = 0;
-        req_addr = 0;
+        // Byte transfers must support odd addresses without touching neighbors.
+        ram_a.mem[2]=8'h5a; ram_b.mem[2]=8'ha5;
+        access(1,25'h1000001,8'h96);
+        access(1,25'h1800001,8'h69);
+        access(0,25'h1000001,8'h96);
+        access(0,25'h1800001,8'h69);
+        if(ram_a.mem[0]!==8'h34 || ram_a.mem[2]!==8'h5a ||
+           ram_b.mem[0]!==8'hcd || ram_b.mem[2]!==8'ha5) $fatal(1,"Adjacent byte overwritten");
+        access(1,25'hff,8'hc3);
+        access(0,25'hff,8'hc3);
+        if(flash.mem[254]!==8'h23 || flash.mem[256]!==8'h67) $fatal(1,"Flash byte store overrun");
 
         // Reset cancels an in-flight read and releases all chip selects.
         @(negedge clk);
@@ -174,9 +175,9 @@ module tb_qspi_ctrl #(
         if (!flash_cs || !ram_a_cs || !ram_b_cs || sck || read_data_val || req_rdy)
             $fatal(1, "Bad reset state");
         rst_n = 1;
-        access(0, 25'h1800000, 16'habcd);
-        if (flash.program_ops != 3) $fatal(1, "Unexpected Flash programs");
-        $display("PASS qspi_ctrl: banks, endian, reads/writes, Flash WEL/WIP, alignment, reset");
+        access(0, 25'h1800000, 8'hcd);
+        if (flash.program_ops != 4) $fatal(1, "Unexpected Flash programs");
+        $display("PASS qspi_ctrl: banks, endian, reads/writes, Flash WEL/WIP, odd/even byte addresses, reset");
         $finish;
     end
     initial begin

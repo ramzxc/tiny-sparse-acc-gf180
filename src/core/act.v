@@ -87,15 +87,12 @@ module act (
         end
     endfunction
 
-    reg second_lane;
-    reg [`DATA_WIDTH-1:0] saved_input;
-    reg [2:0] saved_op;
-    wire [`DATA_WIDTH-1:0] x = second_lane ? saved_input : vpu_res_in[0 +: `DATA_WIDTH];
-    wire [2:0] operation = second_lane ? saved_op : act_op_in;
+    wire [`DATA_WIDTH-1:0] x = vpu_res_in;
+    wire [2:0] operation = act_op_in;
     reg [`DATA_WIDTH-1:0] result;
 
-    // One activation datapath; result registers still hold both lanes.
-    always @(*) begin
+    // One activation datapath and one held result.
+    always_comb begin
         case (operation)
             `ACT_RELU: result = fp8_is_nan(x[6:0]) ? FP8_QNAN : x[7] ? FP8_ZERO : x;
             `ACT_SIGMOID: result = fp8_sigmoid(x);
@@ -108,30 +105,19 @@ module act (
 
     always @(posedge clk) begin
         if (!rst_n) begin
-            second_lane <= 0;
-            saved_input <= 0;
-            saved_op <= 0;
             act_res_out <= 0;
             act_res_out_val <= 0;
         end else begin
-            act_res_out_val <= 0;
-            if (second_lane) begin
-                act_res_out[`DATA_WIDTH +: `DATA_WIDTH] <= result;
-                act_res_out_val <= 1;
-                second_lane <= 0;
-            end else if (vpu_res_in_val) begin
-                act_res_out[0 +: `DATA_WIDTH] <= result;
-                saved_input <= vpu_res_in[`DATA_WIDTH +: `DATA_WIDTH];
-                saved_op <= act_op_in;
-                second_lane <= 1;
-            end
+            act_res_out_val <= vpu_res_in_val;
+            if (vpu_res_in_val)
+                act_res_out <= result;
         end
     end
 
 `ifndef SYNTHESIS
     initial begin
-        if (`DATA_WIDTH != 8 || `COMPUTE_WIDTH != 2)
-            $fatal(1, "Serial activation requires two FP8 lanes");
+        if (`DATA_WIDTH != 8 || `COMPUTE_WIDTH != 1)
+            $fatal(1, "Activation requires one FP8 lane");
     end
 `endif
 endmodule

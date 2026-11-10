@@ -9,7 +9,7 @@ module tb_uart_matvec;
     wire tx,done,error;
     wire mem_itf_rdy,read_en,write_en,copy_en,read_data_val;
     wire [24:0] src_addr,dst_addr;
-    wire [15:0] read_data,write_data;
+    wire [7:0] read_data,write_data;
     wire [63:0] rx_inst,host_inst;
     wire rx_inst_val,host_inst_val,fifo_rdy,host_rdy;
     uart_rx receiver (.clk(clk),.rst_n(rst_n),.rx(rx),.inst(rx_inst),.inst_val(rx_inst_val));
@@ -19,7 +19,7 @@ module tb_uart_matvec;
     micro_core_fixture core (.*);
     wire qspi_req_val,qspi_req_rdy,qspi_req_write,qspi_read_data_val;
     wire [24:0] qspi_req_addr;
-    wire [15:0] qspi_req_data,qspi_read_data;
+    wire [7:0] qspi_req_data,qspi_read_data;
     mem_itf itf (.clk(clk),.rst_n(rst_n),.rdy(mem_itf_rdy),
         .read_en(read_en),.write_en(write_en),.copy_en(copy_en),
         .src_addr(src_addr),.dst_addr(dst_addr),.write_data(write_data),
@@ -100,8 +100,8 @@ module tb_uart_matvec;
         if(failed!=1 || completed!=0 || starts!=0) $fatal(1,"Invalid shape rejection");
         for(integer i=0;i<12;i++) ram_a.mem[32+i]=8'h38;
         ram_a.mem[33]=8'h40;ram_a.mem[34]=8'h44;ram_a.mem[35]=8'h48;
-        ram_b.mem[128]=8'h40;ram_b.mem[129]=0;ram_b.mem[130]=8'h38;ram_b.mem[131]=0;
-        ram_b.mem[132]=8'h38;ram_b.mem[133]=8'h38;ram_b.mem[134]=0;ram_b.mem[135]=0;
+        ram_b.mem[128]=8'h40;ram_b.mem[129]=0;ram_b.mem[130]=8'h38;ram_b.mem[131]=8'h38;
+        ram_b.mem[132]=8'h38;ram_b.mem[133]=0;ram_b.mem[134]=0;ram_b.mem[135]=0;
         allow_qspi=0;
         send_word({1'b0,1'b1,2'd0,8'd4,8'd3,8'd1,12'd32,12'd128,12'd256});
         if(starts!=1) $fatal(1,"Job start");

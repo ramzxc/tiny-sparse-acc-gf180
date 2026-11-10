@@ -4,9 +4,9 @@ module tb_act;
     reg clk=0;
     always #5 clk=!clk;
     reg rst_n=0, vpu_res_in_val=0;
-    reg [15:0] vpu_res_in=0;
+    reg [7:0] vpu_res_in=0;
     reg [2:0] act_op_in=0;
-    wire [15:0] act_res_out;
+    wire [7:0] act_res_out;
     wire act_res_out_val;
     act dut (.*);
     // Independent exact-rational oracle vectors from acc/sim/fp8/reference.py.
@@ -21,7 +21,7 @@ module tb_act;
             4: expected=((x & 127)==127) ? 8'h7f : (!(x & 128) && (x & 127)!=0) ? 8'h38 : 0;
         endcase
     endfunction
-    reg [15:0] held;
+    reg [7:0] held;
     initial begin
         $readmemh("test/vectors/fp8_unary.hex",vectors);
         repeat (2) @(negedge clk);
@@ -30,19 +30,16 @@ module tb_act;
         for(integer op=0;op<5;op++) begin
             for(integer x=0;x<256;x++) begin
                 act_op_in=3'(op);
-                vpu_res_in={8'(255-x),8'(x)};
+                vpu_res_in=8'(x);
                 vpu_res_in_val=1;
                 @(negedge clk);
-                if (act_res_out_val) $fatal(1,"Early activation valid");
-                vpu_res_in_val=0; vpu_res_in=0; act_op_in=0;
-                @(negedge clk);
-                if (!act_res_out_val || act_res_out !== {expected(op,255-x),expected(op,x)})
+                if (!act_res_out_val || act_res_out !== expected(op,x))
                     $fatal(1,"Activation mismatch op=%0d x=%h got=%h",op,x,act_res_out);
             end
         end
         held=act_res_out;
         vpu_res_in_val=0;
-        vpu_res_in=16'hffff;
+        vpu_res_in=8'hff;
         repeat(3) begin
             @(negedge clk);
             if(act_res_out_val || act_res_out !== held) $fatal(1,"Hold/valid");
@@ -50,24 +47,18 @@ module tb_act;
         rst_n=0; vpu_res_in_val=1;
         @(negedge clk);
         if(act_res_out_val || act_res_out !== 0) $fatal(1,"Reset priority");
-        rst_n=1; act_op_in=0; vpu_res_in=16'hb838;
+        rst_n=1; act_op_in=0; vpu_res_in=8'h38;
         @(negedge clk);
-        if(act_res_out_val) $fatal(1,"Early recovery valid");
-        vpu_res_in_val=0;
-        @(negedge clk);
-        if(!act_res_out_val || act_res_out !== 16'hb838) $fatal(1,"Recovery");
-        // Reset between lane 0 and lane 1 must cancel the pending pair.
-        vpu_res_in_val=1;
-        @(negedge clk);
+        if(!act_res_out_val || act_res_out !== 8'h38) $fatal(1,"Recovery");
         rst_n=0; vpu_res_in_val=0;
         @(negedge clk);
-        if(act_res_out_val || act_res_out !== 0) $fatal(1,"Mid-pair reset");
+        if(act_res_out_val || act_res_out !== 0) $fatal(1,"Reset");
         rst_n=1;
         repeat(2) begin
             @(negedge clk);
             if(act_res_out_val) $fatal(1,"Stale result after reset");
         end
-        $display("PASS act: all 256 FP8 inputs x 5 modes x 2 lanes, two-cycle results, saved operands, hold, reset");
+        $display("PASS act: all 256 FP8 inputs x 5 modes, one-cycle results, hold, reset");
         $finish;
     end
 endmodule

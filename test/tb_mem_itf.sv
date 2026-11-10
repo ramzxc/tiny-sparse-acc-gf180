@@ -28,10 +28,10 @@ module tb_mem_itf;
     uart_tx transmitter (.clk(clk), .rst_n(rst_n), .inst_fifo_rdy(use_uart && fifo_rdy), .tx(tx));
     uart_rx #(.WORD_WIDTH(32)) receiver (.clk(clk), .rst_n(rst_n), .rx(rx), .inst(uart_inst), .inst_val(uart_inst_val));
     wire rdy, read_data_val;
-    wire [15:0] read_data;
+    wire [7:0] read_data;
     wire qspi_req_val, qspi_req_rdy, qspi_req_write, qspi_read_data_val;
     wire [24:0] qspi_req_addr;
-    wire [15:0] qspi_req_data, qspi_read_data;
+    wire [7:0] qspi_req_data, qspi_read_data;
     reg allow_qspi = 1;
     wire ctrl_ready;
     wire sck, flash_cs, ram_a_cs, ram_b_cs;
@@ -62,7 +62,7 @@ module tb_mem_itf;
         .read_en(read_en), .write_en(write_en), .copy_en(copy_en),
         .src_addr(core_src_addr),
         .dst_addr(core_dst_addr),
-        .write_data(change_inputs ? 16'hdead : core_inst[15:0]),
+        .write_data(change_inputs ? 8'had : core_inst[7:0]),
         .read_data(read_data), .read_data_val(read_data_val),
         .qspi_req_val(qspi_req_val), .qspi_req_rdy(qspi_req_rdy),
         .qspi_req_write(qspi_req_write), .qspi_req_addr(qspi_req_addr), .qspi_req_data(qspi_req_data),
@@ -89,7 +89,7 @@ module tb_mem_itf;
 
     integer accepts = 0, completions = 0;
     reg stalled = 0;
-    reg [41:0] held_request;
+    reg [33:0] held_request;
     always @(posedge clk) begin
         if (!rst_n) begin
             stalled <= 0;
@@ -119,7 +119,7 @@ module tb_mem_itf;
         end
     endtask
 
-    task automatic execute(input [6:0] op, input [24:0] payload, input [15:0] expected);
+    task automatic execute(input [6:0] op, input [24:0] payload, input [7:0] expected);
         integer start_accepts, start_completions, timeout_count;
         begin
             @(negedge clk);
@@ -155,7 +155,7 @@ module tb_mem_itf;
 
     integer uart_words = 0;
     reg [31:0] last_uart_word;
-    reg [15:0] last_core_read;
+    reg [7:0] last_core_read;
     integer uart_read_count = 0;
     always @(posedge clk) if (rst_n && use_uart) begin
         if (uart_inst_val) begin
@@ -164,7 +164,7 @@ module tb_mem_itf;
             last_uart_word = uart_inst;
         end
         if (read_data_val) begin
-            if (read_data !== 16'habc1) $fatal(1, "UART memory readback mismatch");
+            if (read_data !== 8'hc1) $fatal(1, "UART memory readback mismatch");
             last_core_read = read_data;
             uart_read_count = uart_read_count + 1;
         end
@@ -234,16 +234,16 @@ module tb_mem_itf;
         set_address(`MEM_SET_DST, `PSRAM_A_BASE_ADDR + 25'h20);
         execute(`MEM_COPY, 0, 0);
         set_address(`MEM_SET_SRC, `PSRAM_A_BASE_ADDR + 25'h20);
-        execute(`MEM_READ, 0, 16'hb35a);
-        execute(`MEM_READ, 0, 16'hb35a); // Source persists, no auto increment.
+        execute(`MEM_READ, 0, 8'h5a);
+        execute(`MEM_READ, 0, 8'h5a); // Source persists, no auto increment.
         set_address(`MEM_SET_DST, `PSRAM_B_BASE_ADDR + 25'h40);
         execute(`MEM_COPY, 0, 0);
         set_address(`MEM_SET_SRC, `PSRAM_B_BASE_ADDR + 25'h40);
-        execute(`MEM_READ, 0, 16'hb35a);
+        execute(`MEM_READ, 0, 8'h5a);
         set_address(`MEM_SET_DST, `FLASH_BASE_ADDR + 25'h100);
         execute(`MEM_COPY, 0, 0);
         set_address(`MEM_SET_SRC, `FLASH_BASE_ADDR + 25'h100);
-        execute(`MEM_READ, 0, 16'hb35a);
+        execute(`MEM_READ, 0, 8'h5a);
 
         set_address(`MEM_SET_DST, `PSRAM_A_BASE_ADDR + 25'h20);
         execute(`MEM_WRITE, 25'h01fe, 0);
@@ -252,11 +252,11 @@ module tb_mem_itf;
         set_address(`MEM_SET_DST, `PSRAM_A_BASE_ADDR + 25'h22);
         execute(`MEM_COPY, 0, 0);
         set_address(`MEM_SET_SRC, `PSRAM_A_BASE_ADDR + 25'h22);
-        execute(`MEM_READ, 0, 16'h02fd);
+        execute(`MEM_READ, 0, 8'hfd);
 
         allow_qspi = 0;
         fork
-            execute(`MEM_READ, 0, 16'h02fd);
+            execute(`MEM_READ, 0, 8'hfd);
             begin
                 repeat (15) @(negedge clk);
                 allow_qspi = 1;
@@ -271,11 +271,11 @@ module tb_mem_itf;
         request_word = {`MEM_SET_SRC, (`PSRAM_B_BASE_ADDR + 25'h40)};
         wait (rdy);
         @(negedge clk);
-        if (!read_data_val || read_data !== 16'h02fd) $fatal(1, "Pending SET changed active read");
+        if (!read_data_val || read_data !== 8'hfd) $fatal(1, "Pending SET changed active read");
         @(negedge clk); // SET accepted on intervening rising edge.
         req_val = 0;
         if (!rdy) $fatal(1, "SET should complete immediately");
-        execute(`MEM_READ, 0, 16'hb35a);
+        execute(`MEM_READ, 0, 8'h5a);
 
         // Joint reset cancels an unsent request and clears both saved addresses.
         allow_qspi = 0;
@@ -292,7 +292,7 @@ module tb_mem_itf;
         rst_n = 1;
         allow_qspi = 1;
         set_address(`MEM_SET_SRC, `PSRAM_B_BASE_ADDR + 25'h40);
-        execute(`MEM_READ, 0, 16'hb35a);
+        execute(`MEM_READ, 0, 8'h5a);
 
         // Four bytes per instruction, feeding the same 7+25-bit interface.
         use_uart = 1;
@@ -324,7 +324,7 @@ module tb_mem_itf;
         uart_command(`MEM_SET_SRC, `FLASH_BASE_ADDR + 25'h120);
         uart_command(`MEM_READ, 0);
         repeat (1000) @(negedge clk);
-        if (uart_words != 12 || delivered != 12 || uart_read_count != 3 || last_core_read !== 16'habc1)
+        if (uart_words != 12 || delivered != 12 || uart_read_count != 3 || last_core_read !== 8'hc1)
             $fatal(1, "UART -> FIFO -> mem_itf -> QSPI integration");
         $display("PASS mem_itf: direct ports plus UART -> FIFO -> fake core -> QSPI; core/memory stalls, PSRAM A/B and Flash copy/readback");
         $finish;

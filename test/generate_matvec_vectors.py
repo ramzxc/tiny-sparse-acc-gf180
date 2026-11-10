@@ -61,7 +61,7 @@ if __name__ == '__main__':
     rng = random.Random(8321)
     cases = []
     def add(rows, cols, vectors, activation, zero=False):
-        stride = (rows+1)//2*2
+        stride = rows
         w = [rng.choice([0x00,0x80,0x38,0xb8,0x40,0xc0,0x30,0x01,0x7e,0xfe])
              if row < rows else 0 for col in range(cols) for row in range(stride)]
         x = [[rng.choice([0,0x80]) if zero else rng.choice([0,0x80,0,0x38,0xb8,0x40,0x28,0x01])
@@ -77,7 +77,7 @@ if __name__ == '__main__':
     with open(sys.argv[1], 'w') as f:
         f.write(f'{len(cases)}\n')
         for rows,cols,vectors,act,sparse,w,x in cases:
-            stride = (rows+1)//2*2
+            stride = rows
             result = []
             for vector in x:
                 accum = [0]*stride
@@ -90,6 +90,6 @@ if __name__ == '__main__':
                 result.extend(accum)
             nnz = sum((v&127)!=0 for vector in x for v in vector)
             f.write(f'{rows} {cols} {vectors} {act} {sparse} {nnz}\n')
-            x_storage = [v for vector in x for v in vector+([0] if cols%2 else [])]
+            x_storage = [v for vector in x for v in vector]
             for data in (w,x_storage,result):
                 f.write(' '.join(f'{v:02x}' for v in data)+'\n')

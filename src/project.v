@@ -34,7 +34,7 @@ module tt_um_tiny_sparse_acc_ramzxc (
     wire tx, done, error;
     wire mem_itf_rdy,read_en,write_en,copy_en,read_data_val;
     wire [24:0] src_addr,dst_addr;
-    wire [15:0] read_data,write_data;
+    wire [`DATA_WIDTH-1:0] read_data,write_data;
 `ifdef TT_DIRECT_UCODE
     localparam HOST_WIDTH = `INST_WIDTH;
 `else
@@ -82,7 +82,7 @@ module tt_um_tiny_sparse_acc_ramzxc (
         .inst_in_val(host_inst_val), .inst_in_rdy(host_rdy),
         .done(done), .error(error),
         .inst_out(inst), .inst_out_val(inst_val), .inst_out_rdy(core_rdy),
-        .input_is_zero(input_data[6:0] == 0 && input_data[14:8] == 0), .input_data_val(input_data_val)
+        .input_is_zero(input_data[6:0] == 0), .input_data_val(input_data_val)
     );
 
 `endif
@@ -117,7 +117,7 @@ module tt_um_tiny_sparse_acc_ramzxc (
     );
     wire qspi_req_val,qspi_req_rdy,qspi_req_write,qspi_read_data_val;
     wire [24:0] qspi_req_addr;
-    wire [15:0] qspi_req_data,qspi_read_data;
+    wire [`DATA_WIDTH-1:0] qspi_req_data,qspi_read_data;
     mem_itf itf (.clk(clk),.rst_n(internal_rst_n),.rdy(mem_itf_rdy),
         .read_en(read_en),.write_en(write_en),.copy_en(copy_en),
         .src_addr(src_addr),.dst_addr(dst_addr),.write_data(write_data),

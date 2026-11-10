@@ -23,34 +23,39 @@ For example PSRAM A address 0x1000020 in SRC is encoded as words 0x8020, 0xC800
 
 The host supplies address setup, transfers, execution and EXE_SYNC/MEM_SYNC.
 Done/error outputs are tied low because this mode has no high-level job boundary.
-VPU, activation and PSRAM operations are retained. The two VPU lanes share one
-FP8 multiplier and one FP8 adder. Compute takes two edges: lane 0 first, then
-lane 1 with a single result-valid pulse. Operand registers may be updated in
-flight; lane 1 uses a saved operand pair. VPU CLEAR/PASS/ACTIVATE remain one-edge
-operations. Only MUL supports accumulation; ADD/SUB/RSUB ignore the accumulate
-bit. Products are rounded before accumulation (not fused FMA).
+VPU, activation and PSRAM operations use one FP8 element per request.
+The single VPU lane has one FP8 multiplier and one FP8 adder; each instruction
+produces its result on the accepting clock edge. Simultaneous operand updates
+use the previous operand values for that instruction. Only MUL supports
+accumulation; ADD/SUB/RSUB ignore the accumulate bit. Products are rounded
+before accumulation (not fused FMA).
 The FP8 datapath shares add/subtract logic, normalizes with a leading-zero count,
 and rounds products using retained/guard/sticky bits.
 `bash test/run_fp8_math.sh` exhaustively checks both binary operations and product
 packing against an exact-rational reference.
 
-Activation also shares one datapath across two lanes (two edges per pair).
+Activation has one datapath and registers one result per accepting edge.
 The hard-sigmoid lookup reproduces all 256 FP8 inputs exactly using combinational
 logic, not SRAM. The top holds exe_rdy low until activation completes.
 Memory addresses are stored only in mem_ctrl and held until transfer completion.
+mem_ctrl states directly identify read/write/copy dispatch and read/other
+completion waits, without a separate saved command. Address-half writes use
+shared reset-masked data. Request and completion timing remain unchanged.
 mem_itf captures direct write data and COPY readback but uses SRC/DST directly.
 QSPI also borrows this held address: req_addr must remain stable from request
 acceptance through read_data_val, including Flash status polling and retries.
 It selects address bits/nibbles using the existing counter instead of a 24-bit
-address shift register. Commands are selected similarly, without an 8-bit
+address shift register. Flash and PSRAM share the address nibble selector;
+Flash selects one bit from that nibble while PSRAM outputs all four bits.
+Commands are selected similarly, without an 8-bit
 command shift register. req_write and req_data are still captured on acceptance.
 Simulation checks enforce the address-hold contract. VPU is unchanged by this
 QSPI optimization.
-QSPI exposes its byte-swapped data shift register as the read result, valid from
+QSPI exposes its 8-bit data shift register as the read result, valid from
 read completion until the next transaction is accepted. mem_itf forwards that
 result on read_data_val; consumers must not use it as persistent storage during
-later transfers. Request acceptance/completion cycles and bus protocols remain
-unchanged.
+later transfers. Each memory payload now occupies two QSPI clocks (one byte);
+command, address, dummy and Flash status-poll protocols are unchanged.
 
 The instruction FIFO has one waiting slot. UART RX assembles the two-byte
 words by shifting; UART TX generates the unchanged READY=0x01 frame directly.
@@ -68,7 +73,7 @@ external-memory timing signoff. GF180_STD_DB overrides the local library path.
 
 ## How it works
 
-Two-lane FP8 E4M3FN accelerator with external QSPI PSRAM and 64-bit UART jobs.
+Single-lane FP8 E4M3FN accelerator with external QSPI PSRAM and 64-bit UART jobs.
 No on-chip SRAM macros are instantiated. Products, accumulation, activation
 results and stored elements use FP8. The core clock is 10 MHz and QSPI SCK is
 5 MHz. UART is 8N1, approximately 115200 baud (87 clocks per bit).
@@ -92,13 +97,13 @@ Matrix jobs compute C[M,N] = activation(A[M,K] * B[K,N]). Bit 63 is zero;
 bit 62 enables B-zero skipping; bits 61:60 select activation; bits 59:52,
 51:44 and 43:36 encode M, K and N (1..255). Bits 35:24, 23:12 and 11:0
 are A, B and C byte offsets from the bases in src/defs/micro_defs.vh.
-Storage is column-major with each column padded to an even byte count.
+Storage is packed column-major, one byte per element, with no padding.
 
 Vector jobs set bit 63. Bit 62 enables sparse multiplication; bits 61:60
 are zero; bits 59:52 encode length; bits 51:50 select ADD, SUB (A-B), MUL
 or PASS(B). Bits 49:47 select activation and bits 46:36 are zero.
 Offsets occupy the same low 36 bits, all relative to PSRAM B.
-Output storage must not overlap inputs. Odd lengths require padding storage.
+Output storage must not overlap inputs. Odd lengths and odd byte addresses are supported.
 
 Activation codes are 0 NONE, 1 ReLU, 2 hard sigmoid, 3 hard tanh and 4 STEP.
 Matrix jobs can apply STEP with a following vector PASS job.
@@ -122,3 +127,12 @@ after RTL changes; CI checks that it matches the source.
 QSPI Flash plus two PSRAM chips on a compatible Pmod. The current Flash controller
 assumes the board has prepared the required Flash configuration; see qspi_ctrl.v.
 This is a development checkpoint, not a complete standalone inference system.
+
+## Single-lane area experiment
+
+At 10 MHz with the same GF180 DC flow, total cell area decreased from
+45,157.46 to 35,142.96 um² (10,014.50 um² / 22.2%). This exceeds the
+1,000 um² retention threshold. QSPI reads/writes and COPY now transfer one
+byte, and host software must issue one operation per element rather than
+per pair. UART instructions remain 16 bits. FP8 arithmetic is unchanged.
+This is synthesis area, not a completed placement/routing result.
