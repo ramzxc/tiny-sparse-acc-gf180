@@ -29,19 +29,21 @@ async def receive_reply(dut):
     return await receive_byte(dut), await receive_byte(dut)
 
 @cocotb.test()
-async def uart_status(dut):
+async def uart_ready(dut):
     cocotb.start_soon(Clock(dut.clk, 100, unit="ns").start())
     dut.ena.value = 1
     dut.ui_in.value = 8
     dut.uio_in.value = 0
     dut.rst_n.value = 0
     await ClockCycles(dut.clk, 10)
+    receiver = cocotb.start_soon(receive_byte(dut))
     dut.rst_n.value = 1
-    await ClockCycles(dut.clk, 10)
-    assert int(dut.uo_out.value) & 0x10, "UART TX must idle high"
-    assert int(dut.uio_out.value) & 0xc0 == 0xc0, "PSRAM must be deselected"
-    receiver = cocotb.start_soon(receive_reply(dut))
-    await send_byte(dut, 0x05)
-    code, status = await with_timeout(receiver, 300, "us")
-    assert code == 0x06, f"Unexpected reply: {code:02x}"
-    assert not status & 0x10, f"Unexpected protocol/Flash error: {status:02x}"
+    assert await with_timeout(receiver, 300, "us") == 1
+    assert int(dut.uio_out.value) & 0xc1 == 0xc1
+    # Zero dimensions are rejected without touching external memory.
+    receiver = cocotb.start_soon(receive_byte(dut))
+    for _ in range(8):
+        await send_byte(dut, 0)
+    assert await with_timeout(receiver, 300, "us") == 1
+    assert int(dut.uo_out.value) & 4, "Malformed job must set error"
+    assert int(dut.uio_out.value) & 0xc1 == 0xc1

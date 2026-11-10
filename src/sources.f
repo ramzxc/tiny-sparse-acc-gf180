@@ -1,0 +1,11 @@
+project.v
+uart/uart_rx.v
+uart/uart_tx.v
+core/inst_fifo.v
+core/micro_ctrl.v
+core/decoder.v
+core/mem_ctrl.v
+core/vpu.v
+core/act.v
+mem_itf.v
+qspi_ctrl.v

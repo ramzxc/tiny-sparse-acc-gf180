@@ -60,6 +60,9 @@ jobs:
           # make will return success even if the tests fail, so check results.xml for failed tests
           python -m cocotb_tools.check_results results.xml
 
+      - name: Install Icarus Verilog
+        run: sudo apt-get update && sudo apt-get install -y iverilog
+
       - name: Run UART and QSPI integration test
         run: bash test/check_import.sh
 

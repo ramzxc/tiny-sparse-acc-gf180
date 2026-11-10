@@ -16,7 +16,6 @@ project:
   # List your project's source files here.
   # Source files must be in ./src and you must list each source file separately, one per line.
   # Don't forget to also update `PROJECT_SOURCES` in test/Makefile.
-  # Original SystemVerilog remains in src/*.sv; regenerate with scripts/generate_verilog.py.
   source_files:
     - "generated/design.v"
 
@@ -34,24 +33,24 @@ pinout:
   ui[7]: ""
 
   # Outputs
-  uo[0]: "Host ready"
-  uo[1]: "TPU available"
-  uo[2]: "Flash busy"
-  uo[3]: "Synchronize seen"
-  uo[4]: "UART TX"
-  uo[5]: "Flash error bit 0"
-  uo[6]: "Flash error bit 1"
-  uo[7]: "Flash error bit 2"
+  uo[0]: "Job ready"
+  uo[1]: "Job done"
+  uo[2]: "Job error"
+  uo[3]: ""
+  uo[4]: "UART TX (READY)"
+  uo[5]: ""
+  uo[6]: ""
+  uo[7]: ""
 
   # Bidirectional pins
   uio[0]: "Flash CS_n"
-  uio[1]: "Flash IO0"
-  uio[2]: "Flash IO1"
-  uio[3]: "Flash SCK"
-  uio[4]: "Flash IO2"
-  uio[5]: "Flash IO3"
-  uio[6]: "PSRAM CS_n 0"
-  uio[7]: "PSRAM CS_n 1 (high)"
+  uio[1]: "QSPI DQ0"
+  uio[2]: "QSPI DQ1"
+  uio[3]: "QSPI SCK"
+  uio[4]: "QSPI DQ2"
+  uio[5]: "QSPI DQ3"
+  uio[6]: "PSRAM A CS_n"
+  uio[7]: "PSRAM B CS_n"
 
 # Do not change!
 yaml_version: 6

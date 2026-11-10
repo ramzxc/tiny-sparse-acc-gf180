@@ -10,7 +10,7 @@ endif
 FST ?= -fst # Use more efficient FST format
 TOPLEVEL_LANG ?= verilog
 SRC_DIR = $(CURDIR)/../src
-PROJECT_SOURCES = tpu_pkg.sv inst_fifo.sv dma.sv weight_buffer.sv weight_load_ctrl.sv sparsity_ctrl.sv unified_buffer.sv accumulation_buffer.sv activation.sv activation_ctrl.sv vpu.sv vpu_ctrl.sv inst_decoder.sv tpu_core.sv tpu.sv psram_buffer_ctrl.sv psram_ctrl.sv qspi_memory_bus.sv qspi_flash_phy.sv qspi_flash_adapter.sv uart_byte.sv tt_um_tiny_sparse_acc_ramzxc.sv
+PROJECT_SOURCES = $(shell cat $(SRC_DIR)/sources.f)
 
 
 ifneq ($(GATES),yes)
@@ -39,7 +39,7 @@ VERILOG_SOURCES += $(CURDIR)/gate_level_netlist.v
 endif
 
 # Allow sharing configuration between design and testbench via `include`:
-COMPILE_ARGS 		+= -I$(SRC_DIR)
+COMPILE_ARGS 		+= -I$(SRC_DIR) -I$(SRC_DIR)/core
 
 # Include the testbench sources:
 VERILOG_SOURCES += $(CURDIR)/tb.v

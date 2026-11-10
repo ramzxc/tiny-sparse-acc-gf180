@@ -1,43 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 cd "$(dirname "$0")/.."
-mkdir -p test/output test/sim_build/import
-python3 - <<'PYCODE'
-from pathlib import Path
-import json, subprocess
-files = ['src/' + Path(f).name for f in json.loads(Path('test/rtl_import_sha256.json').read_text())]
-models = ['test/qspi_psram_model.sv']
-command = ['verilator', '--lint-only', '--timing', '-Wno-fatal', '--top-module',
-           'tb_tt_um_tiny_sparse_acc_ramzxc', *files, *models,
-           'test/qspi_nor_model.sv', 'test/tb_tt_um_tiny_sparse_acc_ramzxc.sv']
-result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
-Path('test/output/import_lint.log').write_text(result.stdout)
-print(result.stdout)
-if result.returncode:
-    raise SystemExit(result.returncode)
-command = ['verilator', '--binary', '--timing', '--assert', '-Wno-fatal', '-j', '2',
-           '--top-module', 'tb_tt_um_tiny_sparse_acc_ramzxc',
-           '--Mdir', 'test/sim_build/import', '-o', 'sim_import',
-           *files, *models, 'test/qspi_nor_model.sv',
-           'test/tb_tt_um_tiny_sparse_acc_ramzxc.sv']
-with Path('test/output/import_build.log').open('w') as log:
-    subprocess.run(command, stdout=log, stderr=subprocess.STDOUT, check=True)
-result = subprocess.run(['test/sim_build/import/sim_import'],
-                        stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
-                        timeout=120)
-Path('test/output/import_sim.log').write_text(result.stdout)
-print(result.stdout)
-if result.returncode or 'TT WRAPPER PASS' not in result.stdout:
-    raise SystemExit('UART/QSPI integration test failed')
-command = ['verilator', '--binary', '--timing', '--assert', '-Wno-fatal', '-j', '2',
-           '--top-module', 'tb_psram_bus', '--Mdir', 'test/sim_build/psram',
-           '-o', 'sim_psram', *files, *models, 'test/tb_psram_bus.sv']
-with Path('test/output/psram_build.log').open('w') as log:
-    subprocess.run(command, stdout=log, stderr=subprocess.STDOUT, check=True)
-result = subprocess.run(['test/sim_build/psram/sim_psram'], capture_output=True,
-                        text=True, timeout=30)
-Path('test/output/psram_sim.log').write_text(result.stdout + result.stderr)
-print(result.stdout)
-if result.returncode or 'PSRAM BUS PASS' not in result.stdout:
-    raise SystemExit('PSRAM bus test failed')
-PYCODE
+for test in inst_fifo decoder act mem_ctrl micro_ctrl uart_matvec; do
+    bash "test/run_${test}.sh"
+done
+build_dir=$(mktemp -d /tmp/tt-checkpoint.XXXXXX)
+trap 'rm -rf "$build_dir"' EXIT
+iverilog -g2012 -I src -s tb_tt_checkpoint -o "$build_dir/top" \
+    src/generated/design.v test/qspi_psram_model.sv test/qspi_nor_model.sv test/tb_tt_checkpoint.sv
+vvp "$build_dir/top"

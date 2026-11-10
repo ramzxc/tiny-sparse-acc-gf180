@@ -65,13 +65,92 @@ module tb_tt_um_tiny_sparse_acc_ramzxc;
         d='0; d.opcode=op; d.dram_addr=32'(flash_addr); d.sram_addr=16'(local_addr); d.length=8'(rows);
         return inst_type'(d);
     endfunction
+    function automatic inst_type acc_transfer(input logic [7:0] op, input logic [23:0] address);
+        acc_transfer_inst_type a;
+        a='0; a.opcode=op; a.psram_addr=address;
+        return inst_type'(a);
+    endfunction
     task automatic sync_wait;
         inst_type word; logic [7:0] status;
         word='0; word.opcode=OPCODE_SYNCHRONIZE; send_inst(word);
         do begin command(8'h05,8'h06,status); if(status[4]) $fatal(1,"status error"); end while(!status[3]);
     endtask
+    function automatic logic [7:0] small_fp8(input int value);
+        case(value)
+            0: return 8'h00; 1: return 8'h38; 2: return 8'h40;
+            3: return 8'h44; 4: return 8'h48; 5: return 8'h4a;
+            6: return 8'h4c; 7: return 8'h4e; 8: return 8'h50;
+            default: $fatal(1,"Unsupported test integer");
+        endcase
+    endfunction
+
+    // Independent encoding for the small positive integer reference results.
+    function automatic logic [15:0] integer_fp16(input int value);
+        int msb;
+        if(value==0) return 0;
+        msb=0;
+        for(int b=0;b<10;b++) if(value >= (1<<b)) msb=b;
+        return 16'(((msb+15)<<10) | ((value-(1<<msb))<<(10-msb)));
+    endfunction
+
+    task automatic scalar_step(input int input_row, weight_row, input bit add);
+        input_inst_type ii;
+        weight_inst_type wi;
+        vpu_inst_type vi;
+        ii='0; ii.opcode=OPCODE_INPUT; ii.input_addr=16'(input_row);
+        wi='0; wi.opcode=OPCODE_WEIGHT; wi.weight_addr=24'(weight_row);
+        vi='0; vi.opcode=OPCODE_VPU_SCALAR_MUL | 8'(add); vi.length=1;
+        send_inst(inst_type'(ii));
+        send_inst(inst_type'(wi));
+        send_inst(inst_type'(vi));
+    endtask
+
+    task automatic columnwise_gustavson;
+        int a[4][3];
+        int b[3][2];
+        int reference[4][2];
+        int slot, row0;
+        logic [31:0] expected_pair, actual_pair;
+        a='{'{1,2,0},'{3,0,4},'{0,5,6},'{7,0,8}};
+        b='{'{2,0},'{0,3},'{1,2}};
+        for(int row=0;row<4;row++) for(int col=0;col<2;col++) begin
+            reference[row][col]=0;
+            for(int k=0;k<3;k++) reference[row][col]+=a[row][k]*b[k][col];
+        end
+        for(int tile=0;tile<2;tile++) for(int k=0;k<3;k++) begin
+            flash.mem[512+tile*32+2*k]=small_fp8(a[2*tile][k]);
+            flash.mem[513+tile*32+2*k]=small_fp8(a[2*tile+1][k]);
+        end
+        for(int col=0;col<2;col++) for(int k=0;k<3;k++) begin
+            flash.mem[1024+col*32+2*k]=small_fp8(b[k][col]);
+            flash.mem[1025+col*32+2*k]=0;
+        end
+        flash.mem[1100]=0; flash.mem[1101]=0;
+        send_inst(dma_inst(OPCODE_DRAM_TO_BUFFER,1100,3,1));
+        for(int col=0;col<2;col++) for(int tile=0;tile<2;tile++) begin
+            row0=2*tile; slot=2*col+tile;
+            send_inst(dma_inst(OPCODE_DRAM_TO_WEIGHT,512+tile*32,0,3));
+            send_inst(dma_inst(OPCODE_DRAM_TO_BUFFER,1024+col*32,0,3));
+            scalar_step(3,0,0); // Explicitly initialize the live pair to zero.
+            // Column-wise scatter: each nonzero B[k,col] scales A[:,k].
+            for(int k=0;k<2;k++) if(b[k][col]!=0) scalar_step(k,k,1);
+            send_inst(acc_transfer(OPCODE_ACC_STORE,24'h020000+24'(4*slot)));
+            scalar_step(3,0,0); // Destroy the live partial sum to exercise restore.
+            send_inst(acc_transfer(OPCODE_ACC_LOAD,24'h020000+24'(4*slot)));
+            if(b[2][col]!=0) scalar_step(2,2,1);
+            send_inst(acc_transfer(OPCODE_ACC_STORE,24'h020000+24'(4*slot)));
+            sync_wait();
+            expected_pair={integer_fp16(reference[row0+1][col]),integer_fp16(reference[row0][col])};
+            actual_pair={ram.mem[131075+4*slot],ram.mem[131074+4*slot],ram.mem[131073+4*slot],ram.mem[131072+4*slot]};
+            if(actual_pair !== expected_pair)
+                $fatal(1,"Column-wise Gustavson mismatch col=%0d rows=%0d..%0d got=%h expected=%h",col,row0,row0+1,actual_pair,expected_pair);
+        end
+        $display("COLUMNWISE GUSTAVSON PASS: A(4x3) * B(3x2), two-row tiles, K split 2+1, explicit spill/restore; C=[[2,6],[10,8],[6,27],[22,16]]");
+    endtask
+
     logic [7:0] status;
     int before_count;
+    int before_ram_writes, before_ram_reads;
     inst_type pending_word;
     weight_inst_type weight_word;
     input_inst_type input_word;
@@ -120,6 +199,17 @@ module tb_tt_um_tiny_sparse_acc_ramzxc;
             assert(flash.mem[12544+b] === flash.mem[128+b])
                 else $fatal(1,"PSRAM FP16 restore/save mismatch");
 
+        // Exercise physical Flash page splitting with an unaligned DMA transfer.
+        for (int b=0; b<16; b++) flash.mem[4093+b] = 8'(b*7+11);
+        send_inst(dma_inst(OPCODE_DRAM_TO_ACC,4093,0,4));
+        send_inst(dma_inst(OPCODE_ACC_TO_DRAM,13055,0,4));
+        sync_wait();
+        for (int b=0; b<16; b++)
+            assert(flash.mem[13055+b] === flash.mem[4093+b])
+                else $fatal(1,"Sequential DMA Flash page crossing mismatch");
+        assert(flash.mem[13054] === 8'hff && flash.mem[13071] === 8'hff)
+            else $fatal(1,"Sequential DMA boundary guard corrupted");
+
         // Real WB -> VPU -> accumulator RMW -> activation -> UB -> Flash path.
         flash.mem[64]=8'h38; flash.mem[65]=8'h40; // weights 1, 2
         flash.mem[80]=8'h40; flash.mem[81]=8'h44; // input 2, 3
@@ -129,10 +219,16 @@ module tb_tt_um_tiny_sparse_acc_ramzxc;
         send_inst(inst_type'(input_word));
         weight_word='0; weight_word.opcode=OPCODE_WEIGHT;
         send_inst(inst_type'(weight_word));
+        sync_wait();
+        before_ram_writes=ram.writes; before_ram_reads=ram.reads;
         vpu_word='0; vpu_word.opcode=OPCODE_VPU_VEC_MUL; vpu_word.length=1;
         send_inst(inst_type'(vpu_word));
         vpu_word.opcode=OPCODE_VPU_VEC_MUL | 8'h01;
         send_inst(inst_type'(vpu_word)); // accumulate again: 4, 12
+        sync_wait();
+        assert(ram.writes == before_ram_writes && ram.reads == before_ram_reads+2)
+            else $fatal(1,"VPU accumulation unexpectedly accessed PSRAM (other than UB input reads)");
+        send_inst(acc_transfer(OPCODE_ACC_STORE,24'h020000));
         activate_word='0; activate_word.opcode=OPCODE_ACTIVATE;
         activate_word.length=1; activate_word.buffer_addr=1;
         send_inst(inst_type'(activate_word));
@@ -145,7 +241,21 @@ module tb_tt_um_tiny_sparse_acc_ramzxc;
             else $fatal(1,"PSRAM activation writeback mismatch");
         assert({ram.mem[1],ram.mem[0]} === 16'h4038)
             else $fatal(1,"PSRAM weight region overwritten");
+        // Restore an earlier tile after overwriting the live registers.
+        vpu_word.opcode=OPCODE_VPU_VEC_MUL;
+        send_inst(inst_type'(vpu_word)); // live sums are now 2, 6
+        send_inst(acc_transfer(OPCODE_ACC_LOAD,24'h020000)); // restore 4, 12
+        vpu_word.opcode=OPCODE_VPU_VEC_MUL | 8'h01;
+        send_inst(inst_type'(vpu_word)); // 6, 18
+        send_inst(acc_transfer(OPCODE_ACC_STORE,24'h020004));
+        sync_wait();
+        assert({ram.mem[131079],ram.mem[131078],ram.mem[131077],ram.mem[131076]} === 32'h4c804600)
+            else $fatal(1,"ACC_LOAD / accumulate / ACC_STORE mismatch");
+        assert({ram.mem[131075],ram.mem[131074],ram.mem[131073],ram.mem[131072]} === 32'h4a004400)
+            else $fatal(1,"Earlier tile overwritten without ACC_STORE");
         $display("PSRAM PIPELINE PASS: DMA, weight stationary, FP16 RMW, activation, address isolation; max CS=%0t", ram.max_active);
+
+        columnwise_gustavson();
 
         // Reset a partial UART packet; subsequent packet must start cleanly.
         send_byte(8'h01); send_byte(8'h55);
@@ -157,7 +267,7 @@ module tb_tt_um_tiny_sparse_acc_ramzxc;
         $finish;
     end
     initial begin
-        #100000000;
+        #300000000;
         $display("TIMEOUT accepted=%0d host=%0d flash=%0d bus=%b owner=%b phy=%0d psram=%0d req=%b rsp=%b", accepted, dut.host_state, dut.core.memory_bus.flash_adapter.state, dut.core.memory_bus.active, dut.core.memory_bus.owner, dut.core.memory_bus.phy.state, dut.core.memory_bus.ram_controller.state, dut.core.psram_req_valid, dut.core.psram_rsp_valid);
         $display("flash bytes=%0d beats=%0d phy reads=%0d valid=%b rxready=%b", dut.core.memory_bus.flash_adapter.bytes_left,dut.core.memory_bus.flash_adapter.beats_left,dut.core.memory_bus.phy.reads_left,dut.core.memory_bus.flash_adapter.dma_read_data_valid,dut.core.memory_bus.rx_ready);
         $fatal(1,"wrapper timeout");
