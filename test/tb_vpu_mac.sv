@@ -26,7 +26,7 @@ module tb_vpu_mac;
             parsed=$fscanf(fd,"%h %h %h %h %h",x,w,previous,control,expected);
             if (parsed!=5) begin
                 if (!$feof(fd)) $fatal(1,"Malformed vector");
-                $display("PASS two MAC lanes: %0d exact-FP8 cases, ADD/SUB ignore accumulate, MUL accumulation, signed zero, NaN, saturation, sparse",count);
+                $display("PASS shared MAC: %0d exact-FP8 cases, ADD/SUB ignore accumulate, MUL accumulation, signed zero, NaN, saturation, sparse",count);
                 $finish;
             end
             // Seed the live accumulator using PASS; no extra arithmetic/rounding.
@@ -41,6 +41,13 @@ module tb_vpu_mac;
             input_data_val=0; weight_data_val=0;
             exe_inst_in={`EXE_MODE_COMPUTE,control}; exe_inst_in_val=1;
             @(negedge clk);
+            if (vpu_res_out_val) $fatal(1,"Valid asserted before lane 1 finished");
+            // Command and operand buses may change after acceptance. Lane 1
+            // must use the saved operands, including same-edge updates below.
+            exe_inst_in_val=0; exe_inst_in=0;
+            input_data=~x; weight_data=~w; input_data_val=1; weight_data_val=1;
+            @(negedge clk);
+            input_data_val=0; weight_data_val=0;
             if (!vpu_res_out_val || vpu_res_out!==expected || act_op_out!==control[5:3])
                 $fatal(1,"Case %0d x=%h w=%h old=%h ctrl=%h got=%h expected=%h",count,x,w,previous,control,vpu_res_out,expected);
             exe_inst_in_val=0;

@@ -1,7 +1,7 @@
 `include "../defs/defs.vh"
 
 module inst_fifo # (
-    parameter integer FIFO_DEPTH = 2,
+    parameter integer FIFO_DEPTH = 1,
     parameter integer WORD_WIDTH = `HOST_INST_WIDTH
 ) (
     input clk,

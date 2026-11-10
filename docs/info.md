@@ -1,13 +1,62 @@
 ## Current build variant
 
 The Actions build currently selects `direct` in src/build_mode.txt. UART accepts
-four little-endian bytes per READY credit, carrying the internal 32-bit ISA:
-[31:25] opcode, [24:0] payload (src/defs/inst_defs.vh). micro_ctrl is omitted.
+two little-endian bytes per READY credit, carrying the internal 16-bit ISA.
+Normal instructions use opcode[15:9] (0..63) and payload[8:0].
+Address instructions use command[15:13] (4..7) and fragment[12:0].
+micro_ctrl is omitted. This format is incompatible with the old four-byte stream.
+
+| Address command | [15:13] | Updated bits |
+| --- | --- | --- |
+| SET_SRC_LO | 4 | SRC[12:0] |
+| SET_DST_LO | 5 | DST[12:0] |
+| SET_SRC_HI | 6 | SRC[24:13] from payload[11:0] |
+| SET_DST_HI | 7 | DST[24:13] from payload[11:0] |
+
+SRC/DST remain 25-bit absolute byte addresses, including memory selection.
+Each half preserves the other half; HIGH payload[12] is ignored.
+There is no extra base register or base-plus-offset adder. Set both halves before
+a transfer, or update only the changed half. Address updates wait for mem_rdy.
+EXE_SYNC/MEM_SYNC/NOP opcodes are now 60/61/62; other normal opcodes are unchanged.
+For example PSRAM A address 0x1000020 in SRC is encoded as words 0x8020, 0xC800
+(UART bytes 20 80, then 00 C8, each word requiring its own READY credit).
+
 The host supplies address setup, transfers, execution and EXE_SYNC/MEM_SYNC.
 Done/error outputs are tied low because this mode has no high-level job boundary.
-VPU, activation and PSRAM operations are retained. Each of the two VPU lanes uses one FP8 multiplier and one shared FP8 adder. Only MUL supports accumulation; ADD/SUB/RSUB ignore the accumulate bit. Products are rounded before accumulation (not fused FMA). Sparse weight-fetch skipping
-and matrix loops must be managed by the host. Low-level Flash transfers are also
-reachable through the internal ISA.
+VPU, activation and PSRAM operations are retained. The two VPU lanes share one
+FP8 multiplier and one FP8 adder. Compute takes two edges: lane 0 first, then
+lane 1 with a single result-valid pulse. Operand registers may be updated in
+flight; lane 1 uses a saved operand pair. VPU CLEAR/PASS/ACTIVATE remain one-edge
+operations. Only MUL supports accumulation; ADD/SUB/RSUB ignore the accumulate
+bit. Products are rounded before accumulation (not fused FMA).
+The FP8 datapath shares add/subtract logic, normalizes with a leading-zero count,
+and rounds products using retained/guard/sticky bits.
+`bash test/run_fp8_math.sh` exhaustively checks both binary operations and product
+packing against an exact-rational reference.
+
+Activation also shares one datapath across two lanes (two edges per pair).
+The hard-sigmoid lookup reproduces all 256 FP8 inputs exactly using combinational
+logic, not SRAM. The top holds exe_rdy low until activation completes.
+Memory addresses are stored only in mem_ctrl and held until transfer completion.
+mem_itf captures direct write data and COPY readback but uses SRC/DST directly.
+QSPI also borrows this held address: req_addr must remain stable from request
+acceptance through read_data_val, including Flash status polling and retries.
+It selects address bits/nibbles using the existing counter instead of a 24-bit
+address shift register. Commands are selected similarly, without an 8-bit
+command shift register. req_write and req_data are still captured on acceptance.
+Simulation checks enforce the address-hold contract. VPU is unchanged by this
+QSPI optimization.
+QSPI exposes its byte-swapped data shift register as the read result, valid from
+read completion until the next transaction is accepted. mem_itf forwards that
+result on read_data_val; consumers must not use it as persistent storage during
+later transfers. Request acceptance/completion cycles and bus protocols remain
+unchanged.
+
+The instruction FIFO has one waiting slot. UART RX assembles the two-byte
+words by shifting; UART TX generates the unchanged READY=0x01 frame directly.
+
+Sparse weight-fetch skipping and matrix loops must be managed by the host.
+Low-level Flash transfers remain reachable through the internal ISA.
 
 Set src/build_mode.txt to `micro` and regenerate Verilog to restore the 64-bit
 job interface described below. `bash syn/run_synth.sh micro` and

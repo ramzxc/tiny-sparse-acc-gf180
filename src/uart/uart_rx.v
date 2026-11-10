@@ -16,15 +16,16 @@ module uart_rx # (
     
     localparam integer TIMER_BITS = (CLKS_PER_BIT > 1) ? $clog2(CLKS_PER_BIT) : 1;
     localparam integer HALF_BIT_CLKS = CLKS_PER_BIT / 2;
-    localparam integer INST_IDX_BITS = $clog2(WORD_WIDTH);
+    localparam integer BYTE_COUNT = WORD_WIDTH / `DATA_WIDTH;
+    localparam integer BYTE_IDX_BITS = BYTE_COUNT > 1 ? $clog2(BYTE_COUNT) : 1;
     localparam [TIMER_BITS-1:0] BIT_LAST = TIMER_BITS'(CLKS_PER_BIT - 1);
     localparam [TIMER_BITS-1:0] HALF_BIT_LAST = TIMER_BITS'(HALF_BIT_CLKS - 1);
-    localparam [INST_IDX_BITS-1:0] INST_LAST = INST_IDX_BITS'(WORD_WIDTH - 1);
+    localparam [BYTE_IDX_BITS-1:0] BYTE_LAST = BYTE_IDX_BITS'(BYTE_COUNT - 1);
 
     reg rx_meta;
     reg rx_sync;
 
-    reg [INST_IDX_BITS-1:0] inst_idx;
+    reg [BYTE_IDX_BITS-1:0] byte_idx;
     reg [TIMER_BITS-1:0] clk_cnt;
     reg [$clog2(`DATA_WIDTH+2)-1:0] bit_idx;
 
@@ -42,7 +43,7 @@ module uart_rx # (
             rx_sync <= 0;
             clk_cnt <= 0;
             bit_idx <= 0;
-            inst_idx <= 0;
+            byte_idx <= 0;
             state <= RESET;
         end
         else begin
@@ -55,7 +56,7 @@ module uart_rx # (
                     clk_cnt <= 0;
                     bit_idx <= 0;
                     inst <= 0;
-                    inst_idx <= 0;
+                    byte_idx <= 0;
 
                     if (rx_sync == 1) begin
                         state <= IDLE;
@@ -88,18 +89,19 @@ module uart_rx # (
                             clk_cnt <= 0;
 
                             if (bit_idx <= `DATA_WIDTH) begin
-                                inst[inst_idx] <= rx_sync;
-
-                                if (inst_idx != INST_LAST)
-                                    inst_idx <= inst_idx + 1;
+                                // LSB-first bits and low-byte-first words end up
+                                // in natural order after all WORD_WIDTH shifts.
+                                inst <= {rx_sync, inst[WORD_WIDTH-1:1]};
 
                                 bit_idx <= bit_idx + 1;
                             end
                             else begin
                                 if (rx_sync) begin
-                                    if (inst_idx == INST_LAST) begin
+                                    if (byte_idx == BYTE_LAST) begin
                                         inst_val <= 1;
-                                        inst_idx <= 0;
+                                        byte_idx <= 0;
+                                    end else begin
+                                        byte_idx <= byte_idx + 1'b1;
                                     end
 
                                     state <= IDLE;

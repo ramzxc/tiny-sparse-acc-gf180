@@ -7,7 +7,7 @@ module tb_uart_fifo;
     wire [63:0] inst, inst_out;
     uart_tx transmitter (.clk(clk), .rst_n(rst_n), .inst_fifo_rdy(fifo_rdy), .tx(tx));
     uart_rx receiver (.clk(clk), .rst_n(rst_n), .rx(rx), .inst(inst), .inst_val(inst_val));
-    inst_fifo fifo (.clk(clk), .rst_n(rst_n), .inst(inst), .inst_val(inst_val),
+    inst_fifo #(.FIFO_DEPTH(2)) fifo (.clk(clk), .rst_n(rst_n), .inst(inst), .inst_val(inst_val),
         .fifo_rdy(fifo_rdy), .core_rdy(core_rdy), .inst_out(inst_out), .inst_out_val(inst_out_val));
 
     integer received = 0;

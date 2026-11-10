@@ -79,8 +79,8 @@ module tb_micro_ctrl;
                 else if(qspi_req_addr[24:23]==2'b11) input_reads++;
                 else $fatal(1,"Unexpected Flash access");
             end
-            if(core.exe_inst_val && core.inst[31:25]==`EXECUTE) macs++;
-            if(core.mem_inst_val && core.inst[31:25]==`SRAM_TO_VPU &&
+            if(core.exe_inst_val && core.inst[15:9]==`EXECUTE) macs++;
+            if(core.mem_inst_val && core.inst[15:9]==`SRAM_TO_VPU &&
                 core.inst[`MEM_SCALAR_BIT] && core.exe_active) overlap_loads++;
         end
     end

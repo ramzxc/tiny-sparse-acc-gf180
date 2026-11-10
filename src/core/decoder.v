@@ -23,9 +23,9 @@ module decoder (
     wire [`INST_OP_WIDTH-1:0] opcode =
         inst_in[`INST_WIDTH-1:`INST_PAYLOAD_WIDTH];
 
-    // Memory action encodings 0..5 match the corresponding ISA opcode low bits.
-    // Transfer commands ignore address; SET commands write the named register.
-    assign mem_inst_out = {opcode[2:0], inst_in[`INST_PAYLOAD_WIDTH-1:0]};
+    // Address commands pass through; normal memory commands are repacked.
+    assign mem_inst_out = inst_in[15] ? inst_in :
+        {opcode[2:0], 4'b0, inst_in[8:0]};
     assign exe_inst_out = (opcode == `ACC_CLEAR)
         ? {`EXE_MODE_CLEAR, 7'b0}
         : (opcode == `ACTIVATE)
@@ -39,11 +39,13 @@ module decoder (
         mem_inst_out_val = 0;
         exe_inst_out_val = 0;
 
-        if (rst_n) begin
+        if (rst_n && inst_in[15]) begin
+            core_rdy = mem_rdy;
+            mem_inst_out_val = inst_in_val && mem_rdy;
+        end else if (rst_n) begin
             case (opcode)
                 `FLASH_TO_SRAM, `SRAM_TO_VPU,
-                `ACT_TO_SRAM, `SRAM_TO_FLASH,
-                `SET_SRC, `SET_DST: begin
+                `ACT_TO_SRAM, `SRAM_TO_FLASH: begin
                     core_rdy = mem_rdy;
                     mem_inst_out_val = inst_in_val && mem_rdy;
                 end

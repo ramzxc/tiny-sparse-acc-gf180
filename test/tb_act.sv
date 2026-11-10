@@ -33,6 +33,9 @@ module tb_act;
                 vpu_res_in={8'(255-x),8'(x)};
                 vpu_res_in_val=1;
                 @(negedge clk);
+                if (act_res_out_val) $fatal(1,"Early activation valid");
+                vpu_res_in_val=0; vpu_res_in=0; act_op_in=0;
+                @(negedge clk);
                 if (!act_res_out_val || act_res_out !== {expected(op,255-x),expected(op,x)})
                     $fatal(1,"Activation mismatch op=%0d x=%h got=%h",op,x,act_res_out);
             end
@@ -49,8 +52,22 @@ module tb_act;
         if(act_res_out_val || act_res_out !== 0) $fatal(1,"Reset priority");
         rst_n=1; act_op_in=0; vpu_res_in=16'hb838;
         @(negedge clk);
+        if(act_res_out_val) $fatal(1,"Early recovery valid");
+        vpu_res_in_val=0;
+        @(negedge clk);
         if(!act_res_out_val || act_res_out !== 16'hb838) $fatal(1,"Recovery");
-        $display("PASS act: all 256 FP8 inputs x 5 modes x 2 lanes, consecutive results, hold, reset");
+        // Reset between lane 0 and lane 1 must cancel the pending pair.
+        vpu_res_in_val=1;
+        @(negedge clk);
+        rst_n=0; vpu_res_in_val=0;
+        @(negedge clk);
+        if(act_res_out_val || act_res_out !== 0) $fatal(1,"Mid-pair reset");
+        rst_n=1;
+        repeat(2) begin
+            @(negedge clk);
+            if(act_res_out_val) $fatal(1,"Stale result after reset");
+        end
+        $display("PASS act: all 256 FP8 inputs x 5 modes x 2 lanes, two-cycle results, saved operands, hold, reset");
         $finish;
     end
 endmodule

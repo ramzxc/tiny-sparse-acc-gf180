@@ -69,7 +69,7 @@ module tb_egru_layer;
                 else if(qspi_req_addr[24:23]==2'b11) input_reads++;
                 else $fatal(1,"Unexpected Flash access");
             end
-            if(core.exe_inst_val && core.inst[31:25]==`EXECUTE) macs++;
+            if(core.exe_inst_val && core.inst[15:9]==`EXECUTE) macs++;
         end
     end
     task automatic send_command(input [63:0] word_value);

@@ -43,9 +43,9 @@ async def uart_ready(dut):
     assert int(dut.uio_out.value) & 0xc1 == 0xc1
     direct = (Path(__file__).resolve().parents[1] / "src/build_mode.txt").read_text().strip() == "direct"
     # Direct mode: send one NOP. Micro mode: reject zero dimensions.
-    word = (126 << 25) if direct else 0
+    word = (62 << 9) if direct else 0
     receiver = cocotb.start_soon(receive_byte(dut))
-    for i in range(4 if direct else 8):
+    for i in range(2 if direct else 8):
         await send_byte(dut, (word >> (8*i)) & 255)
     assert await with_timeout(receiver, 300, "us") == 1
     assert bool(int(dut.uo_out.value) & 4) == (not direct)

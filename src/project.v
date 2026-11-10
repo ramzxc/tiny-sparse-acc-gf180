@@ -69,7 +69,7 @@ module tt_um_tiny_sparse_acc_ramzxc (
     end
 
 `ifdef TT_DIRECT_UCODE
-    // PC supplies the 32-bit internal ISA, including EXE_SYNC/MEM_SYNC.
+    // PC supplies the 16-bit internal ISA, including EXE_SYNC/MEM_SYNC.
     assign inst = host_inst;
     assign inst_val = host_inst_val;
     assign host_rdy = core_rdy;

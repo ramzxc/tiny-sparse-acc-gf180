@@ -7,6 +7,8 @@
 // and fixed 16-bit request/response handling are our own additions.
 //
 // One aligned 16-bit request at a time. Mode 0, SCK = clk / 2.
+// req_addr must remain stable from acceptance until read_data_val.
+// req_write/req_data are captured on acceptance and may change afterward.
 // Board setup: PSRAMs in QPI; Flash in SPI with QE=1, not continuous read.
 // Flash program targets must already be erased/unprotected. No erase interface.
 // Address map: 0xxxxxx=Flash, 10xxxxx=PSRAM A, 11xxxxx=PSRAM B.
@@ -23,7 +25,9 @@ module qspi_ctrl (
     input [24:0] req_addr,
     input [`DATA_WIDTH*2-1:0] req_data,
 
-    output reg [`DATA_WIDTH*2-1:0] read_data,
+    // Valid after read completion and until the next request is accepted.
+    // During a transfer, this exposes the shared shift register (not valid data).
+    output [`DATA_WIDTH*2-1:0] read_data,
     output reg read_data_val,
 
     output reg sck,
@@ -48,17 +52,23 @@ module qspi_ctrl (
     reg [3:0] state;
     reg [2:0] operation;
     reg [1:0] chip;
-    reg [23:0] addr_shift;
     reg write_reg;
-    reg [7:0] cmd_shift;
     reg [15:0] data_shift;
     reg [1:0] status_shift; // Keep only the last two status bits: WEL and WIP.
     reg [4:0] cycles_left;
 
+    // Reuse the serial data register as the read result; no extra 16-bit copy.
+    assign read_data = {data_shift[7:0], data_shift[15:8]};
     wire is_ram = chip[1];
     wire [7:0] memory_opcode = is_ram
         ? (write_reg ? 8'h02 : 8'h0b)
         : (write_reg ? 8'h32 : 8'h6b);
+
+    // The parent holds the address; select its next bit/nibble directly.
+    // PSRAM uses 23 address bits and a leading zero in its 24-bit header.
+    wire [23:0] address = is_ram ? {1'b0, req_addr[22:0]} : req_addr[23:0];
+    wire [7:0] command = operation == MEMORY ? memory_opcode :
+        (operation == WRITE_ENABLE ? 8'h06 : 8'h05);
 
     // Odd byte addresses are unsupported, so they are not accepted.
     assign req_rdy = rst_n && state == IDLE && !req_addr[0];
@@ -72,19 +82,19 @@ module qspi_ctrl (
         case (state)
             CMD: begin
                 if (is_ram) begin
-                    dq_out = cmd_shift[7:4];
+                    dq_out = cycles_left[0] ? command[7:4] : command[3:0];
                     dq_oe = 4'b1111;
                 end else begin
-                    dq_out[0] = cmd_shift[7];
+                    dq_out[0] = command[cycles_left[2:0]];
                     dq_oe = 4'b1101;
                 end
             end
             ADDR: begin
                 if (is_ram) begin
-                    dq_out = addr_shift[23:20];
+                    dq_out = address[{cycles_left[2:0], 2'b00} +: 4];
                     dq_oe = 4'b1111;
                 end else begin
-                    dq_out[0] = addr_shift[23];
+                    dq_out[0] = address[cycles_left];
                     dq_oe = 4'b1101;
                 end
             end
@@ -104,13 +114,10 @@ module qspi_ctrl (
             state <= IDLE;
             operation <= MEMORY;
             chip <= 0;
-            addr_shift <= 0;
             write_reg <= 0;
-            cmd_shift <= 0;
             data_shift <= 0;
             status_shift <= 0;
             cycles_left <= 0;
-            read_data <= 0;
             read_data_val <= 0;
             sck <= 0;
             flash_sc_n <= 1;
@@ -123,8 +130,6 @@ module qspi_ctrl (
                 IDLE: begin
                     if (req_val && req_rdy) begin
                         chip <= req_addr[24:23];
-                        addr_shift <= req_addr[24]
-                            ? {1'b0, req_addr[22:0]} : req_addr[23:0];
                         write_reg <= req_write;
                         // Low byte is sent first, most significant nibble first.
                         data_shift <= {req_data[7:0], req_data[15:8]};
@@ -138,11 +143,6 @@ module qspi_ctrl (
                     psram_a_sc_n <= chip != 2'b10;
                     psram_b_sc_n <= chip != 2'b11;
                     sck <= 0;
-
-                    if (operation == MEMORY)
-                        cmd_shift <= memory_opcode;
-                    else
-                        cmd_shift <= operation == WRITE_ENABLE ? 8'h06 : 8'h05;
 
                     cycles_left <= is_ram ? 1 : 7;
                     state <= CMD;
@@ -161,8 +161,6 @@ module qspi_ctrl (
                         if (cycles_left != 0) begin
                             cycles_left <= cycles_left - 1'b1;
                             case (state)
-                                CMD: cmd_shift <= cmd_shift << (is_ram ? 4 : 1);
-                                ADDR: addr_shift <= addr_shift << (is_ram ? 4 : 1);
                                 DATA: if (write_reg)
                                     data_shift <= {data_shift[11:0], 4'b0};
                                 default: begin end
@@ -194,8 +192,6 @@ module qspi_ctrl (
                                     state <= DATA;
                                 end
                                 DATA: begin
-                                    if (!write_reg)
-                                        read_data <= {data_shift[7:0], data_shift[15:8]};
                                     state <= DESELECT;
                                 end
                                 STATUS: state <= DESELECT;
@@ -266,6 +262,17 @@ module qspi_ctrl (
     end
 
 `ifndef SYNTHESIS
+    // Check the borrowed-address contract in standalone and integration tests.
+    reg [24:0] accepted_addr;
+    always @(posedge clk) begin
+        if (!rst_n)
+            accepted_addr <= 0;
+        else if (req_val && req_rdy)
+            accepted_addr <= req_addr;
+        else if (state != IDLE && req_addr !== accepted_addr)
+            $fatal(1, "qspi_ctrl req_addr changed before completion");
+    end
+
     initial begin
         if (`DATA_WIDTH != 8)
             $fatal(1, "qspi_ctrl implements 16-bit transfers with 8-bit bytes");

@@ -26,6 +26,8 @@
         logic [4:0] el, es, exponent, rounded;
         logic [3:0] ml, ms;
         logic [7:0] aligned, total;
+        logic subtract;
+        logic [2:0] leading_zeros, normalize_shift;
         begin
             if (fp8_is_nan(a[6:0]) || fp8_is_nan(b[6:0])) return FP8_QNAN;
             hi_operand = (a[6:0] >= b[6:0]) ? a : b;
@@ -35,20 +37,29 @@
             ml = {(hi_operand[6:3] != 0), hi_operand[2:0]};
             ms = {(lo_operand[6:3] != 0), lo_operand[2:0]};
             aligned = fp8_jam8({1'b0, ms, 3'b000}, el - es);
-            total = (hi_operand[7] == lo_operand[7]) ?
-                ({1'b0, ml, 3'b000} + aligned) : ({1'b0, ml, 3'b000} - aligned);
+            // One add/subtract datapath: invert B and use carry-in for subtraction.
+            subtract = hi_operand[7] ^ lo_operand[7];
+            total = {1'b0, ml, 3'b000} + (aligned ^ {8{subtract}}) + 8'(subtract);
             if (total == 0) return (a[7] && b[7]) ? 8'h80 : FP8_ZERO;
             exponent = el;
             if (total[7]) begin
                 total = fp8_jam8(total, 5'd1);
                 exponent = exponent + 1'b1;
             end
-            // Cancellation normalization needs at most six shifts; no 20-bit sum.
-            for (int i = 0; i < 6; i++)
-            if (!total[6] && exponent > 1) begin
-                total = total << 1;
-                exponent = exponent - 1'b1;
-            end
+            // Normalize once, limited by the minimum normal exponent.
+            casez (total[6:0])
+                7'b1??????: leading_zeros = 0;
+                7'b01?????: leading_zeros = 1;
+                7'b001????: leading_zeros = 2;
+                7'b0001???: leading_zeros = 3;
+                7'b00001??: leading_zeros = 4;
+                7'b000001?: leading_zeros = 5;
+                default:    leading_zeros = 6;
+            endcase
+            normalize_shift = ({2'b0, leading_zeros} < exponent)
+                ? leading_zeros : 3'(exponent - 1'b1);
+            total = total << normalize_shift;
+            exponent = exponent - {2'b0, normalize_shift};
             rounded = {1'b0, total[6:3]} + 5'(total[2] && (total[1] || total[0] || total[3]));
             if (rounded[4]) begin
                 rounded  = rounded >> 1;
@@ -60,44 +71,62 @@
         end
     endfunction
 
-    // Product/scaling packer specialized to at most eight magnitude bits.
+    // Eight-bit product packer: select retained/guard/sticky bits directly.
+    // No remainder subtractor or variable-width halfway calculation.
     function automatic fp8_type fp8_pack8(input logic sign, input logic [7:0] magnitude,
                                           input logic signed [6:0] scale);
-        logic signed [4:0] msb;
+        logic [2:0] msb;
         logic signed [6:0] exponent, shift;
-        logic [8:0] truncated, remainder, halfway, rounded;
-        logic [3:0] encoded;
+        logic [3:0] retained, encoded;
+        logic guard_bit, sticky;
+        logic [4:0] rounded;
         begin
-            msb = -5'sd1;
-            truncated = 0;
-            remainder = 0;
-            halfway = 0;
-            rounded = 0;
-            encoded = 0;
-            for (int i = 0; i < 8; i++)
-                if (magnitude[i]) msb = 5'(i);
-            if (msb < 0) return {sign, 7'b0};
-            exponent = 7'(msb) + scale;
+            if (magnitude == 0) return {sign, 7'b0};
+            casez (magnitude)
+                8'b1???????: msb = 7;
+                8'b01??????: msb = 6;
+                8'b001?????: msb = 5;
+                8'b0001????: msb = 4;
+                8'b00001???: msb = 3;
+                8'b000001??: msb = 2;
+                8'b0000001?: msb = 1;
+                default:     msb = 0;
+            endcase
+            exponent = $signed({4'b0, msb}) + scale;
             if (exponent > 8) return {sign, 7'h7e};
-            shift = (exponent >= -6) ? 7'(msb) - 7'sd3 : -7'sd9 - scale;
-            if (shift > 8) rounded = 0;
-            else if (shift > 0) begin
-                truncated = {1'b0, magnitude} >> shift;
-                remainder = {1'b0, magnitude} - (truncated << shift);
-                halfway   = 9'd1 << (shift - 1'b1);
-                rounded   = truncated + 9'((remainder > halfway) || (remainder == halfway && truncated[0]));
-            end else rounded = {1'b0, magnitude} << (-shift);
+            shift = (exponent >= -6) ? $signed({4'b0, msb}) - 7'sd3 : -7'sd9 - scale;
+            retained = 0;
+            guard_bit = 0;
+            sticky = 0;
+            // In-range retained significands fit in four bits. Negative shifts
+            // only occur for magnitudes whose leading bit is below bit 3.
+            case (shift)
+                -7'sd3: retained = {magnitude[0], 3'b0};
+                -7'sd2: retained = {magnitude[1:0], 2'b0};
+                -7'sd1: retained = {magnitude[2:0], 1'b0};
+                0: retained = magnitude[3:0];
+                1: begin retained = magnitude[4:1]; guard_bit = magnitude[0]; end
+                2: begin retained = magnitude[5:2]; guard_bit = magnitude[1]; sticky = magnitude[0]; end
+                3: begin retained = magnitude[6:3]; guard_bit = magnitude[2]; sticky = |magnitude[1:0]; end
+                4: begin retained = magnitude[7:4]; guard_bit = magnitude[3]; sticky = |magnitude[2:0]; end
+                5: begin retained = {1'b0, magnitude[7:5]}; guard_bit = magnitude[4]; sticky = |magnitude[3:0]; end
+                6: begin retained = {2'b0, magnitude[7:6]}; guard_bit = magnitude[5]; sticky = |magnitude[4:0]; end
+                7: begin retained = {3'b0, magnitude[7]}; guard_bit = magnitude[6]; sticky = |magnitude[5:0]; end
+                8: begin guard_bit = magnitude[7]; sticky = |magnitude[6:0]; end
+                default: begin end // Magnitude is below half the smallest subnormal.
+            endcase
+            rounded = {1'b0, retained} + 5'(guard_bit && (sticky || retained[0]));
             if (exponent < -6) begin
                 if (rounded >= 8) return {sign, 7'h08};
                 return {sign, 4'b0, rounded[2:0]};
             end
-            if (rounded >= 16) begin
-                rounded  = rounded >> 1;
+            if (rounded[4]) begin
+                rounded = rounded >> 1;
                 exponent = exponent + 1'b1;
             end
             if (exponent > 8 || (exponent == 8 && rounded > 14)) return {sign, 7'h7e};
             encoded = 4'(exponent + 7'sd7);
-            return {sign, encoded[3:0], rounded[2:0]};
+            return {sign, encoded, rounded[2:0]};
         end
     endfunction
 

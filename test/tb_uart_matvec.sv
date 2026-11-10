@@ -14,7 +14,7 @@ module tb_uart_matvec;
     wire rx_inst_val,host_inst_val,fifo_rdy,host_rdy;
     uart_rx receiver (.clk(clk),.rst_n(rst_n),.rx(rx),.inst(rx_inst),.inst_val(rx_inst_val));
     uart_tx transmitter (.clk(clk),.rst_n(rst_n),.inst_fifo_rdy(fifo_rdy),.tx(tx));
-    inst_fifo fifo (.clk(clk),.rst_n(rst_n),.inst(rx_inst),.inst_val(rx_inst_val),
+    inst_fifo #(.FIFO_DEPTH(2)) fifo (.clk(clk),.rst_n(rst_n),.inst(rx_inst),.inst_val(rx_inst_val),
         .fifo_rdy(fifo_rdy),.core_rdy(host_rdy),.inst_out(host_inst),.inst_out_val(host_inst_val));
     micro_core_fixture core (.*);
     wire qspi_req_val,qspi_req_rdy,qspi_req_write,qspi_read_data_val;

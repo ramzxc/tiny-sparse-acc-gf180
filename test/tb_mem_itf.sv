@@ -13,17 +13,17 @@ module tb_mem_itf;
     reg clk = 0;
     always #50 clk = !clk;
     reg rst_n = 0, req_val = 0;
-    reg [`INST_WIDTH-1:0] request_word = 0;
+    reg [31:0] request_word = 0;
     reg use_uart = 0, rx = 1;
-    wire [`INST_WIDTH-1:0] uart_inst;
+    wire [31:0] uart_inst;
     wire uart_inst_val;
     wire [31:0] fifo_inst;
     wire fifo_valid, fifo_rdy, tx;
     reg stall_core = 0;
     wire core_rdy = rdy && !stall_core;
-    wire [`INST_WIDTH-1:0] core_inst = use_uart ? fifo_inst : request_word;
+    wire [31:0] core_inst = use_uart ? fifo_inst : request_word;
     wire core_inst_val = use_uart ? (fifo_valid && core_rdy) : req_val;
-    inst_fifo #(.WORD_WIDTH(32)) fifo (.clk(clk), .rst_n(rst_n), .inst(uart_inst), .inst_val(uart_inst_val),
+    inst_fifo #(.WORD_WIDTH(32), .FIFO_DEPTH(2)) fifo (.clk(clk), .rst_n(rst_n), .inst(uart_inst), .inst_val(uart_inst_val),
         .fifo_rdy(fifo_rdy), .core_rdy(core_rdy), .inst_out(fifo_inst), .inst_out_val(fifo_valid));
     uart_tx transmitter (.clk(clk), .rst_n(rst_n), .inst_fifo_rdy(use_uart && fifo_rdy), .tx(tx));
     uart_rx #(.WORD_WIDTH(32)) receiver (.clk(clk), .rst_n(rst_n), .rx(rx), .inst(uart_inst), .inst_val(uart_inst_val));
@@ -60,8 +60,8 @@ module tb_mem_itf;
     mem_itf dut (
         .clk(clk), .rst_n(rst_n), .rdy(rdy),
         .read_en(read_en), .write_en(write_en), .copy_en(copy_en),
-        .src_addr(change_inputs ? 25'h1fffffe : core_src_addr),
-        .dst_addr(change_inputs ? 25'h1fffffe : core_dst_addr),
+        .src_addr(core_src_addr),
+        .dst_addr(core_dst_addr),
         .write_data(change_inputs ? 16'hdead : core_inst[15:0]),
         .read_data(read_data), .read_data_val(read_data_val),
         .qspi_req_val(qspi_req_val), .qspi_req_rdy(qspi_req_rdy),
@@ -131,7 +131,7 @@ module tb_mem_itf;
             @(negedge clk);
             if (rdy) $fatal(1, "rdy did not deassert on acceptance");
             req_val = 0;
-            change_inputs = 1; // All address/data inputs can change while busy.
+            change_inputs = 1; // Payload can change; persistent SRC/DST stay fixed until ready.
             request_word = {`MEM_SET_DST, 25'h1fffffe};
             timeout_count = 0;
             while (!rdy && timeout_count < 5000) begin
@@ -287,7 +287,7 @@ module tb_mem_itf;
         rst_n = 0;
         repeat (3) @(negedge clk);
         if (qspi_req_val || read_data_val || !rdy) $fatal(1, "Reset outputs");
-        if (core_src_addr !== 0 || core_dst_addr !== 0 || dut.copy_dst_addr !== 0)
+        if (core_src_addr !== 0 || core_dst_addr !== 0)
             $fatal(1, "Reset addresses");
         rst_n = 1;
         allow_qspi = 1;

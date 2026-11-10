@@ -38,9 +38,9 @@ module tt_um_tiny_sparse_acc_ramzxc (
 	wire [24:0] dst_addr;
 	wire [15:0] read_data;
 	wire [15:0] write_data;
-	localparam HOST_WIDTH = 32;
-	wire [31:0] rx_inst;
-	wire [31:0] host_inst;
+	localparam HOST_WIDTH = 16;
+	wire [15:0] rx_inst;
+	wire [15:0] host_inst;
 	wire rx_inst_val;
 	wire host_inst_val;
 	wire fifo_rdy;
@@ -68,11 +68,11 @@ module tt_um_tiny_sparse_acc_ramzxc (
 		.inst_out(host_inst),
 		.inst_out_val(host_inst_val)
 	);
-	wire [31:0] inst;
+	wire [15:0] inst;
 	wire inst_val;
 	wire core_rdy;
 	wire mem_rdy;
-	wire [27:0] mem_inst;
+	wire [15:0] mem_inst;
 	wire mem_inst_val;
 	wire [8:0] exe_inst;
 	wire exe_inst_val;
@@ -227,21 +227,22 @@ module uart_rx (
 	input rx;
 	localparam integer TIMER_BITS = (CLKS_PER_BIT > 1 ? $clog2(CLKS_PER_BIT) : 1);
 	localparam integer HALF_BIT_CLKS = CLKS_PER_BIT / 2;
-	localparam integer INST_IDX_BITS = $clog2(WORD_WIDTH);
+	localparam integer BYTE_COUNT = WORD_WIDTH / 8;
+	localparam integer BYTE_IDX_BITS = (BYTE_COUNT > 1 ? $clog2(BYTE_COUNT) : 1);
 	function automatic signed [TIMER_BITS - 1:0] sv2v_cast_EECBB_signed;
 		input reg signed [TIMER_BITS - 1:0] inp;
 		sv2v_cast_EECBB_signed = inp;
 	endfunction
 	localparam [TIMER_BITS - 1:0] BIT_LAST = sv2v_cast_EECBB_signed(CLKS_PER_BIT - 1);
 	localparam [TIMER_BITS - 1:0] HALF_BIT_LAST = sv2v_cast_EECBB_signed(HALF_BIT_CLKS - 1);
-	function automatic signed [INST_IDX_BITS - 1:0] sv2v_cast_5CDB1_signed;
-		input reg signed [INST_IDX_BITS - 1:0] inp;
-		sv2v_cast_5CDB1_signed = inp;
+	function automatic signed [BYTE_IDX_BITS - 1:0] sv2v_cast_E955B_signed;
+		input reg signed [BYTE_IDX_BITS - 1:0] inp;
+		sv2v_cast_E955B_signed = inp;
 	endfunction
-	localparam [INST_IDX_BITS - 1:0] INST_LAST = sv2v_cast_5CDB1_signed(WORD_WIDTH - 1);
+	localparam [BYTE_IDX_BITS - 1:0] BYTE_LAST = sv2v_cast_E955B_signed(BYTE_COUNT - 1);
 	reg rx_meta;
 	reg rx_sync;
-	reg [INST_IDX_BITS - 1:0] inst_idx;
+	reg [BYTE_IDX_BITS - 1:0] byte_idx;
 	reg [TIMER_BITS - 1:0] clk_cnt;
 	reg [3:0] bit_idx;
 	reg [1:0] state;
@@ -256,7 +257,7 @@ module uart_rx (
 			rx_sync <= 0;
 			clk_cnt <= 0;
 			bit_idx <= 0;
-			inst_idx <= 0;
+			byte_idx <= 0;
 			state <= RESET;
 		end
 		else begin
@@ -268,7 +269,7 @@ module uart_rx (
 					clk_cnt <= 0;
 					bit_idx <= 0;
 					inst <= 0;
-					inst_idx <= 0;
+					byte_idx <= 0;
 					if (rx_sync == 1)
 						state <= IDLE;
 				end
@@ -294,16 +295,16 @@ module uart_rx (
 					else if (clk_cnt == BIT_LAST) begin
 						clk_cnt <= 0;
 						if (bit_idx <= 8) begin
-							inst[inst_idx] <= rx_sync;
-							if (inst_idx != INST_LAST)
-								inst_idx <= inst_idx + 1;
+							inst <= {rx_sync, inst[WORD_WIDTH - 1:1]};
 							bit_idx <= bit_idx + 1;
 						end
 						else if (rx_sync) begin
-							if (inst_idx == INST_LAST) begin
+							if (byte_idx == BYTE_LAST) begin
 								inst_val <= 1;
-								inst_idx <= 0;
+								byte_idx <= 0;
 							end
+							else
+								byte_idx <= byte_idx + 1'b1;
 							state <= IDLE;
 						end
 						else
@@ -332,20 +333,18 @@ module uart_tx (
 		sv2v_cast_EECBB_signed = inp;
 	endfunction
 	localparam [TIMER_BITS - 1:0] BIT_LAST = sv2v_cast_EECBB_signed(CLKS_PER_BIT - 1);
-	reg [9:0] data_reg;
 	reg [TIMER_BITS - 1:0] clk_cnt;
 	reg [3:0] bit_idx;
 	localparam IDLE = 0;
 	localparam DATA = 1;
 	reg state;
 	reg ready_sent;
-	assign tx = (state == DATA ? data_reg[bit_idx] : 1'b1);
+	assign tx = ((state != DATA) || (bit_idx == 1)) || (bit_idx == 9);
 	always @(posedge clk)
 		if (!rst_n) begin
 			state <= IDLE;
 			clk_cnt <= 0;
 			bit_idx <= 0;
-			data_reg <= 0;
 			ready_sent <= 0;
 		end
 		else begin
@@ -354,7 +353,6 @@ module uart_tx (
 			case (state)
 				IDLE:
 					if (inst_fifo_rdy && !ready_sent) begin
-						data_reg <= 10'h202;
 						ready_sent <= 1'b1;
 						bit_idx <= 0;
 						state <= DATA;
@@ -384,7 +382,7 @@ module inst_fifo (
 	inst_out,
 	inst_out_val
 );
-	parameter integer FIFO_DEPTH = 2;
+	parameter integer FIFO_DEPTH = 1;
 	parameter integer WORD_WIDTH = 64;
 	input clk;
 	input rst_n;
@@ -465,7 +463,7 @@ module micro_ctrl (
 	output wire inst_in_rdy;
 	output reg done;
 	output reg error;
-	output reg [31:0] inst_out;
+	output reg [15:0] inst_out;
 	output reg inst_out_val;
 	input inst_out_rdy;
 	input input_is_zero;
@@ -491,6 +489,7 @@ module micro_ctrl (
 	localparam [4:0] NEXT_TILE = 18;
 	localparam [4:0] VALIDATE = 19;
 	reg [4:0] state;
+	reg address_high;
 	reg [7:0] rows;
 	reg [7:0] cols;
 	reg [7:0] column;
@@ -543,31 +542,31 @@ module micro_ctrl (
 	wire accepted = inst_out_val && inst_out_rdy;
 	assign inst_in_rdy = rst_n && (state == IDLE);
 	always @(*) begin
-		inst_out = 32'hfc000000;
+		inst_out = 16'h7c00;
 		inst_out_val = rst_n;
 		case (state)
-			CLEAR: inst_out = 32'h42000000;
-			CLEAR_SYNC: inst_out = 32'hf8000000;
-			SET_INPUT: inst_out = {7'd4, input_addr[24:1], 1'b0};
-			LOAD_INPUT: inst_out = {30'h00800000, input_addr[0], !elementwise};
-			INPUT_SYNC: inst_out = 32'hfa000000;
+			CLEAR: inst_out = 16'h4200;
+			CLEAR_SYNC: inst_out = 16'h7800;
+			SET_INPUT: inst_out = (address_high ? {4'hc, input_addr[24:13]} : {3'd4, input_addr[12:1], 1'b0});
+			LOAD_INPUT: inst_out = {14'h0080, input_addr[0], !elementwise};
+			INPUT_SYNC: inst_out = 16'h7a00;
 			SET_WEIGHT: begin
-				inst_out = {7'd4, weight_addr[24:0]};
+				inst_out = (address_high ? {4'hc, weight_addr[24:13]} : {3'd4, weight_addr[12:0]});
 				inst_out_val = rst_n && valid_weight_addr;
 			end
-			LOAD_WEIGHT: inst_out = {29'h00400000, elementwise, 2'b00};
-			WEIGHT_SYNC: inst_out = 32'hfa000000;
+			LOAD_WEIGHT: inst_out = {13'h0040, elementwise, 2'b00};
+			WEIGHT_SYNC: inst_out = 16'h7a00;
 			MAC:
 				if (elementwise && (vector_op == 2'd3))
-					inst_out = 32'h46000000;
+					inst_out = 16'h4600;
 				else
-					inst_out = {25'h0800000, (elementwise && sparse_en) && (vector_op == 2'd2), 3'd0, !elementwise, (elementwise ? (vector_op == 2'd1 ? 2'd3 : vector_op) : 2'd2)};
-			MAC_SYNC: inst_out = 32'hf8000000;
-			APPLY_ACT: inst_out = {26'h1100000, act_op, 3'b000};
-			ACT_SYNC: inst_out = 32'hf8000000;
-			SET_OUTPUT: inst_out = {7'd5, output_addr};
-			STORE: inst_out = 32'h04000000;
-			STORE_SYNC: inst_out = 32'hfa000000;
+					inst_out = {9'h080, (elementwise && sparse_en) && (vector_op == 2'd2), 3'd0, !elementwise, (elementwise ? (vector_op == 2'd1 ? 2'd3 : vector_op) : 2'd2)};
+			MAC_SYNC: inst_out = 16'h7800;
+			APPLY_ACT: inst_out = {10'h110, act_op, 3'b000};
+			ACT_SYNC: inst_out = 16'h7800;
+			SET_OUTPUT: inst_out = (address_high ? {4'he, output_addr[24:13]} : {3'd5, output_addr[12:0]});
+			STORE: inst_out = 16'h0400;
+			STORE_SYNC: inst_out = 16'h7a00;
 			default: inst_out_val = 0;
 		endcase
 	end
@@ -578,6 +577,7 @@ module micro_ctrl (
 	always @(posedge clk)
 		if (!rst_n) begin
 			state <= IDLE;
+			address_high <= 0;
 			rows <= 0;
 			cols <= 0;
 			column <= 0;
@@ -606,6 +606,8 @@ module micro_ctrl (
 		end
 		else begin
 			done <= 0;
+			if (accepted && (((state == SET_INPUT) || (state == SET_WEIGHT)) || (state == SET_OUTPUT)))
+				address_high <= !address_high;
 			if ((state == INPUT_SYNC) && input_data_val) begin
 				input_seen <= 1;
 				input_zero <= input_is_zero;
@@ -663,7 +665,7 @@ module micro_ctrl (
 					if (accepted)
 						state <= SET_INPUT;
 				SET_INPUT:
-					if (accepted)
+					if (accepted && address_high)
 						state <= LOAD_INPUT;
 				LOAD_INPUT:
 					if (accepted) begin
@@ -688,7 +690,7 @@ module micro_ctrl (
 						done <= 1;
 						state <= IDLE;
 					end
-					else if (accepted)
+					else if (accepted && address_high)
 						state <= LOAD_WEIGHT;
 				LOAD_WEIGHT:
 					if (accepted)
@@ -726,7 +728,7 @@ module micro_ctrl (
 					if (accepted)
 						state <= SET_OUTPUT;
 				SET_OUTPUT:
-					if (accepted)
+					if (accepted && address_high)
 						state <= STORE;
 				STORE:
 					if (accepted)
@@ -778,25 +780,29 @@ module decoder (
 	exe_inst_out_val
 );
 	input rst_n;
-	input [31:0] inst_in;
+	input [15:0] inst_in;
 	input inst_in_val;
 	output reg core_rdy;
 	input mem_rdy;
 	input exe_rdy;
-	output wire [27:0] mem_inst_out;
+	output wire [15:0] mem_inst_out;
 	output reg mem_inst_out_val;
 	output wire [8:0] exe_inst_out;
 	output reg exe_inst_out_val;
-	wire [6:0] opcode = inst_in[31:25];
-	assign mem_inst_out = {opcode[2:0], inst_in[24:0]};
+	wire [6:0] opcode = inst_in[15:9];
+	assign mem_inst_out = (inst_in[15] ? inst_in : {opcode[2:0], 4'b0000, inst_in[8:0]});
 	assign exe_inst_out = (opcode == 7'd33 ? 9'h080 : (opcode == 7'd34 ? {3'h4, inst_in[5:3], 3'b000} : (opcode == 7'd35 ? {3'h6, inst_in[5:3], 3'b000} : {2'd0, inst_in[6:0]})));
 	always @(*) begin
 		core_rdy = 0;
 		mem_inst_out_val = 0;
 		exe_inst_out_val = 0;
-		if (rst_n)
+		if (rst_n && inst_in[15]) begin
+			core_rdy = mem_rdy;
+			mem_inst_out_val = inst_in_val && mem_rdy;
+		end
+		else if (rst_n)
 			case (opcode)
-				7'd0, 7'd1, 7'd2, 7'd3, 7'd4, 7'd5: begin
+				7'd0, 7'd1, 7'd2, 7'd3: begin
 					core_rdy = mem_rdy;
 					mem_inst_out_val = inst_in_val && mem_rdy;
 				end
@@ -804,9 +810,9 @@ module decoder (
 					core_rdy = exe_rdy;
 					exe_inst_out_val = inst_in_val && exe_rdy;
 				end
-				7'd124: core_rdy = exe_rdy;
-				7'd125: core_rdy = mem_rdy;
-				7'd126: core_rdy = 1;
+				7'd60: core_rdy = exe_rdy;
+				7'd61: core_rdy = mem_rdy;
+				7'd62: core_rdy = 1;
 				default: core_rdy = 1;
 			endcase
 	end
@@ -834,7 +840,7 @@ module mem_ctrl (
 );
 	input clk;
 	input rst_n;
-	input [27:0] mem_inst_in;
+	input [15:0] mem_inst_in;
 	input mem_inst_in_val;
 	output wire mem_rdy;
 	input mem_itf_rdy;
@@ -859,8 +865,8 @@ module mem_ctrl (
 	reg scalar_load;
 	reg high_byte;
 	reg force_weight;
-	wire [2:0] incoming_command = mem_inst_in[27:25];
-	wire [24:0] address = mem_inst_in[24:0];
+	wire [2:0] incoming_command = mem_inst_in[15:13];
+	wire [12:0] address_part = mem_inst_in[12:0];
 	wire load_vpu = ((rst_n && (state == WAIT)) && (command == 3'd1)) && read_data_val;
 	assign mem_rdy = state == IDLE;
 	assign write_data = act_res_in;
@@ -897,8 +903,10 @@ module mem_ctrl (
 				IDLE:
 					if (mem_inst_in_val)
 						case (incoming_command)
-							3'd4: src_addr <= address;
-							3'd5: dst_addr <= address;
+							3'd4: src_addr[12:0] <= address_part;
+							3'd6: src_addr[24:13] <= address_part[11:0];
+							3'd5: dst_addr[12:0] <= address_part;
+							3'd7: dst_addr[24:13] <= address_part[11:0];
 							3'd0, 3'd3, 3'd1, 3'd2: begin
 								command <= incoming_command;
 								scalar_load <= mem_inst_in[0];
@@ -966,6 +974,14 @@ module vpu (
 			default: fp8_jam8 = {7'b0000000, |x};
 		endcase
 	endfunction
+	function automatic [7:0] sv2v_cast_8;
+		input reg [7:0] inp;
+		sv2v_cast_8 = inp;
+	endfunction
+	function automatic [2:0] sv2v_cast_3;
+		input reg [2:0] inp;
+		sv2v_cast_3 = inp;
+	endfunction
 	function automatic [4:0] sv2v_cast_5;
 		input reg [4:0] inp;
 		sv2v_cast_5 = inp;
@@ -983,6 +999,9 @@ module vpu (
 		reg [3:0] ms;
 		reg [7:0] aligned;
 		reg [7:0] total;
+		reg subtract;
+		reg [2:0] leading_zeros;
+		reg [2:0] normalize_shift;
 		reg [0:1] _sv2v_jump;
 		begin
 			_sv2v_jump = 2'b00;
@@ -998,7 +1017,8 @@ module vpu (
 				ml = {hi_operand[6:3] != 0, hi_operand[2:0]};
 				ms = {lo_operand[6:3] != 0, lo_operand[2:0]};
 				aligned = fp8_jam8({1'b0, ms, 3'b000}, el - es);
-				total = (hi_operand[7] == lo_operand[7] ? {1'b0, ml, 3'b000} + aligned : {1'b0, ml, 3'b000} - aligned);
+				subtract = hi_operand[7] ^ lo_operand[7];
+				total = ({1'b0, ml, 3'b000} + (aligned ^ {8 {subtract}})) + sv2v_cast_8(subtract);
 				if (total == 0) begin
 					fp8_add = (a[7] && b[7] ? 8'h80 : FP8_ZERO);
 					_sv2v_jump = 2'b11;
@@ -1009,14 +1029,18 @@ module vpu (
 						total = fp8_jam8(total, 5'd1);
 						exponent = exponent + 1'b1;
 					end
-					begin : sv2v_autoblock_1
-						reg signed [31:0] i;
-						for (i = 0; i < 6; i = i + 1)
-							if (!total[6] && (exponent > 1)) begin
-								total = total << 1;
-								exponent = exponent - 1'b1;
-							end
-					end
+					casez (total[6:0])
+						7'b1zzzzzz: leading_zeros = 0;
+						7'b01zzzzz: leading_zeros = 1;
+						7'b001zzzz: leading_zeros = 2;
+						7'b0001zzz: leading_zeros = 3;
+						7'b00001zz: leading_zeros = 4;
+						7'b000001z: leading_zeros = 5;
+						default: leading_zeros = 6;
+					endcase
+					normalize_shift = ({2'b00, leading_zeros} < exponent ? leading_zeros : sv2v_cast_3(exponent - 1'b1));
+					total = total << normalize_shift;
+					exponent = exponent - {2'b00, normalize_shift};
 					rounded = {1'b0, total[6:3]} + sv2v_cast_5(total[2] && ((total[1] || total[0]) || total[3]));
 					if (rounded[4]) begin
 						rounded = rounded >> 1;
@@ -1040,18 +1064,6 @@ module vpu (
 			end
 		end
 	endfunction
-	function automatic signed [4:0] sv2v_cast_5_signed;
-		input reg signed [4:0] inp;
-		sv2v_cast_5_signed = inp;
-	endfunction
-	function automatic signed [6:0] sv2v_cast_7_signed;
-		input reg signed [6:0] inp;
-		sv2v_cast_7_signed = inp;
-	endfunction
-	function automatic [8:0] sv2v_cast_9;
-		input reg [8:0] inp;
-		sv2v_cast_9 = inp;
-	endfunction
 	function automatic signed [3:0] sv2v_cast_4_signed;
 		input reg signed [3:0] inp;
 		sv2v_cast_4_signed = inp;
@@ -1060,51 +1072,89 @@ module vpu (
 		input reg sign;
 		input reg [7:0] magnitude;
 		input reg signed [6:0] scale;
-		reg signed [4:0] msb;
+		reg [2:0] msb;
 		reg signed [6:0] exponent;
 		reg signed [6:0] shift;
-		reg [8:0] truncated;
-		reg [8:0] remainder;
-		reg [8:0] halfway;
-		reg [8:0] rounded;
+		reg [3:0] retained;
 		reg [3:0] encoded;
+		reg guard_bit;
+		reg sticky;
+		reg [4:0] rounded;
 		reg [0:1] _sv2v_jump;
 		begin
 			_sv2v_jump = 2'b00;
-			msb = -5'sd1;
-			truncated = 0;
-			remainder = 0;
-			halfway = 0;
-			rounded = 0;
-			encoded = 0;
-			begin : sv2v_autoblock_2
-				reg signed [31:0] i;
-				for (i = 0; i < 8; i = i + 1)
-					if (magnitude[i])
-						msb = sv2v_cast_5_signed(i);
-			end
-			if (msb < 0) begin
+			if (magnitude == 0) begin
 				fp8_pack8 = {sign, 7'b0000000};
 				_sv2v_jump = 2'b11;
 			end
 			if (_sv2v_jump == 2'b00) begin
-				exponent = sv2v_cast_7_signed(msb) + scale;
+				casez (magnitude)
+					8'b1zzzzzzz: msb = 7;
+					8'b01zzzzzz: msb = 6;
+					8'b001zzzzz: msb = 5;
+					8'b0001zzzz: msb = 4;
+					8'b00001zzz: msb = 3;
+					8'b000001zz: msb = 2;
+					8'b0000001z: msb = 1;
+					default: msb = 0;
+				endcase
+				exponent = $signed({4'b0000, msb}) + scale;
 				if (exponent > 8) begin
 					fp8_pack8 = {sign, 7'h7e};
 					_sv2v_jump = 2'b11;
 				end
 				if (_sv2v_jump == 2'b00) begin
-					shift = (exponent >= -6 ? sv2v_cast_7_signed(msb) - 7'sd3 : -(7'sd9 + scale));
-					if (shift > 8)
-						rounded = 0;
-					else if (shift > 0) begin
-						truncated = {1'b0, magnitude} >> shift;
-						remainder = {1'b0, magnitude} - (truncated << shift);
-						halfway = 9'd1 << (shift - 1'b1);
-						rounded = truncated + sv2v_cast_9((remainder > halfway) || ((remainder == halfway) && truncated[0]));
-					end
-					else
-						rounded = {1'b0, magnitude} << -shift;
+					shift = (exponent >= -6 ? $signed({4'b0000, msb}) - 7'sd3 : -(7'sd9 + scale));
+					retained = 0;
+					guard_bit = 0;
+					sticky = 0;
+					case (shift)
+						-7'sd3: retained = {magnitude[0], 3'b000};
+						-7'sd2: retained = {magnitude[1:0], 2'b00};
+						-7'sd1: retained = {magnitude[2:0], 1'b0};
+						0: retained = magnitude[3:0];
+						1: begin
+							retained = magnitude[4:1];
+							guard_bit = magnitude[0];
+						end
+						2: begin
+							retained = magnitude[5:2];
+							guard_bit = magnitude[1];
+							sticky = magnitude[0];
+						end
+						3: begin
+							retained = magnitude[6:3];
+							guard_bit = magnitude[2];
+							sticky = |magnitude[1:0];
+						end
+						4: begin
+							retained = magnitude[7:4];
+							guard_bit = magnitude[3];
+							sticky = |magnitude[2:0];
+						end
+						5: begin
+							retained = {1'b0, magnitude[7:5]};
+							guard_bit = magnitude[4];
+							sticky = |magnitude[3:0];
+						end
+						6: begin
+							retained = {2'b00, magnitude[7:6]};
+							guard_bit = magnitude[5];
+							sticky = |magnitude[4:0];
+						end
+						7: begin
+							retained = {3'b000, magnitude[7]};
+							guard_bit = magnitude[6];
+							sticky = |magnitude[5:0];
+						end
+						8: begin
+							guard_bit = magnitude[7];
+							sticky = |magnitude[6:0];
+						end
+						default:
+							;
+					endcase
+					rounded = {1'b0, retained} + sv2v_cast_5(guard_bit && (sticky || retained[0]));
 					if (exponent < -6) begin
 						if (rounded >= 8) begin
 							fp8_pack8 = {sign, 7'h08};
@@ -1116,7 +1166,7 @@ module vpu (
 						end
 					end
 					if (_sv2v_jump == 2'b00) begin
-						if (rounded >= 16) begin
+						if (rounded[4]) begin
 							rounded = rounded >> 1;
 							exponent = exponent + 1'b1;
 						end
@@ -1126,7 +1176,7 @@ module vpu (
 						end
 						if (_sv2v_jump == 2'b00) begin
 							encoded = sv2v_cast_4_signed(exponent + 7'sd7);
-							fp8_pack8 = {sign, encoded[3:0], rounded[2:0]};
+							fp8_pack8 = {sign, encoded, rounded[2:0]};
 							_sv2v_jump = 2'b11;
 						end
 					end
@@ -1162,31 +1212,33 @@ module vpu (
 	endfunction
 	reg [15:0] weights;
 	reg [15:0] inputs;
-	wire [1:0] operation = exe_inst_in[1:0];
+	reg second_lane;
+	reg [7:0] saved_input;
+	reg [7:0] saved_weight;
+	reg [3:0] saved_control;
 	wire [1:0] mode = exe_inst_in[8:7];
-	wire accumulate = exe_inst_in[2];
-	wire sparse_mul = exe_inst_in[6] && (operation == 2'd2);
-	wire [15:0] mac_result;
-	genvar _gv_lane_1;
-	generate
-		for (_gv_lane_1 = 0; _gv_lane_1 < 2; _gv_lane_1 = _gv_lane_1 + 1) begin : mac
-			localparam lane = _gv_lane_1;
-			wire [7:0] x = inputs[lane * 8+:8];
-			wire [7:0] w = weights[lane * 8+:8];
-			wire [7:0] sum = vpu_res_out[lane * 8+:8];
-			wire multiply = operation == 2'd2;
-			wire reverse_sub = operation == 2'd3;
-			wire subtract = (operation == 2'd1) || reverse_sub;
-			wire [7:0] product = fp8_mul(x, w);
-			wire [7:0] add_a = (multiply ? product : (reverse_sub ? w : x));
-			wire [7:0] operand_b = (reverse_sub ? x : w);
-			wire [7:0] add_b = (multiply ? sum : {operand_b[7] ^ subtract, operand_b[6:0]});
-			wire [7:0] added = fp8_add(add_a, add_b);
-			assign mac_result[lane * 8+:8] = (multiply && !accumulate ? product : added);
-		end
-	endgenerate
+	wire [1:0] operation = (second_lane ? saved_control[1:0] : exe_inst_in[1:0]);
+	wire accumulate = (second_lane ? saved_control[2] : exe_inst_in[2]);
+	wire sparse = (second_lane ? saved_control[3] : exe_inst_in[6]);
+	wire multiply = operation == 2'd2;
+	wire reverse_sub = operation == 2'd3;
+	wire subtract = (operation == 2'd1) || reverse_sub;
+	wire [7:0] x = (second_lane ? saved_input : inputs[0+:8]);
+	wire [7:0] w = (second_lane ? saved_weight : weights[0+:8]);
+	wire [7:0] sum = (second_lane ? vpu_res_out[8+:8] : vpu_res_out[0+:8]);
+	wire [7:0] product = fp8_mul(x, w);
+	wire [7:0] add_a = (multiply ? product : (reverse_sub ? w : x));
+	wire [7:0] operand_b = (reverse_sub ? x : w);
+	wire [7:0] add_b = (multiply ? sum : {operand_b[7] ^ subtract, operand_b[6:0]});
+	wire [7:0] added = fp8_add(add_a, add_b);
+	wire [7:0] arithmetic_result = (multiply && !accumulate ? product : added);
+	wire [7:0] mac_result = ((sparse && multiply) && (x[6:0] == 0) ? (accumulate ? sum : FP8_ZERO) : arithmetic_result);
 	always @(posedge clk)
 		if (!rst_n) begin
+			second_lane <= 0;
+			saved_input <= 0;
+			saved_weight <= 0;
+			saved_control <= 0;
 			weights <= 0;
 			inputs <= 0;
 			vpu_res_out <= 0;
@@ -1199,7 +1251,12 @@ module vpu (
 			if (input_data_val)
 				inputs <= input_data;
 			vpu_res_out_val <= 0;
-			if (exe_inst_in_val && (mode == 2'd1)) begin
+			if (second_lane) begin
+				vpu_res_out[8+:8] <= mac_result;
+				vpu_res_out_val <= 1;
+				second_lane <= 0;
+			end
+			else if (exe_inst_in_val && (mode == 2'd1)) begin
 				vpu_res_out <= 0;
 				act_op_out <= 3'd0;
 				vpu_res_out_val <= 1;
@@ -1214,18 +1271,12 @@ module vpu (
 				vpu_res_out_val <= 1;
 			end
 			else if (exe_inst_in_val && (mode == 2'd0)) begin
-				begin : sv2v_autoblock_3
-					integer lane;
-					for (lane = 0; lane < 2; lane = lane + 1)
-						if (sparse_mul && (inputs[lane * 8+:7] == 0)) begin
-							if (!accumulate)
-								vpu_res_out[lane * 8+:8] <= FP8_ZERO;
-						end
-						else
-							vpu_res_out[lane * 8+:8] <= mac_result[lane * 8+:8];
-				end
+				vpu_res_out[0+:8] <= mac_result;
+				saved_input <= inputs[8+:8];
+				saved_weight <= weights[8+:8];
+				saved_control <= {exe_inst_in[6], exe_inst_in[2], exe_inst_in[1:0]};
 				act_op_out <= exe_inst_in[5:3];
-				vpu_res_out_val <= 1;
+				second_lane <= 1;
 			end
 		end
 endmodule
@@ -1251,238 +1302,37 @@ module act (
 		input reg [6:0] magnitude;
 		fp8_is_nan = magnitude == 7'h7f;
 	endfunction
-	function automatic [7:0] fp8_jam8;
-		input reg [7:0] x;
-		input reg [4:0] n;
-		case (n)
-			0: fp8_jam8 = x;
-			1: fp8_jam8 = {1'b0, x[7:2], x[1] | x[0]};
-			2: fp8_jam8 = {2'b00, x[7:3], |x[2:0]};
-			3: fp8_jam8 = {3'b000, x[7:4], |x[3:0]};
-			4: fp8_jam8 = {4'b0000, x[7:5], |x[4:0]};
-			5: fp8_jam8 = {5'b00000, x[7:6], |x[5:0]};
-			6: fp8_jam8 = {6'b000000, x[7], |x[6:0]};
-			default: fp8_jam8 = {7'b0000000, |x};
-		endcase
-	endfunction
-	function automatic [4:0] sv2v_cast_5;
-		input reg [4:0] inp;
-		sv2v_cast_5 = inp;
-	endfunction
-	function automatic [7:0] fp8_add;
-		input reg [7:0] a;
-		input reg [7:0] b;
-		reg [7:0] hi_operand;
-		reg [7:0] lo_operand;
-		reg [4:0] el;
-		reg [4:0] es;
-		reg [4:0] exponent;
-		reg [4:0] rounded;
-		reg [3:0] ml;
-		reg [3:0] ms;
-		reg [7:0] aligned;
-		reg [7:0] total;
-		reg [0:1] _sv2v_jump;
-		begin
-			_sv2v_jump = 2'b00;
-			if (fp8_is_nan(a[6:0]) || fp8_is_nan(b[6:0])) begin
-				fp8_add = FP8_QNAN;
-				_sv2v_jump = 2'b11;
-			end
-			if (_sv2v_jump == 2'b00) begin
-				hi_operand = (a[6:0] >= b[6:0] ? a : b);
-				lo_operand = (a[6:0] >= b[6:0] ? b : a);
-				el = (hi_operand[6:3] == 0 ? 5'd1 : {1'b0, hi_operand[6:3]});
-				es = (lo_operand[6:3] == 0 ? 5'd1 : {1'b0, lo_operand[6:3]});
-				ml = {hi_operand[6:3] != 0, hi_operand[2:0]};
-				ms = {lo_operand[6:3] != 0, lo_operand[2:0]};
-				aligned = fp8_jam8({1'b0, ms, 3'b000}, el - es);
-				total = (hi_operand[7] == lo_operand[7] ? {1'b0, ml, 3'b000} + aligned : {1'b0, ml, 3'b000} - aligned);
-				if (total == 0) begin
-					fp8_add = (a[7] && b[7] ? 8'h80 : FP8_ZERO);
-					_sv2v_jump = 2'b11;
-				end
-				if (_sv2v_jump == 2'b00) begin
-					exponent = el;
-					if (total[7]) begin
-						total = fp8_jam8(total, 5'd1);
-						exponent = exponent + 1'b1;
-					end
-					begin : sv2v_autoblock_1
-						reg signed [31:0] i;
-						for (i = 0; i < 6; i = i + 1)
-							if (!total[6] && (exponent > 1)) begin
-								total = total << 1;
-								exponent = exponent - 1'b1;
-							end
-					end
-					rounded = {1'b0, total[6:3]} + sv2v_cast_5(total[2] && ((total[1] || total[0]) || total[3]));
-					if (rounded[4]) begin
-						rounded = rounded >> 1;
-						exponent = exponent + 1'b1;
-					end
-					if ((exponent > 15) || ((exponent == 15) && (rounded > 14))) begin
-						fp8_add = {hi_operand[7], 7'h7e};
-						_sv2v_jump = 2'b11;
-					end
-					if (_sv2v_jump == 2'b00) begin
-						if ((exponent == 1) && (rounded < 8)) begin
-							fp8_add = {hi_operand[7], 4'b0000, rounded[2:0]};
-							_sv2v_jump = 2'b11;
-						end
-						if (_sv2v_jump == 2'b00) begin
-							fp8_add = {hi_operand[7], exponent[3:0], rounded[2:0]};
-							_sv2v_jump = 2'b11;
-						end
-					end
-				end
-			end
-		end
-	endfunction
-	function automatic signed [4:0] sv2v_cast_5_signed;
-		input reg signed [4:0] inp;
-		sv2v_cast_5_signed = inp;
-	endfunction
-	function automatic signed [6:0] sv2v_cast_7_signed;
-		input reg signed [6:0] inp;
-		sv2v_cast_7_signed = inp;
-	endfunction
-	function automatic [8:0] sv2v_cast_9;
-		input reg [8:0] inp;
-		sv2v_cast_9 = inp;
-	endfunction
-	function automatic signed [3:0] sv2v_cast_4_signed;
-		input reg signed [3:0] inp;
-		sv2v_cast_4_signed = inp;
-	endfunction
-	function automatic [7:0] fp8_pack8;
-		input reg sign;
-		input reg [7:0] magnitude;
-		input reg signed [6:0] scale;
-		reg signed [4:0] msb;
-		reg signed [6:0] exponent;
-		reg signed [6:0] shift;
-		reg [8:0] truncated;
-		reg [8:0] remainder;
-		reg [8:0] halfway;
-		reg [8:0] rounded;
-		reg [3:0] encoded;
-		reg [0:1] _sv2v_jump;
-		begin
-			_sv2v_jump = 2'b00;
-			msb = -5'sd1;
-			truncated = 0;
-			remainder = 0;
-			halfway = 0;
-			rounded = 0;
-			encoded = 0;
-			begin : sv2v_autoblock_2
-				reg signed [31:0] i;
-				for (i = 0; i < 8; i = i + 1)
-					if (magnitude[i])
-						msb = sv2v_cast_5_signed(i);
-			end
-			if (msb < 0) begin
-				fp8_pack8 = {sign, 7'b0000000};
-				_sv2v_jump = 2'b11;
-			end
-			if (_sv2v_jump == 2'b00) begin
-				exponent = sv2v_cast_7_signed(msb) + scale;
-				if (exponent > 8) begin
-					fp8_pack8 = {sign, 7'h7e};
-					_sv2v_jump = 2'b11;
-				end
-				if (_sv2v_jump == 2'b00) begin
-					shift = (exponent >= -6 ? sv2v_cast_7_signed(msb) - 7'sd3 : -(7'sd9 + scale));
-					if (shift > 8)
-						rounded = 0;
-					else if (shift > 0) begin
-						truncated = {1'b0, magnitude} >> shift;
-						remainder = {1'b0, magnitude} - (truncated << shift);
-						halfway = 9'd1 << (shift - 1'b1);
-						rounded = truncated + sv2v_cast_9((remainder > halfway) || ((remainder == halfway) && truncated[0]));
-					end
-					else
-						rounded = {1'b0, magnitude} << -shift;
-					if (exponent < -6) begin
-						if (rounded >= 8) begin
-							fp8_pack8 = {sign, 7'h08};
-							_sv2v_jump = 2'b11;
-						end
-						if (_sv2v_jump == 2'b00) begin
-							fp8_pack8 = {sign, 4'b0000, rounded[2:0]};
-							_sv2v_jump = 2'b11;
-						end
-					end
-					if (_sv2v_jump == 2'b00) begin
-						if (rounded >= 16) begin
-							rounded = rounded >> 1;
-							exponent = exponent + 1'b1;
-						end
-						if ((exponent > 8) || ((exponent == 8) && (rounded > 14))) begin
-							fp8_pack8 = {sign, 7'h7e};
-							_sv2v_jump = 2'b11;
-						end
-						if (_sv2v_jump == 2'b00) begin
-							encoded = sv2v_cast_4_signed(exponent + 7'sd7);
-							fp8_pack8 = {sign, encoded[3:0], rounded[2:0]};
-							_sv2v_jump = 2'b11;
-						end
-					end
-				end
-			end
-		end
-	endfunction
-	function automatic [7:0] fp8_mul;
-		input reg [7:0] a;
-		input reg [7:0] b;
-		reg [3:0] ma;
-		reg [3:0] mb;
-		reg [7:0] product;
-		reg signed [6:0] ea;
-		reg signed [6:0] eb;
-		reg [0:1] _sv2v_jump;
-		begin
-			_sv2v_jump = 2'b00;
-			if (fp8_is_nan(a[6:0]) || fp8_is_nan(b[6:0])) begin
-				fp8_mul = FP8_QNAN;
-				_sv2v_jump = 2'b11;
-			end
-			if (_sv2v_jump == 2'b00) begin
-				ma = {a[6:3] != 0, a[2:0]};
-				mb = {b[6:3] != 0, b[2:0]};
-				ea = (a[6:3] == 0 ? -7'sd9 : $signed({3'b000, a[6:3]}) - 7'sd10);
-				eb = (b[6:3] == 0 ? -7'sd9 : $signed({3'b000, b[6:3]}) - 7'sd10);
-				product = ma * mb;
-				fp8_mul = fp8_pack8(a[7] ^ b[7], product, ea + eb);
-				_sv2v_jump = 2'b11;
-			end
-		end
-	endfunction
 	function automatic [7:0] fp8_sigmoid;
 		input reg [7:0] x;
-		reg [3:0] mantissa;
-		reg signed [6:0] scale;
-		reg [0:1] _sv2v_jump;
-		begin
-			_sv2v_jump = 2'b00;
-			if (fp8_is_nan(x[6:0])) begin
-				fp8_sigmoid = FP8_QNAN;
-				_sv2v_jump = 2'b11;
-			end
-			if (_sv2v_jump == 2'b00) begin
-				if (x[6:0] >= 7'h40) begin
-					fp8_sigmoid = (x[7] ? 8'h00 : 8'h38);
-					_sv2v_jump = 2'b11;
-				end
-				if (_sv2v_jump == 2'b00) begin
-					mantissa = {x[6:3] != 0, x[2:0]};
-					scale = (x[6:3] == 0 ? -7'sd11 : $signed({3'b000, x[6:3]}) - 7'sd12);
-					fp8_sigmoid = fp8_add(fp8_pack8(x[7], {4'b0000, mantissa}, scale), 8'h30);
-					_sv2v_jump = 2'b11;
-				end
-			end
-		end
+		case (x)
+			8'hc0, 8'hc1, 8'hc2, 8'hc3, 8'hc4, 8'hc5, 8'hc6, 8'hc7, 8'hc8, 8'hc9, 8'hca, 8'hcb, 8'hcc, 8'hcd, 8'hce, 8'hcf, 8'hd0, 8'hd1, 8'hd2, 8'hd3, 8'hd4, 8'hd5, 8'hd6, 8'hd7, 8'hd8, 8'hd9, 8'hda, 8'hdb, 8'hdc, 8'hdd, 8'hde, 8'hdf, 8'he0, 8'he1, 8'he2, 8'he3, 8'he4, 8'he5, 8'he6, 8'he7, 8'he8, 8'he9, 8'hea, 8'heb, 8'hec, 8'hed, 8'hee, 8'hef, 8'hf0, 8'hf1, 8'hf2, 8'hf3, 8'hf4, 8'hf5, 8'hf6, 8'hf7, 8'hf8, 8'hf9, 8'hfa, 8'hfb, 8'hfc, 8'hfd, 8'hfe: fp8_sigmoid = 8'h00;
+			8'hbf: fp8_sigmoid = 8'h10;
+			8'hbe: fp8_sigmoid = 8'h18;
+			8'hbd: fp8_sigmoid = 8'h1c;
+			8'hbc: fp8_sigmoid = 8'h20;
+			8'hbb: fp8_sigmoid = 8'h22;
+			8'hba: fp8_sigmoid = 8'h24;
+			8'hb9: fp8_sigmoid = 8'h26;
+			8'hb7, 8'hb8: fp8_sigmoid = 8'h28;
+			8'hb6: fp8_sigmoid = 8'h29;
+			8'hb3, 8'hb4, 8'hb5: fp8_sigmoid = 8'h2a;
+			8'hb2: fp8_sigmoid = 8'h2b;
+			8'hae, 8'haf, 8'hb0, 8'hb1: fp8_sigmoid = 8'h2c;
+			8'hab, 8'hac, 8'had: fp8_sigmoid = 8'h2d;
+			8'ha4, 8'ha5, 8'ha6, 8'ha7, 8'ha8, 8'ha9, 8'haa: fp8_sigmoid = 8'h2e;
+			8'h99, 8'h9a, 8'h9b, 8'h9c, 8'h9d, 8'h9e, 8'h9f, 8'ha0, 8'ha1, 8'ha2, 8'ha3: fp8_sigmoid = 8'h2f;
+			8'h00, 8'h01, 8'h02, 8'h03, 8'h04, 8'h05, 8'h06, 8'h07, 8'h08, 8'h09, 8'h0a, 8'h0b, 8'h0c, 8'h0d, 8'h0e, 8'h0f, 8'h10, 8'h11, 8'h12, 8'h13, 8'h14, 8'h15, 8'h16, 8'h17, 8'h18, 8'h19, 8'h1a, 8'h1b, 8'h1c, 8'h1d, 8'h1e, 8'h1f, 8'h20, 8'h80, 8'h81, 8'h82, 8'h83, 8'h84, 8'h85, 8'h86, 8'h87, 8'h88, 8'h89, 8'h8a, 8'h8b, 8'h8c, 8'h8d, 8'h8e, 8'h8f, 8'h90, 8'h91, 8'h92, 8'h93, 8'h94, 8'h95, 8'h96, 8'h97, 8'h98: fp8_sigmoid = 8'h30;
+			8'h21, 8'h22, 8'h23, 8'h24, 8'h25, 8'h26, 8'h27, 8'h28, 8'h29, 8'h2a, 8'h2b: fp8_sigmoid = 8'h31;
+			8'h2c, 8'h2d, 8'h2e, 8'h2f, 8'h30, 8'h31, 8'h32: fp8_sigmoid = 8'h32;
+			8'h33, 8'h34, 8'h35: fp8_sigmoid = 8'h33;
+			8'h36, 8'h37, 8'h38, 8'h39: fp8_sigmoid = 8'h34;
+			8'h3a: fp8_sigmoid = 8'h35;
+			8'h3b, 8'h3c, 8'h3d: fp8_sigmoid = 8'h36;
+			8'h3e: fp8_sigmoid = 8'h37;
+			8'h3f, 8'h40, 8'h41, 8'h42, 8'h43, 8'h44, 8'h45, 8'h46, 8'h47, 8'h48, 8'h49, 8'h4a, 8'h4b, 8'h4c, 8'h4d, 8'h4e, 8'h4f, 8'h50, 8'h51, 8'h52, 8'h53, 8'h54, 8'h55, 8'h56, 8'h57, 8'h58, 8'h59, 8'h5a, 8'h5b, 8'h5c, 8'h5d, 8'h5e, 8'h5f, 8'h60, 8'h61, 8'h62, 8'h63, 8'h64, 8'h65, 8'h66, 8'h67, 8'h68, 8'h69, 8'h6a, 8'h6b, 8'h6c, 8'h6d, 8'h6e, 8'h6f, 8'h70, 8'h71, 8'h72, 8'h73, 8'h74, 8'h75, 8'h76, 8'h77, 8'h78, 8'h79, 8'h7a, 8'h7b, 8'h7c, 8'h7d, 8'h7e: fp8_sigmoid = 8'h38;
+			8'h7f, 8'hff: fp8_sigmoid = 8'h7f;
+			default: fp8_sigmoid = FP8_QNAN;
+		endcase
 	endfunction
 	function automatic [7:0] fp8_tanh;
 		input reg [7:0] x;
@@ -1505,24 +1355,40 @@ module act (
 			end
 		end
 	endfunction
+	reg second_lane;
+	reg [7:0] saved_input;
+	reg [2:0] saved_op;
+	wire [7:0] x = (second_lane ? saved_input : vpu_res_in[0+:8]);
+	wire [2:0] operation = (second_lane ? saved_op : act_op_in);
+	reg [7:0] result;
+	always @(*)
+		case (operation)
+			3'd1: result = (fp8_is_nan(x[6:0]) ? FP8_QNAN : (x[7] ? FP8_ZERO : x));
+			3'd2: result = fp8_sigmoid(x);
+			3'd3: result = fp8_tanh(x);
+			3'd4: result = (fp8_is_nan(x[6:0]) ? FP8_QNAN : (!x[7] && (x[6:0] != 0) ? 8'h38 : FP8_ZERO));
+			default: result = x;
+		endcase
 	always @(posedge clk)
 		if (!rst_n) begin
+			second_lane <= 0;
+			saved_input <= 0;
+			saved_op <= 0;
 			act_res_out <= 0;
 			act_res_out_val <= 0;
 		end
 		else begin
-			act_res_out_val <= vpu_res_in_val;
-			if (vpu_res_in_val) begin : sv2v_autoblock_3
-				integer lane;
-				for (lane = 0; lane < 2; lane = lane + 1)
-					case (act_op_in)
-						3'd0: act_res_out[lane * 8+:8] <= vpu_res_in[lane * 8+:8];
-						3'd1: act_res_out[lane * 8+:8] <= (fp8_is_nan(vpu_res_in[lane * 8+:7]) ? FP8_QNAN : (vpu_res_in[((lane + 1) * 8) - 1] ? FP8_ZERO : vpu_res_in[lane * 8+:8]));
-						3'd2: act_res_out[lane * 8+:8] <= fp8_sigmoid(vpu_res_in[lane * 8+:8]);
-						3'd4: act_res_out[lane * 8+:8] <= (fp8_is_nan(vpu_res_in[lane * 8+:7]) ? FP8_QNAN : (!vpu_res_in[((lane + 1) * 8) - 1] && (vpu_res_in[lane * 8+:7] != 0) ? 8'h38 : FP8_ZERO));
-						3'd3: act_res_out[lane * 8+:8] <= fp8_tanh(vpu_res_in[lane * 8+:8]);
-						default: act_res_out[lane * 8+:8] <= vpu_res_in[lane * 8+:8];
-					endcase
+			act_res_out_val <= 0;
+			if (second_lane) begin
+				act_res_out[8+:8] <= result;
+				act_res_out_val <= 1;
+				second_lane <= 0;
+			end
+			else if (vpu_res_in_val) begin
+				act_res_out[0+:8] <= result;
+				saved_input <= vpu_res_in[8+:8];
+				saved_op <= act_op_in;
+				second_lane <= 1;
 			end
 		end
 endmodule
@@ -1555,12 +1421,12 @@ module mem_itf (
 	input [24:0] src_addr;
 	input [24:0] dst_addr;
 	input [15:0] write_data;
-	output reg [15:0] read_data;
+	output wire [15:0] read_data;
 	output reg read_data_val;
 	output reg qspi_req_val;
 	input qspi_req_rdy;
 	output reg qspi_req_write;
-	output reg [24:0] qspi_req_addr;
+	output wire [24:0] qspi_req_addr;
 	output reg [15:0] qspi_req_data;
 	input [15:0] qspi_read_data;
 	input qspi_read_data_val;
@@ -1569,7 +1435,8 @@ module mem_itf (
 	localparam [1:0] WAIT = 2'd2;
 	reg [1:0] state;
 	reg copy_pending;
-	reg [24:0] copy_dst_addr;
+	assign qspi_req_addr = (qspi_req_write ? dst_addr : src_addr);
+	assign read_data = qspi_read_data;
 	always @(*) begin
 		rdy = state == IDLE;
 		qspi_req_val = rst_n && (state == SEND);
@@ -1578,11 +1445,8 @@ module mem_itf (
 		if (!rst_n) begin
 			state <= IDLE;
 			copy_pending <= 0;
-			copy_dst_addr <= 0;
 			qspi_req_write <= 0;
-			qspi_req_addr <= 0;
 			qspi_req_data <= 0;
-			read_data <= 0;
 			read_data_val <= 0;
 		end
 		else begin
@@ -1591,10 +1455,8 @@ module mem_itf (
 				IDLE:
 					if ((read_en || write_en) || copy_en) begin
 						qspi_req_write <= write_en;
-						qspi_req_addr <= (write_en ? dst_addr : src_addr);
 						qspi_req_data <= write_data;
 						copy_pending <= copy_en;
-						copy_dst_addr <= dst_addr;
 						state <= SEND;
 					end
 				SEND:
@@ -1604,16 +1466,13 @@ module mem_itf (
 					if (qspi_read_data_val) begin
 						if (copy_pending) begin
 							qspi_req_write <= 1;
-							qspi_req_addr <= copy_dst_addr;
 							qspi_req_data <= qspi_read_data;
 							copy_pending <= 0;
 							state <= SEND;
 						end
 						else begin
-							if (!qspi_req_write) begin
-								read_data <= qspi_read_data;
+							if (!qspi_req_write)
 								read_data_val <= 1;
-							end
 							state <= IDLE;
 						end
 					end
@@ -1646,7 +1505,7 @@ module qspi_ctrl (
 	input req_write;
 	input [24:0] req_addr;
 	input [15:0] req_data;
-	output reg [15:0] read_data;
+	output wire [15:0] read_data;
 	output reg read_data_val;
 	output reg sck;
 	output reg flash_sc_n;
@@ -1672,14 +1531,15 @@ module qspi_ctrl (
 	reg [3:0] state;
 	reg [2:0] operation;
 	reg [1:0] chip;
-	reg [23:0] addr_shift;
 	reg write_reg;
-	reg [7:0] cmd_shift;
 	reg [15:0] data_shift;
 	reg [1:0] status_shift;
 	reg [4:0] cycles_left;
+	assign read_data = {data_shift[7:0], data_shift[15:8]};
 	wire is_ram = chip[1];
 	wire [7:0] memory_opcode = (is_ram ? (write_reg ? 8'h02 : 8'h0b) : (write_reg ? 8'h32 : 8'h6b));
+	wire [23:0] address = (is_ram ? {1'b0, req_addr[22:0]} : req_addr[23:0]);
+	wire [7:0] command = (operation == MEMORY ? memory_opcode : (operation == WRITE_ENABLE ? 8'h06 : 8'h05));
 	assign req_rdy = (rst_n && (state == IDLE)) && !req_addr[0];
 	always @(*) begin
 		dq_out = 4'b1100;
@@ -1687,20 +1547,20 @@ module qspi_ctrl (
 		case (state)
 			CMD:
 				if (is_ram) begin
-					dq_out = cmd_shift[7:4];
+					dq_out = (cycles_left[0] ? command[7:4] : command[3:0]);
 					dq_oe = 4'b1111;
 				end
 				else begin
-					dq_out[0] = cmd_shift[7];
+					dq_out[0] = command[cycles_left[2:0]];
 					dq_oe = 4'b1101;
 				end
 			ADDR:
 				if (is_ram) begin
-					dq_out = addr_shift[23:20];
+					dq_out = address[{cycles_left[2:0], 2'b00}+:4];
 					dq_oe = 4'b1111;
 				end
 				else begin
-					dq_out[0] = addr_shift[23];
+					dq_out[0] = address[cycles_left];
 					dq_oe = 4'b1101;
 				end
 			DATA:
@@ -1718,13 +1578,10 @@ module qspi_ctrl (
 			state <= IDLE;
 			operation <= MEMORY;
 			chip <= 0;
-			addr_shift <= 0;
 			write_reg <= 0;
-			cmd_shift <= 0;
 			data_shift <= 0;
 			status_shift <= 0;
 			cycles_left <= 0;
-			read_data <= 0;
 			read_data_val <= 0;
 			sck <= 0;
 			flash_sc_n <= 1;
@@ -1737,7 +1594,6 @@ module qspi_ctrl (
 				IDLE:
 					if (req_val && req_rdy) begin
 						chip <= req_addr[24:23];
-						addr_shift <= (req_addr[24] ? {1'b0, req_addr[22:0]} : req_addr[23:0]);
 						write_reg <= req_write;
 						data_shift <= {req_data[7:0], req_data[15:8]};
 						operation <= (req_addr[24] ? MEMORY : WAIT_READY);
@@ -1748,10 +1604,6 @@ module qspi_ctrl (
 					psram_a_sc_n <= chip != 2'b10;
 					psram_b_sc_n <= chip != 2'b11;
 					sck <= 0;
-					if (operation == MEMORY)
-						cmd_shift <= memory_opcode;
-					else
-						cmd_shift <= (operation == WRITE_ENABLE ? 8'h06 : 8'h05);
 					cycles_left <= (is_ram ? 1 : 7);
 					state <= CMD;
 				end
@@ -1766,8 +1618,6 @@ module qspi_ctrl (
 					else if (cycles_left != 0) begin
 						cycles_left <= cycles_left - 1'b1;
 						case (state)
-							CMD: cmd_shift <= cmd_shift << (is_ram ? 4 : 1);
-							ADDR: addr_shift <= addr_shift << (is_ram ? 4 : 1);
 							DATA:
 								if (write_reg)
 									data_shift <= {data_shift[11:0], 4'b0000};
@@ -1801,11 +1651,7 @@ module qspi_ctrl (
 								cycles_left <= 3;
 								state <= DATA;
 							end
-							DATA: begin
-								if (!write_reg)
-									read_data <= {data_shift[7:0], data_shift[15:8]};
-								state <= DESELECT;
-							end
+							DATA: state <= DESELECT;
 							STATUS: state <= DESELECT;
 							default: state <= DESELECT;
 						endcase

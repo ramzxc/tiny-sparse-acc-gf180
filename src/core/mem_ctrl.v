@@ -39,10 +39,11 @@ module mem_ctrl (
     reg force_weight;
 
     wire [2:0] incoming_command = mem_inst_in[`MEM_INST_OP_MSB:`MEM_INST_OP_LSB];
-    wire [`MEM_ADDR_WIDTH-1:0] address = mem_inst_in[`MEM_ADDR_WIDTH-1:0];
+    wire [12:0] address_part = mem_inst_in[12:0];
     wire load_vpu = rst_n && (state == WAIT) &&
         (command == `MEM_CMD_SRAM_TO_VPU) && read_data_val;
 
+    // SRC/DST are retained throughout SEND/WAIT: mem_itf uses them directly.
     // HIGH only after the complete operation, including VPU operand capture.
     assign mem_rdy = (state == IDLE);
     assign write_data = act_res_in;
@@ -85,8 +86,10 @@ module mem_ctrl (
                 IDLE: begin
                     if (mem_inst_in_val) begin
                         case (incoming_command)
-                            `MEM_CMD_SET_SRC: src_addr <= address;
-                            `MEM_CMD_SET_DST: dst_addr <= address;
+                            `MEM_CMD_SET_SRC_LO: src_addr[12:0] <= address_part;
+                            `MEM_CMD_SET_SRC_HI: src_addr[24:13] <= address_part[11:0];
+                            `MEM_CMD_SET_DST_LO: dst_addr[12:0] <= address_part;
+                            `MEM_CMD_SET_DST_HI: dst_addr[24:13] <= address_part[11:0];
                             `MEM_CMD_FLASH_TO_SRAM, `MEM_CMD_SRAM_TO_FLASH,
                             `MEM_CMD_SRAM_TO_VPU, `MEM_CMD_ACT_TO_SRAM: begin
                                 command <= incoming_command;

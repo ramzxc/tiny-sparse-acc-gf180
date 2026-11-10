@@ -34,6 +34,7 @@ module micro_ctrl (
         SET_OUTPUT = 15, STORE = 16, STORE_SYNC = 17, NEXT_TILE = 18, VALIDATE = 19;
 
     reg [4:0] state;
+    reg address_high;
     reg [`MICRO_DIM_WIDTH-1:0] rows, cols, column, vectors, vector_index, validate_left;
     reg [`MICRO_DIM_WIDTH:0] row, column_stride, input_stride;
     reg [`MEM_ADDR_WIDTH-1:0] input_base, input_addr, output_addr, weight_tile, weight_base;
@@ -93,35 +94,41 @@ module micro_ctrl (
     assign inst_in_rdy = rst_n && state == IDLE;
 
     always @(*) begin
-        inst_out = {`INST_NOP, 25'b0};
+        inst_out = {`INST_NOP, 9'b0};
         inst_out_val = rst_n;
         case (state)
-            CLEAR:       inst_out = {`ACC_CLEAR, 25'b0};
-            CLEAR_SYNC:  inst_out = {`EXE_SYNC, 25'b0};
-            SET_INPUT:   inst_out = {`SET_SRC, input_addr[`MEM_ADDR_WIDTH-1:1], 1'b0};
-            LOAD_INPUT:  inst_out = {`SRAM_TO_VPU, 23'b0, input_addr[0], !elementwise};
-            INPUT_SYNC:  inst_out = {`MEM_SYNC, 25'b0};
+            CLEAR:       inst_out = {`ACC_CLEAR, 9'b0};
+            CLEAR_SYNC:  inst_out = {`EXE_SYNC, 9'b0};
+            SET_INPUT: inst_out = address_high
+                ? {`SET_SRC_HI, 1'b0, input_addr[24:13]}
+                : {`SET_SRC_LO, input_addr[12:1], 1'b0};
+            LOAD_INPUT:  inst_out = {`SRAM_TO_VPU, 7'b0, input_addr[0], !elementwise};
+            INPUT_SYNC:  inst_out = {`MEM_SYNC, 9'b0};
             SET_WEIGHT: begin
-                inst_out = {`SET_SRC, weight_addr[`MEM_ADDR_WIDTH-1:0]};
+                inst_out = address_high
+                    ? {`SET_SRC_HI, 1'b0, weight_addr[24:13]}
+                    : {`SET_SRC_LO, weight_addr[12:0]};
                 inst_out_val = rst_n && valid_weight_addr;
             end
-            LOAD_WEIGHT: inst_out = {`SRAM_TO_VPU, 22'b0, elementwise, 2'b0};
-            WEIGHT_SYNC: inst_out = {`MEM_SYNC, 25'b0};
+            LOAD_WEIGHT: inst_out = {`SRAM_TO_VPU, 6'b0, elementwise, 2'b0};
+            WEIGHT_SYNC: inst_out = {`MEM_SYNC, 9'b0};
             MAC: begin
                 if (elementwise && vector_op == `VEC_PASS)
-                    inst_out = {`VECTOR_PASS, 25'b0};
+                    inst_out = {`VECTOR_PASS, 9'b0};
                 else
-                    inst_out = {`EXECUTE, 18'b0,
+                    inst_out = {`EXECUTE, 2'b0,
                         (elementwise && sparse_en && vector_op == `VEC_MUL),
                         `ACT_NONE, !elementwise,
                         (elementwise ? ((vector_op == `VEC_SUB) ? `EXE_OP_RSUB : vector_op) : `EXE_OP_MUL)};
             end
-            MAC_SYNC:    inst_out = {`EXE_SYNC, 25'b0};
-            APPLY_ACT:   inst_out = {`ACTIVATE, 19'b0, act_op, 3'b0};
-            ACT_SYNC:    inst_out = {`EXE_SYNC, 25'b0};
-            SET_OUTPUT:  inst_out = {`SET_DST, output_addr};
-            STORE:       inst_out = {`ACT_TO_SRAM, 25'b0};
-            STORE_SYNC:  inst_out = {`MEM_SYNC, 25'b0};
+            MAC_SYNC:    inst_out = {`EXE_SYNC, 9'b0};
+            APPLY_ACT:   inst_out = {`ACTIVATE, 3'b0, act_op, 3'b0};
+            ACT_SYNC:    inst_out = {`EXE_SYNC, 9'b0};
+            SET_OUTPUT: inst_out = address_high
+                ? {`SET_DST_HI, 1'b0, output_addr[24:13]}
+                : {`SET_DST_LO, output_addr[12:0]};
+            STORE:       inst_out = {`ACT_TO_SRAM, 9'b0};
+            STORE_SYNC:  inst_out = {`MEM_SYNC, 9'b0};
             default:     inst_out_val = 0;
         endcase
     end
@@ -129,6 +136,7 @@ module micro_ctrl (
     always @(posedge clk) begin
         if (!rst_n) begin
             state <= IDLE;
+            address_high <= 0;
             rows <= 0; cols <= 0; column <= 0;
             vectors <= 0; vector_index <= 0; validate_left <= 0;
             input_stride <= 0; input_end <= 0; output_end <= 0; weight_base <= 0;
@@ -141,6 +149,8 @@ module micro_ctrl (
             done <= 0; error <= 0;
         end else begin
             done <= 0;
+            if (accepted && (state == SET_INPUT || state == SET_WEIGHT || state == SET_OUTPUT))
+                address_high <= !address_high;
 
             if (state == INPUT_SYNC && input_data_val) begin
                 input_seen <= 1;
@@ -189,7 +199,7 @@ module micro_ctrl (
                 end
                 CLEAR: if (accepted) state <= CLEAR_SYNC;
                 CLEAR_SYNC: if (accepted) state <= SET_INPUT;
-                SET_INPUT: if (accepted) state <= LOAD_INPUT;
+                SET_INPUT: if (accepted && address_high) state <= LOAD_INPUT;
                 LOAD_INPUT: if (accepted) begin
                     input_seen <= 0;
                     state <= INPUT_SYNC;
@@ -207,7 +217,7 @@ module micro_ctrl (
                     if (!valid_weight_addr) begin
                         // Earlier output tiles may already have been stored.
                         error <= 1; done <= 1; state <= IDLE;
-                    end else if (accepted) state <= LOAD_WEIGHT;
+                    end else if (accepted && address_high) state <= LOAD_WEIGHT;
                 end
                 LOAD_WEIGHT: if (accepted) state <= WEIGHT_SYNC;
                 WEIGHT_SYNC: if (accepted) state <= MAC;
@@ -238,7 +248,7 @@ module micro_ctrl (
                 end
                 APPLY_ACT: if (accepted) state <= ACT_SYNC;
                 ACT_SYNC: if (accepted) state <= SET_OUTPUT;
-                SET_OUTPUT: if (accepted) state <= STORE;
+                SET_OUTPUT: if (accepted && address_high) state <= STORE;
                 STORE: if (accepted) state <= STORE_SYNC;
                 STORE_SYNC: if (accepted) state <= NEXT_TILE;
                 NEXT_TILE: begin

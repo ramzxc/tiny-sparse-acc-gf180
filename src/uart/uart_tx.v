@@ -15,7 +15,6 @@ module uart_tx #(
 
     localparam [TIMER_BITS-1:0] BIT_LAST = TIMER_BITS'(CLKS_PER_BIT - 1);
 
-    reg [`DATA_WIDTH+1:0] data_reg;
     reg [TIMER_BITS-1:0] clk_cnt;
     reg [$clog2(`DATA_WIDTH+2)-1:0] bit_idx;
 
@@ -25,14 +24,15 @@ module uart_tx #(
     reg state;
     reg ready_sent; // Send once per HIGH request; a LOW cycle re-arms TX.
 
-    assign tx = (state == DATA) ? data_reg[bit_idx] : 1'b1;
+    // The only frame is READY (0x01): start=0, bit 0=1, bits 1..7=0, stop=1.
+    // Decode the two HIGH positions instead of storing a constant frame.
+    assign tx = (state != DATA) || (bit_idx == 1) || (bit_idx == `DATA_WIDTH+1);
 
     always @(posedge clk) begin
         if (!rst_n) begin
             state <= IDLE;
             clk_cnt <= 0;
             bit_idx <= 0;
-            data_reg <= 0;
             ready_sent <= 0;
         end
         else begin
@@ -42,7 +42,6 @@ module uart_tx #(
             case(state)
                 IDLE: begin
                     if (inst_fifo_rdy && !ready_sent) begin
-                        data_reg <= {1'b1, 8'h01, 1'b0};
                         ready_sent <= 1'b1;
                         bit_idx <= 0;
                         state <= DATA;

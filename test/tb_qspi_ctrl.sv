@@ -78,8 +78,7 @@ module tb_qspi_ctrl #(
             @(posedge clk);
             @(negedge clk);
             req_val = 0;
-            // Inputs need not remain stable after acceptance.
-            req_addr = 25'h1fffffe;
+            // Address stays stable through completion; data/control may change.
             req_data = ~value;
             req_write = !wr;
             timeout_count = 0;
@@ -93,6 +92,15 @@ module tb_qspi_ctrl #(
                 $fatal(1, "Read %h: expected %h got %h", addr, value, read_data);
             if (!addr[24] && wr && flash.busy)
                 $fatal(1, "Flash read_data_val before program completion");
+            if (!wr) begin
+                // The shared shift register must retain the read response
+                // while idle, even if request inputs change without acceptance.
+                repeat(3) begin
+                    @(negedge clk);
+                    req_data = ~req_data;
+                    if (read_data !== value) $fatal(1,"Read response changed before next request");
+                end
+            end
         end
     endtask
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 cd "$(dirname "$0")/.."
-for test in inst_fifo decoder act vpu_mac mem_ctrl micro_ctrl uart_matvec uart_microcode; do
+for test in inst_fifo decoder act fp8_math vpu_mac qspi_ctrl mem_itf mem_ctrl micro_ctrl uart_matvec uart_microcode; do
     bash "test/run_${test}.sh"
 done
 build_dir=$(mktemp -d /tmp/tt-checkpoint.XXXXXX)
