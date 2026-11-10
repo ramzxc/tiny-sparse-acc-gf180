@@ -38,13 +38,14 @@ module tt_um_tiny_sparse_acc_ramzxc (
 	wire [24:0] dst_addr;
 	wire [15:0] read_data;
 	wire [15:0] write_data;
-	wire [63:0] rx_inst;
-	wire [63:0] host_inst;
+	localparam HOST_WIDTH = 32;
+	wire [31:0] rx_inst;
+	wire [31:0] host_inst;
 	wire rx_inst_val;
 	wire host_inst_val;
 	wire fifo_rdy;
 	wire host_rdy;
-	uart_rx receiver(
+	uart_rx #(.WORD_WIDTH(HOST_WIDTH)) receiver(
 		.clk(clk),
 		.rst_n(internal_rst_n),
 		.rx(rx),
@@ -57,7 +58,7 @@ module tt_um_tiny_sparse_acc_ramzxc (
 		.inst_fifo_rdy(fifo_rdy),
 		.tx(tx)
 	);
-	inst_fifo fifo(
+	inst_fifo #(.WORD_WIDTH(HOST_WIDTH)) fifo(
 		.clk(clk),
 		.rst_n(internal_rst_n),
 		.inst(rx_inst),
@@ -93,20 +94,11 @@ module tt_um_tiny_sparse_acc_ramzxc (
 			exe_active <= 1;
 		else if (act_result_val)
 			exe_active <= 0;
-	micro_ctrl sequencer(
-		.clk(clk),
-		.rst_n(internal_rst_n),
-		.inst_in(host_inst),
-		.inst_in_val(host_inst_val),
-		.inst_in_rdy(host_rdy),
-		.done(done),
-		.error(error),
-		.inst_out(inst),
-		.inst_out_val(inst_val),
-		.inst_out_rdy(core_rdy),
-		.input_is_zero((input_data[6:0] == 0) && (input_data[14:8] == 0)),
-		.input_data_val(input_data_val)
-	);
+	assign inst = host_inst;
+	assign inst_val = host_inst_val;
+	assign host_rdy = core_rdy;
+	assign done = 1'b0;
+	assign error = 1'b0;
 	decoder decode(
 		.rst_n(internal_rst_n),
 		.inst_in(inst),

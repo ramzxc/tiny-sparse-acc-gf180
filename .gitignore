@@ -14,3 +14,7 @@ test/gate_level_netlist.v
 
 # Local migration diagnostics
 test/output/
+
+# Local Design Compiler results
+syn/runs/
+syn/LATEST_*

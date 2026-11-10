@@ -35,11 +35,16 @@ module tt_um_tiny_sparse_acc_ramzxc (
     wire mem_itf_rdy,read_en,write_en,copy_en,read_data_val;
     wire [24:0] src_addr,dst_addr;
     wire [15:0] read_data,write_data;
-    wire [63:0] rx_inst,host_inst;
+`ifdef TT_DIRECT_UCODE
+    localparam HOST_WIDTH = `INST_WIDTH;
+`else
+    localparam HOST_WIDTH = `HOST_INST_WIDTH;
+`endif
+    wire [HOST_WIDTH-1:0] rx_inst,host_inst;
     wire rx_inst_val,host_inst_val,fifo_rdy,host_rdy;
-    uart_rx receiver (.clk(clk),.rst_n(internal_rst_n),.rx(rx),.inst(rx_inst),.inst_val(rx_inst_val));
+    uart_rx #(.WORD_WIDTH(HOST_WIDTH)) receiver (.clk(clk),.rst_n(internal_rst_n),.rx(rx),.inst(rx_inst),.inst_val(rx_inst_val));
     uart_tx transmitter (.clk(clk),.rst_n(internal_rst_n),.inst_fifo_rdy(fifo_rdy),.tx(tx));
-    inst_fifo fifo (.clk(clk),.rst_n(internal_rst_n),.inst(rx_inst),.inst_val(rx_inst_val),
+    inst_fifo #(.WORD_WIDTH(HOST_WIDTH)) fifo (.clk(clk),.rst_n(internal_rst_n),.inst(rx_inst),.inst_val(rx_inst_val),
         .fifo_rdy(fifo_rdy),.core_rdy(host_rdy),.inst_out(host_inst),.inst_out_val(host_inst_val));
     wire [`INST_WIDTH-1:0] inst;
     wire inst_val, core_rdy, mem_rdy;
@@ -63,6 +68,15 @@ module tt_um_tiny_sparse_acc_ramzxc (
             exe_active <= 0;
     end
 
+`ifdef TT_DIRECT_UCODE
+    // PC supplies the 32-bit internal ISA, including EXE_SYNC/MEM_SYNC.
+    assign inst = host_inst;
+    assign inst_val = host_inst_val;
+    assign host_rdy = core_rdy;
+    // No high-level job boundary or job-format error exists in this mode.
+    assign done = 1'b0;
+    assign error = 1'b0;
+`else
     micro_ctrl sequencer (
         .clk(clk), .rst_n(internal_rst_n), .inst_in(host_inst),
         .inst_in_val(host_inst_val), .inst_in_rdy(host_rdy),
@@ -70,6 +84,8 @@ module tt_um_tiny_sparse_acc_ramzxc (
         .inst_out(inst), .inst_out_val(inst_val), .inst_out_rdy(core_rdy),
         .input_is_zero(input_data[6:0] == 0 && input_data[14:8] == 0), .input_data_val(input_data_val)
     );
+
+`endif
 
     decoder decode (
         .rst_n(internal_rst_n), .inst_in(inst), .inst_in_val(inst_val), .core_rdy(core_rdy),

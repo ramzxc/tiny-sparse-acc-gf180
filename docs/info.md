@@ -1,3 +1,22 @@
+## Current build variant
+
+The Actions build currently selects `direct` in src/build_mode.txt. UART accepts
+four little-endian bytes per READY credit, carrying the internal 32-bit ISA:
+[31:25] opcode, [24:0] payload (src/defs/inst_defs.vh). micro_ctrl is omitted.
+The host supplies address setup, transfers, execution and EXE_SYNC/MEM_SYNC.
+Done/error outputs are tied low because this mode has no high-level job boundary.
+VPU, activation and PSRAM operations are retained. Sparse weight-fetch skipping
+and matrix loops must be managed by the host. Low-level Flash transfers are also
+reachable through the internal ISA.
+
+Set src/build_mode.txt to `micro` and regenerate Verilog to restore the 64-bit
+job interface described below. `bash syn/run_synth.sh micro` and
+`bash syn/run_synth.sh direct` independently select the DC comparison variant;
+`--check` validates paths without running DC. Reports are written under
+syn/runs/<variant>/<run>/reports, including module_area.csv and area.rpt.
+The DC constraints retain the earlier board-delay assumptions and are not
+external-memory timing signoff. GF180_STD_DB overrides the local library path.
+
 ## How it works
 
 Two-lane FP8 E4M3FN accelerator with external QSPI PSRAM and 64-bit UART jobs.

@@ -16,6 +16,9 @@ PROJECT_SOURCES = $(shell cat $(SRC_DIR)/sources.f)
 ifneq ($(GATES),yes)
 
 # RTL simulation:
+ifeq ($(shell cat $(SRC_DIR)/build_mode.txt),direct)
+COMPILE_ARGS += -DTT_DIRECT_UCODE
+endif
 COMPILE_ARGS += --timing --assert -Wno-fatal
 VERILATOR_TRACE = 1
 SIM_BUILD				= sim_build/rtl
