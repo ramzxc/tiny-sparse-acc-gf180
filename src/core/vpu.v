@@ -27,11 +27,31 @@ module vpu (
     reg [`DATA_WIDTH*`COMPUTE_WIDTH-1:0] weights;
     reg [`DATA_WIDTH*`COMPUTE_WIDTH-1:0] inputs;
 
-    wire [`EXE_OP_MSB-`EXE_OP_LSB:0] operation = exe_inst_in[`EXE_OP_MSB:`EXE_OP_LSB];
-    wire [`EXE_MODE_MSB-`EXE_MODE_LSB:0] mode =
-        exe_inst_in[`EXE_MODE_MSB:`EXE_MODE_LSB];
+    wire [1:0] operation = exe_inst_in[`EXE_OP_MSB:`EXE_OP_LSB];
+    wire [1:0] mode = exe_inst_in[`EXE_MODE_MSB:`EXE_MODE_LSB];
     wire accumulate = exe_inst_in[`EXE_ACC_BIT];
     wire sparse_mul = exe_inst_in[`EXE_SPARSE_BIT] && operation == `EXE_OP_MUL;
+    wire [`DATA_WIDTH*`COMPUTE_WIDTH-1:0] mac_result;
+
+    // Two combinational MAC lanes: one multiplier and one shared adder per lane.
+    // ADD/SUB select operands at the adder input; only MUL can accumulate.
+    for (genvar lane = 0; lane < `COMPUTE_WIDTH; lane = lane + 1) begin : mac
+        wire [`DATA_WIDTH-1:0] x = inputs[lane*`DATA_WIDTH +: `DATA_WIDTH];
+        wire [`DATA_WIDTH-1:0] w = weights[lane*`DATA_WIDTH +: `DATA_WIDTH];
+        wire [`DATA_WIDTH-1:0] sum = vpu_res_out[lane*`DATA_WIDTH +: `DATA_WIDTH];
+        wire multiply = operation == `EXE_OP_MUL;
+        wire reverse_sub = operation == `EXE_OP_RSUB;
+        wire subtract = operation == `EXE_OP_SUB || reverse_sub;
+        wire [`DATA_WIDTH-1:0] product = fp8_mul(x, w);
+        wire [`DATA_WIDTH-1:0] add_a = multiply ? product : (reverse_sub ? w : x);
+        wire [`DATA_WIDTH-1:0] operand_b = reverse_sub ? x : w;
+        wire [`DATA_WIDTH-1:0] add_b = multiply ? sum :
+            {operand_b[`DATA_WIDTH-1] ^ subtract, operand_b[`DATA_WIDTH-2:0]};
+        wire [`DATA_WIDTH-1:0] added = fp8_add(add_a, add_b);
+        // Bypass addition for plain MUL to preserve signed zero.
+        assign mac_result[lane*`DATA_WIDTH +: `DATA_WIDTH] =
+            multiply && !accumulate ? product : added;
+    end
 
     always @(posedge clk) begin
         if (!rst_n) begin
@@ -62,55 +82,14 @@ module vpu (
                 act_op_out <= exe_inst_in[`EXE_ACT_MSB:`EXE_ACT_LSB];
                 vpu_res_out_val <= 1;
             end else if (exe_inst_in_val && mode == `EXE_MODE_COMPUTE) begin
-                // Store the result directly; the RHS uses the previous sum.
                 for (integer lane = 0; lane < `COMPUTE_WIDTH; lane = lane + 1) begin
                     if (sparse_mul && inputs[lane*`DATA_WIDTH +: 7] == 0) begin
-                        // Sparse B zero suppresses even a NaN weight in this lane.
                         if (!accumulate)
                             vpu_res_out[lane*`DATA_WIDTH +: `DATA_WIDTH] <= FP8_ZERO;
-                    end else case (operation)
-                        `EXE_OP_ADD:
-                            vpu_res_out[lane*`DATA_WIDTH +: `DATA_WIDTH] <= accumulate
-                                ? fp8_add(fp8_add(
-                                    inputs[lane*`DATA_WIDTH +: `DATA_WIDTH],
-                                    weights[lane*`DATA_WIDTH +: `DATA_WIDTH]),
-                                    vpu_res_out[lane*`DATA_WIDTH +: `DATA_WIDTH])
-                                : fp8_add(
-                                    inputs[lane*`DATA_WIDTH +: `DATA_WIDTH],
-                                    weights[lane*`DATA_WIDTH +: `DATA_WIDTH]);
-
-                        `EXE_OP_SUB:
-                            vpu_res_out[lane*`DATA_WIDTH +: `DATA_WIDTH] <= accumulate
-                                ? fp8_add(fp8_add(
-                                    inputs[lane*`DATA_WIDTH +: `DATA_WIDTH],
-                                    weights[lane*`DATA_WIDTH +: `DATA_WIDTH] ^ 8'h80),
-                                    vpu_res_out[lane*`DATA_WIDTH +: `DATA_WIDTH])
-                                : fp8_add(
-                                    inputs[lane*`DATA_WIDTH +: `DATA_WIDTH],
-                                    weights[lane*`DATA_WIDTH +: `DATA_WIDTH] ^ 8'h80);
-
-                        `EXE_OP_MUL:
-                            vpu_res_out[lane*`DATA_WIDTH +: `DATA_WIDTH] <= accumulate
-                                ? fp8_add(fp8_mul(
-                                    inputs[lane*`DATA_WIDTH +: `DATA_WIDTH],
-                                    weights[lane*`DATA_WIDTH +: `DATA_WIDTH]),
-                                    vpu_res_out[lane*`DATA_WIDTH +: `DATA_WIDTH])
-                                : fp8_mul(
-                                    inputs[lane*`DATA_WIDTH +: `DATA_WIDTH],
-                                    weights[lane*`DATA_WIDTH +: `DATA_WIDTH]);
-
-                        `EXE_OP_RSUB:
-                            vpu_res_out[lane*`DATA_WIDTH +: `DATA_WIDTH] <= accumulate
-                                ? fp8_add(fp8_add(
-                                    weights[lane*`DATA_WIDTH +: `DATA_WIDTH],
-                                    inputs[lane*`DATA_WIDTH +: `DATA_WIDTH] ^ 8'h80),
-                                    vpu_res_out[lane*`DATA_WIDTH +: `DATA_WIDTH])
-                                : fp8_add(
-                                    weights[lane*`DATA_WIDTH +: `DATA_WIDTH],
-                                    inputs[lane*`DATA_WIDTH +: `DATA_WIDTH] ^ 8'h80);
-
-                        default: begin end
-                    endcase
+                    end else begin
+                        vpu_res_out[lane*`DATA_WIDTH +: `DATA_WIDTH] <=
+                            mac_result[lane*`DATA_WIDTH +: `DATA_WIDTH];
+                    end
                 end
                 act_op_out <= exe_inst_in[`EXE_ACT_MSB:`EXE_ACT_LSB];
                 vpu_res_out_val <= 1;

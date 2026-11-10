@@ -1166,6 +1166,25 @@ module vpu (
 	wire [1:0] mode = exe_inst_in[8:7];
 	wire accumulate = exe_inst_in[2];
 	wire sparse_mul = exe_inst_in[6] && (operation == 2'd2);
+	wire [15:0] mac_result;
+	genvar _gv_lane_1;
+	generate
+		for (_gv_lane_1 = 0; _gv_lane_1 < 2; _gv_lane_1 = _gv_lane_1 + 1) begin : mac
+			localparam lane = _gv_lane_1;
+			wire [7:0] x = inputs[lane * 8+:8];
+			wire [7:0] w = weights[lane * 8+:8];
+			wire [7:0] sum = vpu_res_out[lane * 8+:8];
+			wire multiply = operation == 2'd2;
+			wire reverse_sub = operation == 2'd3;
+			wire subtract = (operation == 2'd1) || reverse_sub;
+			wire [7:0] product = fp8_mul(x, w);
+			wire [7:0] add_a = (multiply ? product : (reverse_sub ? w : x));
+			wire [7:0] operand_b = (reverse_sub ? x : w);
+			wire [7:0] add_b = (multiply ? sum : {operand_b[7] ^ subtract, operand_b[6:0]});
+			wire [7:0] added = fp8_add(add_a, add_b);
+			assign mac_result[lane * 8+:8] = (multiply && !accumulate ? product : added);
+		end
+	endgenerate
 	always @(posedge clk)
 		if (!rst_n) begin
 			weights <= 0;
@@ -1203,14 +1222,7 @@ module vpu (
 								vpu_res_out[lane * 8+:8] <= FP8_ZERO;
 						end
 						else
-							case (operation)
-								2'd0: vpu_res_out[lane * 8+:8] <= (accumulate ? fp8_add(fp8_add(inputs[lane * 8+:8], weights[lane * 8+:8]), vpu_res_out[lane * 8+:8]) : fp8_add(inputs[lane * 8+:8], weights[lane * 8+:8]));
-								2'd1: vpu_res_out[lane * 8+:8] <= (accumulate ? fp8_add(fp8_add(inputs[lane * 8+:8], weights[lane * 8+:8] ^ 8'h80), vpu_res_out[lane * 8+:8]) : fp8_add(inputs[lane * 8+:8], weights[lane * 8+:8] ^ 8'h80));
-								2'd2: vpu_res_out[lane * 8+:8] <= (accumulate ? fp8_add(fp8_mul(inputs[lane * 8+:8], weights[lane * 8+:8]), vpu_res_out[lane * 8+:8]) : fp8_mul(inputs[lane * 8+:8], weights[lane * 8+:8]));
-								2'd3: vpu_res_out[lane * 8+:8] <= (accumulate ? fp8_add(fp8_add(weights[lane * 8+:8], inputs[lane * 8+:8] ^ 8'h80), vpu_res_out[lane * 8+:8]) : fp8_add(weights[lane * 8+:8], inputs[lane * 8+:8] ^ 8'h80));
-								default:
-									;
-							endcase
+							vpu_res_out[lane * 8+:8] <= mac_result[lane * 8+:8];
 				end
 				act_op_out <= exe_inst_in[5:3];
 				vpu_res_out_val <= 1;

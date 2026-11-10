@@ -5,7 +5,7 @@ four little-endian bytes per READY credit, carrying the internal 32-bit ISA:
 [31:25] opcode, [24:0] payload (src/defs/inst_defs.vh). micro_ctrl is omitted.
 The host supplies address setup, transfers, execution and EXE_SYNC/MEM_SYNC.
 Done/error outputs are tied low because this mode has no high-level job boundary.
-VPU, activation and PSRAM operations are retained. Sparse weight-fetch skipping
+VPU, activation and PSRAM operations are retained. Each of the two VPU lanes uses one FP8 multiplier and one shared FP8 adder. Only MUL supports accumulation; ADD/SUB/RSUB ignore the accumulate bit. Products are rounded before accumulation (not fused FMA). Sparse weight-fetch skipping
 and matrix loops must be managed by the host. Low-level Flash transfers are also
 reachable through the internal ISA.
 

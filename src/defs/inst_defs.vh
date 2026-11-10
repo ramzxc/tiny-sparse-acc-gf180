@@ -32,7 +32,8 @@
 
 // EXECUTE payload: [6] sparse MUL, [5:3] activation, [2] accumulate,
 // [1:0] arithmetic operation. Instruction payload[24:7] is reserved.
-// Accumulate=0 replaces result_data; accumulate=1 enables accumulation.
+// MUL: accumulate=0 replaces result_data; accumulate=1 adds the old result.
+// ADD/SUB/RSUB ignore accumulate and always replace result_data.
 // Activation is part of Execute. Datapath/operand details belong to exe_ctrl.
 `define EXE_INST_WIDTH 9
 // Decoder-only mode bits; low seven bits carry the execution payload.
