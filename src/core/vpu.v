@@ -22,7 +22,6 @@ module vpu (
     output reg vpu_res_out_val
 );
 
-    `include "../defs/fp8_math.vh"
 
     reg [`DATA_WIDTH*`COMPUTE_WIDTH-1:0] weights;
     reg [`DATA_WIDTH*`COMPUTE_WIDTH-1:0] inputs;
@@ -36,22 +35,38 @@ module vpu (
     wire reverse_sub = operation == `EXE_OP_RSUB;
     wire subtract = operation == `EXE_OP_SUB || reverse_sub;
 
-    wire [`DATA_WIDTH-1:0] x = inputs;
-    wire [`DATA_WIDTH-1:0] w = weights;
-    wire [`DATA_WIDTH-1:0] sum = vpu_res_out;
+    localparam W = `DATA_WIDTH;
+    localparam F = `FIXED_FRAC_BITS;
+    localparam signed [2*W:0] MAX_VALUE = (1 << (W-1)) - 1;
+    localparam signed [2*W:0] MIN_VALUE = -(1 << (W-1));
 
-    // One multiplier and one adder shared by all operations.
-    wire [`DATA_WIDTH-1:0] product = fp8_mul(x, w);
-    wire [`DATA_WIDTH-1:0] add_a = multiply ? product : (reverse_sub ? w : x);
-    wire [`DATA_WIDTH-1:0] operand_b = reverse_sub ? x : w;
-    wire [`DATA_WIDTH-1:0] add_b = multiply ? sum :
-        {operand_b[`DATA_WIDTH-1] ^ subtract, operand_b[`DATA_WIDTH-2:0]};
-    wire [`DATA_WIDTH-1:0] added = fp8_add(add_a, add_b);
-    wire [`DATA_WIDTH-1:0] arithmetic_result =
-        multiply && !accumulate ? product : added;
-    // Suppress zero B even for NaN weights; preserve the old sum when skipping.
-    wire [`DATA_WIDTH-1:0] mac_result = sparse && multiply && x[`DATA_WIDTH-2:0] == 0
-        ? (accumulate ? sum : FP8_ZERO) : arithmetic_result;
+    wire signed [W-1:0] x = inputs;
+    wire signed [W-1:0] w = weights;
+    wire signed [W-1:0] sum = vpu_res_out;
+
+    // Keep the full product until rescaling; no additional storage bits.
+    // Nearest rounding, exact half-way cases toward +infinity.
+    wire signed [2*W-1:0] product = x * w;
+    wire signed [2*W:0] rounded_product =
+        {product[2*W-1], product} + ( (2*W+1)'(1) << (F-1) );
+    wire signed [2*W:0] scaled_product = rounded_product >>> F;
+
+    // A single adder serves ADD/SUB/RSUB and MUL accumulation.
+    wire signed [W-1:0] first_operand = reverse_sub ? w : x;
+    wire signed [W-1:0] second_operand = reverse_sub ? x : w;
+    wire signed [2*W:0] add_a = multiply ? scaled_product :
+        {{(W+1){first_operand[W-1]}}, first_operand};
+    wire signed [2*W:0] add_b = multiply
+        ? (accumulate ? {{(W+1){sum[W-1]}}, sum} : {(2*W+1){1'b0}})
+        : {{(W+1){second_operand[W-1]}}, second_operand};
+    wire do_subtract = !multiply && subtract;
+    wire signed [2*W:0] arithmetic_result =
+        add_a + (add_b ^ {(2*W+1){do_subtract}}) + {{(2*W){1'b0}}, do_subtract};
+    wire [W-1:0] saturated_result = arithmetic_result > MAX_VALUE ? MAX_VALUE[W-1:0] :
+        arithmetic_result < MIN_VALUE ? MIN_VALUE[W-1:0] : arithmetic_result[W-1:0];
+    // Fixed point has only one zero encoding: 0x80 is the most negative value.
+    wire [W-1:0] mac_result = sparse && multiply && x == 0
+        ? (accumulate ? sum : {W{1'b0}}) : saturated_result;
 
     // One lane completes on the accepting clock edge. Simultaneous operand
     // updates apply to the next Execute, as with the original two-lane VPU.
@@ -82,8 +97,8 @@ module vpu (
 
 `ifndef SYNTHESIS
     initial begin
-        if (`DATA_WIDTH != 8 || `COMPUTE_WIDTH != 1)
-            $fatal(1, "Single-lane MAC requires DATA_WIDTH=8 and COMPUTE_WIDTH=1");
+        if (`DATA_WIDTH != 8 || `COMPUTE_WIDTH != 1 || F < 1 || F > 6)
+            $fatal(1, "Fixed MAC requires one 8-bit lane and FIXED_FRAC_BITS=1..6");
     end
 `endif
 

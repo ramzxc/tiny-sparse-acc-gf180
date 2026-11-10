@@ -12,7 +12,7 @@
 // Board setup: PSRAMs in QPI; Flash in SPI with QE=1, not continuous read.
 // Flash program targets must already be erased/unprotected. No erase interface.
 // Address map: 0xxxxxx=Flash, 10xxxxx=PSRAM A, 11xxxxx=PSRAM B.
-// One FP8 byte per request; every byte address is supported.
+// One data byte per request; every byte address is supported.
 // Status polling has no timeout/error port: failed WREN or permanent busy waits.
 // Reset aborts the bus transaction; it cannot undo a memory write already made.
 module qspi_ctrl (

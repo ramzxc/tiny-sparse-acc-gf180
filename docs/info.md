@@ -23,20 +23,29 @@ For example PSRAM A address 0x1000020 in SRC is encoded as words 0x8020, 0xC800
 
 The host supplies address setup, transfers, execution and EXE_SYNC/MEM_SYNC.
 Done/error outputs are tied low because this mode has no high-level job boundary.
-VPU, activation and PSRAM operations use one FP8 element per request.
-The single VPU lane has one FP8 multiplier and one FP8 adder; each instruction
+VPU, activation and PSRAM operations use one signed fixed8 element per request.
+The single VPU lane has one signed multiplier and one adder; each instruction
 produces its result on the accepting clock edge. Simultaneous operand updates
 use the previous operand values for that instruction. Only MUL supports
-accumulation; ADD/SUB/RSUB ignore the accumulate bit. Products are rounded
-before accumulation (not fused FMA).
-The FP8 datapath shares add/subtract logic, normalizes with a leading-zero count,
-and rounds products using retained/guard/sticky bits.
-`bash test/run_fp8_math.sh` exhaustively checks both binary operations and product
-packing against an exact-rational reference.
+accumulation; ADD/SUB/RSUB ignore the accumulate bit.
 
-Activation has one datapath and registers one result per accepting edge.
-The hard-sigmoid lookup reproduces all 256 FP8 inputs exactly using combinational
-logic, not SRAM. The top holds exe_rdy low until activation completes.
+`FIXED_FRAC_BITS` in `src/defs/defs.vh` is a compile-time setting from 1 to 6.
+Real value = signed(byte) / 2**FIXED_FRAC_BITS. The default is 4: range
+-8 through 7.9375, resolution 0.0625. No runtime format register or new opcode.
+All operands, accumulator and activation results use the same scale. The
+16-bit product is combinational only; it does not widen registers or memory.
+Multiplication rescales with nearest rounding (ties toward positive infinity),
+then adds the old accumulator if enabled, and saturates once to [-128,127].
+ADD/SUB/RSUB saturate too. There is no wraparound, NaN or negative zero.
+Software must re-encode FP8 model data before using this design.
+
+Activation registers one result per accepting edge: NONE, ReLU, hard sigmoid
+(clamp(x/4 + 0.5, 0, 1), nearest rounding), hard tanh (clamp(x,-1,1)), and STEP
+(x>0). The top holds exe_rdy low until activation completes.
+`bash test/run_fixed8.sh` checks every operand pair for ADD/SUB/RSUB/MUL/MAC
+at all six supported fractional widths, plus all activation byte inputs.
+The FP8 reference/helper remains only for historical numerical comparisons.
+
 Memory addresses are stored only in mem_ctrl and held until transfer completion.
 mem_ctrl states directly identify read/write/copy dispatch and read/other
 completion waits, without a separate saved command. Address-half writes use
@@ -73,9 +82,9 @@ external-memory timing signoff. GF180_STD_DB overrides the local library path.
 
 ## How it works
 
-Single-lane FP8 E4M3FN accelerator with external QSPI PSRAM and 64-bit UART jobs.
+Single-lane signed fixed8 accelerator with external QSPI PSRAM and 64-bit UART jobs.
 No on-chip SRAM macros are instantiated. Products, accumulation, activation
-results and stored elements use FP8. The core clock is 10 MHz and QSPI SCK is
+results and stored elements use fixed8. The core clock is 10 MHz and QSPI SCK is
 5 MHz. UART is 8N1, approximately 115200 baud (87 clocks per bit).
 
 UART RX is ui[3], TX is uo[4]. The chip sends READY byte 0x01 once for each
@@ -114,7 +123,7 @@ Run bash test/check_import.sh for unit tests and complete UART/QSPI pin-level
 integration. Run make -C test for the RTL/GL-compatible UART admission smoke test.
 
 bash test/run_egru_layer.sh uses the local MAZE dataset for an actual EGRU first
-timestep, comparing all intermediates against an independent FP8 oracle.
+timestep, comparing all intermediates against an independent fixed8 oracle.
 python3 test/evaluate_egru_accuracy.py evaluates three full trials in software.
 These dataset-dependent tests are optional and do not run in GitHub CI.
 
@@ -128,11 +137,32 @@ QSPI Flash plus two PSRAM chips on a compatible Pmod. The current Flash controll
 assumes the board has prepared the required Flash configuration; see qspi_ctrl.v.
 This is a development checkpoint, not a complete standalone inference system.
 
-## Single-lane area experiment
+## Historical single-lane FP8 area experiment
 
 At 10 MHz with the same GF180 DC flow, total cell area decreased from
 45,157.46 to 35,142.96 um² (10,014.50 um² / 22.2%). This exceeds the
 1,000 um² retention threshold. QSPI reads/writes and COPY now transfer one
 byte, and host software must issue one operation per element rather than
-per pair. UART instructions remain 16 bits. FP8 arithmetic is unchanged.
+per pair. UART instructions remained 16 bits in that experiment.
 This is synthesis area, not a completed placement/routing result.
+
+## Fixed-point area experiment
+
+Same Synopsys/GF180/10 MHz synthesis: FP8 single lane 35,142.96 um² ->
+fixed8 (4 fractional bits) 32,497.74 um², saving 2,645.22 um² (7.5%).
+VPU: 10,528.18 -> 8,725.92; activation: 2,307.16 -> 1,464.20 um².
+These are cell areas, not an Actions placement/routing pass or a 70% density guarantee.
+
+For a fast numerical comparison on the actual maze EGRU export, run:
+
+```sh
+python3 test/compare_fixed8_egru.py --output /tmp/fixed8-comparison.json
+bash test/run_egru_layer.sh
+```
+
+The comparison sweeps fractional widths 1..6 against floating arithmetic on
+fixed16-exported weights/input, using the same hard activations. It covers the
+first timestep with initial state zero, not recurrent sequence or FC/label accuracy.
+For the default F=4, this sample gives h R²=99.35%, y R²=99.55%, and event
+agreement=99.61%. These figures do not establish full-network task accuracy.
+After changing defs, regenerate `src/generated/design.v` before synthesis/push.

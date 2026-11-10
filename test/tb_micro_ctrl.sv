@@ -191,10 +191,10 @@ module tb_micro_ctrl;
         rst_n=0;repeat(3) @(negedge clk);
         if(done || core.inst_val || qspi_req_val) $fatal(1,"Reset outputs");
         rst_n=1;allow_qspi=1;
-        ram_a.mem[32]=8'h38;ram_a.mem[33]=8'h40;ram_b.mem[128]=8'h40;
+        ram_a.mem[32]=8'h10;ram_a.mem[33]=8'h20;ram_b.mem[128]=8'h20;
         submit();wait_done();
-        if(error || {ram_b.mem[257],ram_b.mem[256]} !== 16'h4840) $fatal(1,"Reset recovery");
-        $display("PASS 64-bit matrix jobs: %0d exact-FP8 cases, sparse/dense, odd dimensions, zero input, all activations, stalls, invalid requests, reset",count);
+        if(error || {ram_b.mem[257],ram_b.mem[256]} !== 16'h4020) $fatal(1,"Reset recovery");
+        $display("PASS 64-bit matrix jobs: %0d fixed8 cases, sparse/dense, odd dimensions, zero input, all activations, stalls, invalid requests, reset",count);
         $display("Weight reads over paired cases: dense=%0d sparse=%0d",dense_reads,sparse_reads);
         $finish;
     end

@@ -9,21 +9,30 @@ module tb_act;
     wire [7:0] act_res_out;
     wire act_res_out_val;
     act dut (.*);
-    // Independent exact-rational oracle vectors from acc/sim/fp8/reference.py.
-    // Record: input FP8, FP16 conversion (unused), hard-sigmoid, hard-tanh.
-    reg [39:0] vectors [0:255];
+    // Integer oracle: divide with floor after the half-LSB rounding offset.
     function automatic [7:0] expected(input integer op, input integer x);
-        case(op)
-            0: expected=8'(x);
-            1: expected=((x & 127)==127) ? 8'h7f : (x & 128) ? 0 : 8'(x);
-            2: expected=vectors[x][15:8];
-            3: expected=vectors[x][7:0];
-            4: expected=((x & 127)==127) ? 8'h7f : (!(x & 128) && (x & 127)!=0) ? 8'h38 : 0;
-        endcase
+        integer v, n, value;
+        begin
+            v = x >= 128 ? x-256 : x;
+            n = 1 << `FIXED_FRAC_BITS;
+            case(op)
+                0: value=v;
+                1: value=v < 0 ? 0 : v;
+                2: begin
+                    value = v+2;
+                    value = (value < 0 ? -((-value+3)/4) : value/4) + n/2;
+                    if(value<0) value=0;
+                    if(value>n) value=n;
+                end
+                3: value=v < -n ? -n : v > n ? n : v;
+                4: value=v > 0 ? n : 0;
+                default: value=v;
+            endcase
+            expected=8'(value);
+        end
     endfunction
     reg [7:0] held;
     initial begin
-        $readmemh("test/vectors/fp8_unary.hex",vectors);
         repeat (2) @(negedge clk);
         if (act_res_out !== 0 || act_res_out_val !== 0) $fatal(1,"Reset");
         rst_n=1;
@@ -58,7 +67,7 @@ module tb_act;
             @(negedge clk);
             if(act_res_out_val) $fatal(1,"Stale result after reset");
         end
-        $display("PASS act: all 256 FP8 inputs x 5 modes, one-cycle results, hold, reset");
+        $display("PASS act: all 256 fixed8 inputs x 5 modes, one-cycle results, hold, reset");
         $finish;
     end
 endmodule

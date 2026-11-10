@@ -98,10 +98,10 @@ module tb_uart_matvec;
         send_word({1'b0,1'b1,2'd0,8'd0,8'd3,8'd1,12'd32,12'd128,12'd256});
         repeat(5) @(negedge clk);
         if(failed!=1 || completed!=0 || starts!=0) $fatal(1,"Invalid shape rejection");
-        for(integer i=0;i<12;i++) ram_a.mem[32+i]=8'h38;
-        ram_a.mem[33]=8'h40;ram_a.mem[34]=8'h44;ram_a.mem[35]=8'h48;
-        ram_b.mem[128]=8'h40;ram_b.mem[129]=0;ram_b.mem[130]=8'h38;ram_b.mem[131]=8'h38;
-        ram_b.mem[132]=8'h38;ram_b.mem[133]=0;ram_b.mem[134]=0;ram_b.mem[135]=0;
+        for(integer i=0;i<12;i++) ram_a.mem[32+i]=8'h10;
+        ram_a.mem[33]=8'h20;ram_a.mem[34]=8'h30;ram_a.mem[35]=8'h40;
+        ram_b.mem[128]=8'h20;ram_b.mem[129]=0;ram_b.mem[130]=8'h10;ram_b.mem[131]=8'h10;
+        ram_b.mem[132]=8'h10;ram_b.mem[133]=0;ram_b.mem[134]=0;ram_b.mem[135]=0;
         allow_qspi=0;
         send_word({1'b0,1'b1,2'd0,8'd4,8'd3,8'd1,12'd32,12'd128,12'd256});
         if(starts!=1) $fatal(1,"Job start");
@@ -118,12 +118,12 @@ module tb_uart_matvec;
         wait(completed==3);
         @(negedge clk);
         if(failed!=1 || starts!=3) $fatal(1,"Duplicate/missing job");
-        if({ram_b.mem[259],ram_b.mem[258],ram_b.mem[257],ram_b.mem[256]} !== 32'h514e4a44)
+        if({ram_b.mem[259],ram_b.mem[258],ram_b.mem[257],ram_b.mem[256]} !== 32'h7f705030)
             $fatal(1,"UART MATVEC result");
-        if({ram_b.mem[291],ram_b.mem[290],ram_b.mem[289],ram_b.mem[288]} !== 32'h38383838)
+        if({ram_b.mem[291],ram_b.mem[290],ram_b.mem[289],ram_b.mem[288]} !== 32'h10101010)
             $fatal(1,"Queued activation/output selection");
-        if({ram_b.mem[323],ram_b.mem[322],ram_b.mem[321],ram_b.mem[320]} !== 32'h514e4a44 ||
-           {ram_b.mem[327],ram_b.mem[326],ram_b.mem[325],ram_b.mem[324]} !== 32'h4a484440)
+        if({ram_b.mem[323],ram_b.mem[322],ram_b.mem[321],ram_b.mem[320]} !== 32'h7f705030 ||
+           {ram_b.mem[327],ram_b.mem[326],ram_b.mem[325],ram_b.mem[324]} !== 32'h50403020)
             $fatal(1,"Multi-column matrix output");
         // Reserved bit and zero N are invalid.
         send_word({1'b1,1'b0,2'd3,8'd4,8'd3,8'd1,12'd32,12'd128,12'd256});

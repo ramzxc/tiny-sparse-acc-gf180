@@ -34,7 +34,7 @@
 // Packed column-major bytes: A/C column stride = M; B column stride = K.
 // Dimensions are 1..255. No bias. Odd addresses need no padding.
 // B and C storage ranges must not overlap.
-// sparse treats FP8 +0/-0 as absent terms even if the skipped weight is NaN.
+// Sparse treats only byte 0x00 as zero; 0x80 represents the minimum value.
 // Vector [63]=1. [62]=sparse MUL, [61:60]=0, [59:52]=length,
 // [51:50]=operation, [49:47]=activation(0..4), [46:36]=0.
 // Low 36 bits remain A/B/C byte offsets. All three vector bases use Unified.

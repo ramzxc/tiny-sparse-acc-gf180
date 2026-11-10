@@ -26,7 +26,7 @@ module tb_vpu_mac;
             parsed=$fscanf(fd,"%h %h %h %h %h",x,w,previous,control,expected);
             if (parsed!=5) begin
                 if (!$feof(fd)) $fatal(1,"Malformed vector");
-                $display("PASS single-lane MAC: %0d exact-FP8 cases, ADD/SUB ignore accumulate, MUL accumulation, signed zero, NaN, saturation, sparse",count);
+                $display("PASS single-lane MAC: %0d fixed8 cases, ADD/SUB ignore accumulate, MUL accumulation, signed values, saturation, sparse",count);
                 $finish;
             end
             // Seed the live accumulator using PASS; no extra arithmetic/rounding.

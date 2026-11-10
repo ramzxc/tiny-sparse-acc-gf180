@@ -7,7 +7,7 @@ python3 - "$build_dir" <<'PY'
 import sys
 from pathlib import Path
 sys.path.insert(0, 'test')
-from generate_matvec_vectors import add8, mul8, encode8, F
+from fp8_reference import add8, mul8, encode8, F
 out=Path(sys.argv[1])
 with (out/'binary.hex').open('w') as f:
     for a in range(256):

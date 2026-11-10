@@ -81,8 +81,8 @@ module tb_uart_microcode;
     initial begin
         repeat(3) @(negedge clk);
         rst_n=1;
-        ram_a.mem[32]=8'h38; ram_a.mem[33]=8'h40; // weights 1,2
-        ram_b.mem[128]=8'h44; ram_b.mem[129]=0;   // input 3
+        ram_a.mem[32]=8'h10; ram_a.mem[33]=8'h20; // weights 1,2
+        ram_b.mem[128]=8'h30; ram_b.mem[129]=0;   // input 3
         instruction(7'd4, `WEIGHT_BASE_ADDR+25'd32);
         instruction(`SRAM_TO_VPU, 0);
         instruction(`MEM_SYNC, 0);
@@ -94,21 +94,21 @@ module tb_uart_microcode;
         instruction(7'd5, `UNIFIED_BASE_ADDR+25'd256);
         instruction(`ACT_TO_SRAM, 0);
         instruction(`MEM_SYNC, 0);
-        if (ram_b.mem[256] !== 8'h44)
+        if (ram_b.mem[256] !== 8'h30)
             $fatal(1, "Direct microcode multiply/store mismatch");
         instruction(`EXECUTE, 6); // MUL + accumulate: 6,12
         instruction(`EXE_SYNC, 0);
         instruction(7'd5, `UNIFIED_BASE_ADDR+25'd258);
         instruction(`ACT_TO_SRAM, 0);
         instruction(`MEM_SYNC, 0);
-        if (ram_b.mem[258] !== 8'h4c)
+        if (ram_b.mem[258] !== 8'h60)
             $fatal(1, "Direct microcode accumulation mismatch");
         instruction(`ACTIVATE, 25'd16); // hard sigmoid: 1,1
         instruction(`EXE_SYNC, 0);
         instruction(7'd5, `UNIFIED_BASE_ADDR+25'd260);
         instruction(`ACT_TO_SRAM, 0);
         instruction(`MEM_SYNC, 0);
-        if (ram_b.mem[260] !== 8'h38)
+        if (ram_b.mem[260] !== 8'h10)
             $fatal(1, "Direct microcode activation mismatch");
         if (rx_words != 26 || error || done) $fatal(1, "Direct protocol mismatch");
         $display("PASS UART16 microcode: 26 instructions, memory loads, multiply, accumulation, activation, PSRAM stores and sync");

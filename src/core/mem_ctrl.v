@@ -100,7 +100,7 @@ module mem_ctrl (
 `ifndef SYNTHESIS
     initial begin
         if (`DATA_WIDTH != 8 || `COMPUTE_WIDTH != 1)
-            $fatal(1, "mem_ctrl transfers one FP8 byte per instruction");
+            $fatal(1, "mem_ctrl transfers one data byte per instruction");
     end
 `endif
 

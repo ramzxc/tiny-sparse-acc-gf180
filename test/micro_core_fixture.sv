@@ -50,7 +50,7 @@ module micro_core_fixture (
         .inst_in_val(host_inst_val), .inst_in_rdy(host_rdy),
         .done(done), .error(error),
         .inst_out(inst), .inst_out_val(inst_val), .inst_out_rdy(core_rdy),
-        .input_is_zero(input_data[6:0] == 0), .input_data_val(input_data_val)
+        .input_is_zero(input_data == 0), .input_data_val(input_data_val)
     );
 
     decoder decode (

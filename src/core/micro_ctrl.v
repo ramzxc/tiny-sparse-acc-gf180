@@ -153,7 +153,7 @@ module micro_ctrl (
 
             if (state == INPUT_SYNC && input_data_val) begin
                 input_seen <= 1;
-                // FP8 +0 and -0 are both absent sparse terms.
+                // Only fixed-point zero is an absent sparse term.
                 input_zero <= input_is_zero;
             end
 
@@ -284,7 +284,7 @@ module micro_ctrl (
 `ifndef SYNTHESIS
     initial begin
         if (`DATA_WIDTH != 8 || `COMPUTE_WIDTH != 1 || `MICRO_DIM_WIDTH != 8)
-            $fatal(1, "Matrix engine currently uses one FP8 lane and 8-bit dimensions");
+            $fatal(1, "Matrix engine currently uses one fixed8 lane and 8-bit dimensions");
     end
 `endif
 endmodule

@@ -120,8 +120,8 @@ module tb_mem_ctrl;
     initial begin
         repeat(3) @(negedge clk);
         // Flash fixture: weights=(2,3), inputs=(4,5), low lane first.
-        flash.mem[0]=8'h40;flash.mem[1]=8'h44;
-        flash.mem[2]=8'h48;flash.mem[3]=8'h4a;
+        flash.mem[0]=8'h20;flash.mem[1]=8'h30;
+        flash.mem[2]=8'h40;flash.mem[3]=8'h50;
         rst_n=1;
         // Full address range, including chip selection; each half must preserve
         // the other half and never initiate a physical transaction.
@@ -145,15 +145,15 @@ module tb_mem_ctrl;
         issue(`MEM_CMD_SET_DST_LO,`WEIGHT_BASE_ADDR+25'h20);
         if(transactions!=0 || !mem_rdy) $fatal(1,"SET accessed memory");
         issue(`MEM_CMD_FLASH_TO_SRAM,0);finish_mem();
-        if(ram_a.mem[32] !== 8'h40) $fatal(1,"Flash to weight");
+        if(ram_a.mem[32] !== 8'h20) $fatal(1,"Flash to weight");
         issue(`MEM_CMD_SET_SRC_LO,2);
         issue(`MEM_CMD_SET_DST_LO,`UNIFIED_BASE_ADDR+25'h40);
         issue(`MEM_CMD_FLASH_TO_SRAM,0);finish_mem();
-        if(ram_b.mem[64] !== 8'h48) $fatal(1,"Flash to unified");
+        if(ram_b.mem[64] !== 8'h40) $fatal(1,"Flash to unified");
 
         issue(`MEM_CMD_SET_SRC_LO,`WEIGHT_BASE_ADDR+25'h20);
         issue(`MEM_CMD_SRAM_TO_VPU,0);finish_mem();
-        if(weight_loads!=1 || input_loads!=0 || compute.weights !== 8'h40) $fatal(1,"Weight load/ready timing");
+        if(weight_loads!=1 || input_loads!=0 || compute.weights !== 8'h20) $fatal(1,"Weight load/ready timing");
         issue(`MEM_CMD_SET_SRC_LO,`UNIFIED_BASE_ADDR+25'h40);
         allow_qspi=0;
         issue(`MEM_CMD_SRAM_TO_VPU,0);
@@ -162,23 +162,23 @@ module tb_mem_ctrl;
             if(mem_rdy || input_loads!=0) $fatal(1,"Read stall");
         end
         allow_qspi=1;finish_mem();
-        if(input_loads!=1 || compute.inputs !== 8'h48 || compute.weights !== 8'h40)
+        if(input_loads!=1 || compute.inputs !== 8'h40 || compute.weights !== 8'h20)
             $fatal(1,"Input load/weight persistence");
-        // MUL: 4*2=8. Then accumulate -> 16.
-        execute({`ACT_NONE,1'b0,`EXE_OP_MUL},8'h50);
-        execute({`ACT_NONE,1'b1,`EXE_OP_MUL},8'h58);
+        // MUL: 4*2 saturates to 7.9375. Accumulation also saturates.
+        execute({`ACT_NONE,1'b0,`EXE_OP_MUL},8'h7f);
+        execute({`ACT_NONE,1'b1,`EXE_OP_MUL},8'h7f);
         issue(`MEM_CMD_SET_DST_LO,`UNIFIED_BASE_ADDR+25'h60);
         issue(`MEM_CMD_ACT_TO_SRAM,0);finish_mem();
-        if(ram_b.mem[96] !== 8'h58) $fatal(1,"Activation store");
+        if(ram_b.mem[96] !== 8'h7f) $fatal(1,"Activation store");
         // No automatic address increment; another store overwrites the same word.
-        execute({`ACT_RELU,1'b0,`EXE_OP_SUB},8'h40);
+        execute({`ACT_RELU,1'b0,`EXE_OP_SUB},8'h20);
         issue(`MEM_CMD_ACT_TO_SRAM,0);finish_mem();
-        if(ram_b.mem[96] !== 8'h40 || dst_addr !== (`UNIFIED_BASE_ADDR+25'h60))
+        if(ram_b.mem[96] !== 8'h20 || dst_addr !== (`UNIFIED_BASE_ADDR+25'h60))
             $fatal(1,"Persistent destination");
         issue(`MEM_CMD_SET_SRC_LO,`UNIFIED_BASE_ADDR+25'h60);
         issue(`MEM_CMD_SET_DST_LO,25'h100);
         issue(`MEM_CMD_SRAM_TO_FLASH,0);finish_mem();
-        if(flash.mem[256] !== 8'h40) $fatal(1,"SRAM to flash");
+        if(flash.mem[256] !== 8'h20) $fatal(1,"SRAM to flash");
 
         // Reset a pending request before QSPI accepts it.
         allow_qspi=0;
@@ -192,7 +192,7 @@ module tb_mem_ctrl;
         rst_n=1;allow_qspi=1;
         issue(`MEM_CMD_SET_SRC_LO,`WEIGHT_BASE_ADDR+25'h20);
         issue(`MEM_CMD_SRAM_TO_VPU,0);finish_mem();
-        if(compute.weights !== 8'h40) $fatal(1,"Reset recovery");
+        if(compute.weights !== 8'h20) $fatal(1,"Reset recovery");
         start_transactions=transactions;
         issue(3'd7,0);
         repeat(3) @(negedge clk);
