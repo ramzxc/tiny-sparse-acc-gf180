@@ -40,6 +40,10 @@ Magic macro streamout; device and routing geometry remain unchanged.
 GDS database precision is normalized from ICC2's 0.1 nm to the streamout
 merger's 1 nm. Packaging checks all polygon/path edges, instance placements,
 array offsets and label positions first and fails if rounding would occur.
+For Magic LEF compatibility, Manhattan obstruction polygons are decomposed
+into rectangles with an exact geometric XOR check. Pin access and routing
+obstructions are preserved. The redundant ICC2 OVERLAP placement outline
+and its layer declaration are removed after checking against LEF SIZE.
 
 Main RTL remains available in `project.v` and `generated/design.v`. The
 experiment's `info.yaml` selects `hardmacro_wrapper.v` instead.

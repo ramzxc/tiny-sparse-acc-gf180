@@ -60,6 +60,42 @@ for name in ('VDD', 'VSS'):
     match = re.search(pattern, lef, re.S)
     assert match and 'PORT' not in match[0]
     lef = re.sub(pattern, '', lef, flags=re.S)
+
+# OVERLAP is ICC2's placement-only outline, not a fabrication/routing layer.
+# Magic's GF180 technology does not define it. Remove only this redundant
+# outline after proving it matches SIZE; keep every routing obstruction.
+overlap = re.search(r'    LAYER OVERLAP\s*;\s*POLYGON\s+([^;]+);[^\S\n]*\n?', lef)
+if overlap:
+    values = list(map(float, overlap[1].split()))
+    outline = gdstk.Polygon(list(zip(values[::2], values[1::2])))
+    assert not gdstk.boolean([outline], [boundary], 'xor', precision=0.0005)
+    lef = lef[:overlap.start()] + lef[overlap.end():]
+lef = re.sub(r'^LAYER OVERLAP\s+TYPE OVERLAP\s*;\s*END OVERLAP\s*\n', '', lef, flags=re.M)
+
+# Magic rejects the long notched POLYGON records emitted by ICC2. Split
+# Manhattan polygons into rectangles, preserving pin-access notches exactly.
+def polygon_rectangles(match):
+    values = list(map(float, match[1].split()))
+    assert len(values) >= 8 and len(values) % 2 == 0
+    points = list(zip(values[::2], values[1::2]))
+    for a, b in zip(points, points[1:] + points[:1]):
+        assert a[0] == b[0] or a[1] == b[1], 'Non-Manhattan LEF polygon'
+    polygon = gdstk.Polygon(points)
+    ys = sorted({y for x, y in points})
+    rectangles = []
+    for bottom, top_y in zip(ys, ys[1:]):
+        middle = (bottom + top_y) / 2
+        xs = sorted(a[0] for a, b in zip(points, points[1:] + points[:1])
+                    if a[0] == b[0] and min(a[1], b[1]) < middle < max(a[1], b[1]))
+        assert len(xs) % 2 == 0
+        for left, right in zip(xs[::2], xs[1::2]):
+            rectangles.append(gdstk.rectangle((left, bottom), (right, top_y)))
+    assert not gdstk.boolean([polygon], rectangles, 'xor', precision=0.0005)
+    return '\n'.join('      RECT ' + ' '.join(f'{v:.6f}'.rstrip('0').rstrip('.')
+                     for point in r.bounding_box() for v in point) + ' ;'
+                     for r in rectangles)
+
+lef = re.sub(r'\s*POLYGON\s+([^;]+);', lambda m: '\n' + polygon_rectangles(m), lef)
 (out / 'core.lef').write_text(lef)
 for filename in ('core.v', 'core.pg.v'):
     text = (a.export / filename).read_text()
@@ -105,6 +141,6 @@ print(f'Removed {removed} unreferenced filler NAME_MAP entries')
     'removed_unused_spef_fillers': removed,
     'pr_boundary_um': [0, 0, width, height],
     'gds_precision_m': lib.precision,
-    'changes': 'Remove unused SPEF filler names; rename top; remove geometry-free VDD/VSS aliases, use existing VPWR/VGND terminals; add missing PR_bndry (0/0) from LEF SIZE; normalize GDS precision to 1 nm after grid checks. Circuit geometry unchanged.'
+    'changes': 'Remove unused SPEF filler names; rename top; remove geometry-free VDD/VSS aliases, use existing VPWR/VGND terminals; add missing PR_bndry (0/0) from LEF SIZE; normalize GDS precision to 1 nm after grid checks; convert LEF polygons to equivalent rectangles and remove redundant OVERLAP outline. Circuit geometry unchanged.'
 }, indent=2) + '\n')
 print(out)
