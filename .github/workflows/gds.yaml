@@ -40,6 +40,9 @@ jobs:
         with:
           pdk: gf180mcuD
 
+      - name: Check physical core is included in final GDS
+        run: python3 scripts/check_core_gds.py runs/wokwi/final/gds/*.gds tt_submission/*.gds
+
       - name: Upload build diagnostics
         if: always()
         uses: actions/upload-artifact@v7
