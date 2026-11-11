@@ -10,7 +10,9 @@ packaging transformations are in `provenance.json`; reproduce with
 
 The macro is 339.92 x 137.20 um, at (3.36, 3.92), orientation N. Its existing
 Metal4 VPWR/VGND terminals align with the parent grid. `macro_pdn.tcl` adds
-same-layer feeds overlapping those terminals by 1 um. No signoff checks are
+same-layer feeds overlapping those terminals by 1 um. It defines only the
+wrapper standard-cell grid; the default Metal4--Metal5 macro grid is omitted
+because the macro already has its own power network and Metal4 terminals. No signoff checks are
 suppressed specifically for this experiment.
 
 The SPEF contains only nominal 25C RC. It is reused across the flow's corners
