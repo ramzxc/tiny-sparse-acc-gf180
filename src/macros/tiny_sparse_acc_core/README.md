@@ -22,9 +22,23 @@ ports directly, without modifying physical geometry.
 Main RTL remains available in `project.v` and `generated/design.v`. The
 experiment's `info.yaml` selects `hardmacro_wrapper.v` instead.
 
-Local verification before push: Icarus elaboration with the native GF180
-models passed. The UART gate-level smoke test failed: transmitter.clk_cnt[6]
-remains X after reset and TX subsequently becomes X. This also reproduces
-with zero cell delay. The exported optimized feedback logic reconverges
-through this bit; distinguish simulation X pessimism from a real reset issue
-before using this export as a submission. The test is intentionally unchanged.
+Compatibility fixes:
+
+- Remove 1,432 unreferenced physical filler NAME_MAP entries from SPEF.
+  Packaging aborts if a candidate entry has any references. R/C data and
+  connectivity are unchanged; this avoids the OpenSTA parser failure at
+  the first `xofiller!` entry.
+- `test/icc2_reset_x.vh` corrects only six proven UART D-input values while
+  both reset polarities are known and active. It releases on reset deassertion
+  or unknown reset, applies on subsequent resets too, and never forces Q.
+  This code is included only for this hard-macro GL simulation, not RTL or
+  synthesis. The uncorrected DC and ICC2 netlists exhibit X pessimism.
+- `python3 test/check_icc2_reset.py` exhaustively evaluates each corrected
+  combinational cone over all binary inputs, constraining only reset. The GL
+  build runs this proof before compiling. A changed or unsupported cone fails
+  the check instead of silently accepting the workaround. This is a local
+  reset proof, not full-chip formal equivalence.
+
+With the corrections, the existing UART READY / NOP / READY smoke test passes
+against the packaged powered netlist and native GF180 cell models. Its output
+assertions are unchanged. Full GDS integration/signoff is still under test.

@@ -7,5 +7,6 @@
     "core.pg.v": "b7749c28a2a2a96b4bdcae9e3941667bea48c5e9d0423ae8f83261de9c5683ba",
     "core.gf180_nominal_25.spef": "20a28e8bbe7b0236a0173315adc10aea075c03506d599c0677439084bafa6165"
   },
-  "changes": "Rename top; remove geometry-free VDD/VSS aliases, use existing VPWR/VGND terminals. GDS geometry unchanged."
+  "removed_unused_spef_fillers": 1432,
+  "changes": "Remove unused SPEF filler names; rename top; remove geometry-free VDD/VSS aliases, use existing VPWR/VGND terminals. GDS geometry unchanged."
 }

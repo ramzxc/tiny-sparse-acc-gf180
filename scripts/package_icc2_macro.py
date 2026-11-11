@@ -36,11 +36,36 @@ for filename in ('core.v', 'core.pg.v'):
         # Preserve named child ports .VDD/.VSS; replace their connection nets.
         top = re.sub(rf'(?<!\.)\b{alias}\b', actual, top)
     (out / filename).write_text(text[:start] + top + text[end:])
-(out / 'core.spef').write_text((a.export / 'core.gf180_nominal_25.spef').read_text().replace(f'*DESIGN "{old}"', f'*DESIGN "{new}"'))
+spef = (a.export / 'core.gf180_nominal_25.spef').read_text()
+spef = spef.replace(f'*DESIGN "{old}"', f'*DESIGN "{new}"')
+# ICC2 includes physical-only fillers in NAME_MAP, although they have no
+# signal parasitics. Older OpenSTA parsers reject their exclamation marks.
+# Remove only entries with no references; never remove R/C or connectivity.
+from collections import Counter
+references = Counter(re.findall(r'\*(\d+)(?!\d)', spef))
+lines = spef.splitlines(keepends=True)
+removed = 0
+in_name_map = False
+kept = []
+for line in lines:
+    if line.strip() == '*NAME_MAP':
+        in_name_map = True
+    elif re.match(r'^\*[A-Z_]+', line):
+        in_name_map = False
+    match = re.fullmatch(r'\*(\d+) (xofiller!\S+)\s*', line)
+    if in_name_map and match:
+        if references[match[1]] != 1:
+            raise ValueError(f'Cannot drop referenced filler: {match[2]}')
+        removed += 1
+    else:
+        kept.append(line)
+(out / 'core.spef').write_text(''.join(kept))
+print(f'Removed {removed} unreferenced filler NAME_MAP entries')
 (out / 'provenance.json').write_text(json.dumps({
     'export': a.export.name,
     'source_sha256': {f: hashlib.sha256((a.export / f).read_bytes()).hexdigest()
                       for f in ('core.gds', 'core.lef', 'core.v', 'core.pg.v', 'core.gf180_nominal_25.spef')},
-    'changes': 'Rename top; remove geometry-free VDD/VSS aliases, use existing VPWR/VGND terminals. GDS geometry unchanged.'
+    'removed_unused_spef_fillers': removed,
+    'changes': 'Remove unused SPEF filler names; rename top; remove geometry-free VDD/VSS aliases, use existing VPWR/VGND terminals. GDS geometry unchanged.'
 }, indent=2) + '\n')
 print(out)
