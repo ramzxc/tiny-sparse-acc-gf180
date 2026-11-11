@@ -31,6 +31,29 @@ if existing:
         'GDS PR boundary differs from LEF SIZE'
 else:
     top.add(boundary)
+# The TT streamout merger expects 1 nm GDS database units. ICC2 emits 0.1 nm
+# units even when all geometry is on a 1 nm grid. Refuse conversion if it
+# would round any polygon/path edge, instance origin or text position.
+def check_nm_grid(points, context):
+    for point in points:
+        for value in point:
+            nm = float(value) * lib.unit / 1e-9
+            if abs(nm - round(nm)) > 1e-5:
+                raise ValueError(f'Cannot losslessly convert {context} to 1 nm: {value}')
+
+for cell in lib.cells:
+    for polygon in cell.polygons:
+        check_nm_grid(polygon.points, cell.name)
+    for path in cell.paths:
+        for polygon in path.to_polygons():
+            check_nm_grid(polygon.points, cell.name)
+    for reference in cell.references:
+        check_nm_grid([reference.origin], cell.name)
+        if reference.repetition.size:
+            check_nm_grid(reference.repetition.get_offsets(), cell.name)
+    for label in cell.labels:
+        check_nm_grid([label.origin], cell.name)
+lib.precision = 1e-9
 lib.write_gds(out / 'core.gds')
 for name in ('VDD', 'VSS'):
     pattern = rf'  PIN {name}\n.*?  END {name}\n'
@@ -81,6 +104,7 @@ print(f'Removed {removed} unreferenced filler NAME_MAP entries')
                       for f in ('core.gds', 'core.lef', 'core.v', 'core.pg.v', 'core.gf180_nominal_25.spef')},
     'removed_unused_spef_fillers': removed,
     'pr_boundary_um': [0, 0, width, height],
-    'changes': 'Remove unused SPEF filler names; rename top; remove geometry-free VDD/VSS aliases, use existing VPWR/VGND terminals; add missing PR_bndry (0/0) from LEF SIZE. Circuit geometry unchanged.'
+    'gds_precision_m': lib.precision,
+    'changes': 'Remove unused SPEF filler names; rename top; remove geometry-free VDD/VSS aliases, use existing VPWR/VGND terminals; add missing PR_bndry (0/0) from LEF SIZE; normalize GDS precision to 1 nm after grid checks. Circuit geometry unchanged.'
 }, indent=2) + '\n')
 print(out)

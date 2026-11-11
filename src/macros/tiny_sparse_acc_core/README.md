@@ -37,6 +37,9 @@ ports directly, without modifying physical geometry.
 Packaging also adds the missing GF180 PR_bndry rectangle on GDS layer 0/0,
 using the LEF size (299.60 x 141.12 um). This boundary marker is required by
 Magic macro streamout; device and routing geometry remain unchanged.
+GDS database precision is normalized from ICC2's 0.1 nm to the streamout
+merger's 1 nm. Packaging checks all polygon/path edges, instance placements,
+array offsets and label positions first and fails if rounding would occur.
 
 Main RTL remains available in `project.v` and `generated/design.v`. The
 experiment's `info.yaml` selects `hardmacro_wrapper.v` instead.
