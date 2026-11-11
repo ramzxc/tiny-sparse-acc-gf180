@@ -41,14 +41,17 @@ if {$::env(PDN_ENABLE_RAILS)} {
 }
 
 # Join all vertical supply stripes above the macro. The core ends at
-# y=145.04 um; these Metal3 buses are centered at 148.96/152.26 um.
+# y=145.04 um; these Metal3 buses are centered at 147.00/150.90 um.
+# Keep both buses between the existing M1 rail via stacks, not on top of
+# their intermediate Metal3 landing shapes. Overlap there prevents PDNGEN
+# from completing the M1--M4 stacks and leaves the upper rows disconnected.
 # Unlike the manual macro feeds below, these belong to the PDN grid so
 # pdngen creates Metal3--Metal4 vias at every same-net crossing. This also
 # keeps the upper portions of the eight macro-aligned stripes from trimming
 # away and connects them to the ninth pair serving the right-hand rows.
 # Offset is relative to the wrapper core lower edge (y=3.92 um).
 add_pdn_stripe -grid stdcell_grid -layer Metal3 \
-    -width 1.6 -pitch 38.87 -spacing 1.7 -offset 145.04 \
+    -width 1.6 -pitch 38.87 -spacing 2.3 -offset 143.08 \
     -starts_with POWER -extend_to_boundary
 add_pdn_connect -grid stdcell_grid -layers {Metal3 Metal4}
 
