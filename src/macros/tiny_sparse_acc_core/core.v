@@ -1,13 +1,13 @@
 // IC Compiler II Version Y-2026.03 Verilog Writer
-// Generated on 11/11/2026 at 15:46:49
+// Generated on 11/11/2026 at 19:23:49
 // Library Name: core.ndm
 // Block Name: tt_um_tiny_sparse_acc_ramzxc
-// User Label: 
-// Write Command: write_verilog -exclude { all_physical_cells } /docker/projects/tapeout/tiny-sparse-acc-gf180/pnr/exports/20261111_154647_1794379607968332/core.v
+// User Label: initial_placement
+// Write Command: write_verilog -exclude { all_physical_cells } /docker/projects/tapeout/tiny-sparse-acc-gf180/pnr/exports/20261111_192348_1794392628598485/core.v
 module qspi_ctrl ( clk , rst_n , req_val , req_rdy , req_write , req_addr , 
     req_data , read_data , read_data_val , sck , flash_sc_n , psram_a_sc_n , 
-    psram_b_sc_n , dq_in , dq_out , dq_oe , VDD , VSS , HFSNET_2 , ZCTSNET_0 , 
-    ZCTSNET_1 , ZCTSNET_2 , ZCTSNET_4 ) ;
+    psram_b_sc_n , dq_in , dq_out , dq_oe , VDD , VSS , HFSNET_0 , ZCTSNET_0 , 
+    ZCTSNET_1 , ZCTSNET_2 ) ;
 input  clk ;
 input  rst_n ;
 input  req_val ;
@@ -26,11 +26,10 @@ output [3:0] dq_out ;
 output [3:0] dq_oe ;
 input  VDD ;
 input  VSS ;
-input  HFSNET_2 ;
+input  HFSNET_0 ;
 input  ZCTSNET_0 ;
 input  ZCTSNET_1 ;
 input  ZCTSNET_2 ;
-input  ZCTSNET_4 ;
 
 wire write_reg ;
 wire N318 ;
@@ -120,7 +119,7 @@ wire n56 ;
 wire n57 ;
 wire n58 ;
 wire n59 ;
-wire ZCTSNET_3 ;
+wire tmp_net43 ;
 wire n62 ;
 wire n63 ;
 wire n64 ;
@@ -190,6 +189,7 @@ wire n127 ;
 wire n129 ;
 wire n130 ;
 wire n131 ;
+wire n132 ;
 wire n133 ;
 wire n134 ;
 wire n135 ;
@@ -224,6 +224,7 @@ wire n165 ;
 wire n166 ;
 wire n167 ;
 wire n168 ;
+wire n169 ;
 wire n170 ;
 wire n171 ;
 wire n172 ;
@@ -248,7 +249,7 @@ wire n191 ;
 wire n192 ;
 wire n193 ;
 wire n223 ;
-wire tmp_net33 ;
+wire tmp_net34 ;
 wire n226 ;
 wire n227 ;
 wire n228 ;
@@ -266,38 +267,33 @@ wire [3:0] state ;
 wire [1:0] status_shift ;
 supply1 VDD ;
 supply0 VSS ;
-wire tmp_net34 ;
-wire tmp_net42 ;
-wire tmp_net43 ;
+wire tmp_net35 ;
+wire tmp_net44 ;
+wire tmp_net48 ;
 wire tmp_net49 ;
 wire tmp_net50 ;
 wire tmp_net51 ;
+wire tmp_net52 ;
 wire tmp_net53 ;
-wire tmp_net54 ;
-wire tmp_net55 ;
+wire tmp_net57 ;
 wire tmp_net61 ;
+wire tmp_net64 ;
 wire tmp_net65 ;
-wire tmp_net68 ;
-wire tmp_net69 ;
+wire tmp_net66 ;
 wire tmp_net70 ;
 wire tmp_net71 ;
-wire tmp_net76 ;
-wire tmp_net77 ;
-wire tmp_net81 ;
-wire tmp_net82 ;
-wire tmp_net83 ;
-wire tmp_net84 ;
+wire tmp_net75 ;
 
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 state_reg_1_ ( .D ( n196 ) , 
-    .CLK ( ZCTSNET_3 ) , .Q ( state[1] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .CLK ( ZCTSNET_0 ) , .Q ( state[1] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 chip_reg_0_ ( .D ( n205 ) , 
     .CLK ( ZCTSNET_0 ) , .Q ( chip[0] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 write_reg_reg ( .D ( n204 ) , 
-    .CLK ( ZCTSNET_0 ) , .Q ( write_reg ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .CLK ( ZCTSNET_1 ) , .Q ( write_reg ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 operation_reg_1_ ( .D ( n200 ) , 
-    .CLK ( ZCTSNET_0 ) , .Q ( operation[1] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .CLK ( ZCTSNET_1 ) , .Q ( operation[1] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 state_reg_2_ ( .D ( n197 ) , 
-    .CLK ( ZCTSNET_3 ) , .Q ( state[2] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .CLK ( ZCTSNET_1 ) , .Q ( state[2] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 state_reg_0_ ( .D ( n199 ) , 
     .CLK ( ZCTSNET_2 ) , .Q ( state[0] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 operation_reg_2_ ( .D ( n201 ) , 
@@ -306,62 +302,62 @@ gf180mcu_fd_sc_mcu7t5v0__dffq_1 status_shift_reg_0_ ( .D ( n215 ) ,
     .CLK ( ZCTSNET_0 ) , .Q ( status_shift[0] ) , .VDD ( VDD ) , 
     .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 read_data_val_reg ( .D ( N318 ) , 
-    .CLK ( ZCTSNET_0 ) , .Q ( read_data_val ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .CLK ( clk ) , .Q ( read_data_val ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 status_shift_reg_1_ ( .D ( n214 ) , 
     .CLK ( ZCTSNET_0 ) , .Q ( status_shift[1] ) , .VDD ( VDD ) , 
     .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 operation_reg_0_ ( .D ( n202 ) , 
     .CLK ( ZCTSNET_0 ) , .Q ( operation[0] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 data_shift_reg_0_ ( .D ( n213 ) , 
-    .CLK ( clk ) , .Q ( read_data[0] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .CLK ( ZCTSNET_0 ) , .Q ( read_data[0] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 data_shift_reg_1_ ( .D ( n212 ) , 
     .CLK ( ZCTSNET_0 ) , .Q ( read_data[1] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 data_shift_reg_2_ ( .D ( n211 ) , 
-    .CLK ( clk ) , .Q ( read_data[2] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .CLK ( ZCTSNET_0 ) , .Q ( read_data[2] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 data_shift_reg_3_ ( .D ( n210 ) , 
-    .CLK ( clk ) , .Q ( read_data[3] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .CLK ( ZCTSNET_0 ) , .Q ( read_data[3] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 data_shift_reg_4_ ( .D ( n209 ) , 
-    .CLK ( clk ) , .Q ( read_data[4] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .CLK ( ZCTSNET_0 ) , .Q ( read_data[4] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 data_shift_reg_5_ ( .D ( n208 ) , 
     .CLK ( ZCTSNET_0 ) , .Q ( read_data[5] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 data_shift_reg_6_ ( .D ( n207 ) , 
     .CLK ( ZCTSNET_0 ) , .Q ( read_data[6] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 data_shift_reg_7_ ( .D ( n206 ) , 
-    .CLK ( clk ) , .Q ( read_data[7] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .CLK ( ZCTSNET_0 ) , .Q ( read_data[7] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 cycles_left_reg_3_ ( .D ( n217 ) , 
     .CLK ( ZCTSNET_1 ) , .Q ( cycles_left[3] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 cycles_left_reg_0_ ( .D ( n220 ) , 
-    .CLK ( ZCTSNET_3 ) , .Q ( cycles_left[0] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .CLK ( ZCTSNET_1 ) , .Q ( cycles_left[0] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 cycles_left_reg_1_ ( .D ( n219 ) , 
-    .CLK ( ZCTSNET_3 ) , .Q ( cycles_left[1] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .CLK ( ZCTSNET_1 ) , .Q ( cycles_left[1] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 cycles_left_reg_4_ ( .D ( n216 ) , 
     .CLK ( ZCTSNET_1 ) , .Q ( cycles_left[4] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 cycles_left_reg_2_ ( .D ( n218 ) , 
     .CLK ( ZCTSNET_1 ) , .Q ( cycles_left[2] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 flash_sc_n_reg ( .D ( n195 ) , 
-    .CLK ( ZCTSNET_2 ) , .Q ( flash_sc_n ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .CLK ( ZCTSNET_0 ) , .Q ( flash_sc_n ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 psram_b_sc_n_reg ( .D ( n221 ) , 
-    .CLK ( ZCTSNET_2 ) , .Q ( psram_b_sc_n ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .CLK ( ZCTSNET_0 ) , .Q ( psram_b_sc_n ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 psram_a_sc_n_reg ( .D ( n194 ) , 
-    .CLK ( ZCTSNET_2 ) , .Q ( psram_a_sc_n ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__dffq_1 sck_reg ( .D ( n222 ) , .CLK ( ZCTSNET_2 ) , 
+    .CLK ( ZCTSNET_0 ) , .Q ( psram_a_sc_n ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__dffq_1 sck_reg ( .D ( n222 ) , .CLK ( ZCTSNET_0 ) , 
     .Q ( sck ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 state_reg_3_ ( .D ( n198 ) , 
-    .CLK ( ZCTSNET_2 ) , .Q ( state[3] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .CLK ( ZCTSNET_0 ) , .Q ( state[3] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 chip_reg_1_ ( .D ( n203 ) , 
-    .CLK ( ZCTSNET_2 ) , .Q ( chip[1] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .CLK ( ZCTSNET_1 ) , .Q ( chip[1] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__inv_1 U3 ( .I ( chip[1] ) , .ZN ( n1 ) , 
     .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__inv_1 U4 ( .I ( chip[1] ) , .ZN ( n2 ) , 
     .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__oai222_1 ctmTdsLR_1_33 ( .A1 ( req_addr[4] ) , 
-    .A2 ( n57 ) , .B1 ( n56 ) , .B2 ( req_addr[12] ) , .C1 ( n58 ) , 
-    .C2 ( req_addr[20] ) , .ZN ( tmp_net34 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .A2 ( n57 ) , .B1 ( req_addr[12] ) , .B2 ( n56 ) , .C1 ( n58 ) , 
+    .C2 ( req_addr[20] ) , .ZN ( tmp_net35 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__oai22_2 U6 ( .A1 ( n75 ) , .A2 ( n2 ) , 
     .B1 ( n124 ) , .B2 ( n138 ) , .ZN ( dq_out[1] ) , .VDD ( VDD ) , 
     .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__aoi21_1 ctmTdsLR_1_201 ( .A1 ( n163 ) , 
-    .A2 ( n155 ) , .B ( tmp_net77 ) , .ZN ( n202 ) , .VDD ( VDD ) , 
+gf180mcu_fd_sc_mcu7t5v0__aoi21_1 ctmTdsLR_1_194 ( .A1 ( n163 ) , 
+    .A2 ( n155 ) , .B ( tmp_net71 ) , .ZN ( n202 ) , .VDD ( VDD ) , 
     .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__inv_1 U8 ( .I ( dq_oe[2] ) , .ZN ( n4 ) , 
     .VDD ( VDD ) , .VSS ( VSS ) ) ;
@@ -390,7 +386,7 @@ gf180mcu_fd_sc_mcu7t5v0__nand3_1 U19 ( .A1 ( n12 ) , .A2 ( state[1] ) ,
 gf180mcu_fd_sc_mcu7t5v0__nand3_1 U20 ( .A1 ( n76 ) , .A2 ( n124 ) , 
     .A3 ( n5 ) , .ZN ( dq_oe[2] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__or2_1 ctmTdsLR_1_31 ( .A1 ( n1 ) , .A2 ( n76 ) , 
-    .Z ( tmp_net33 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .Z ( tmp_net34 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__nor2_1 U22 ( .A1 ( state[0] ) , .A2 ( state[1] ) , 
     .ZN ( n89 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__nand2_1 U23 ( .A1 ( n89 ) , .A2 ( n193 ) , 
@@ -564,13 +560,12 @@ gf180mcu_fd_sc_mcu7t5v0__oai211_1 U99 ( .A1 ( n49 ) , .A2 ( n48 ) ,
     .B ( n90 ) , .C ( n1 ) , .ZN ( n70 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__nand2_1 U100 ( .A1 ( n58 ) , .A2 ( n56 ) , 
     .ZN ( n57 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__clkbuf_1 ZCTSBUF_14530_62 ( .I ( ZCTSNET_4 ) , 
-    .Z ( ZCTSNET_3 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__nand3_1 ctmTdsLR_1_153 ( .A1 ( tmp_net42 ) , 
-    .A2 ( n168 ) , .A3 ( tmp_net71 ) , .ZN ( n223 ) , .VDD ( VDD ) , 
-    .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__or2_1 ctmTdsLR_2_154 ( .A1 ( n171 ) , .A2 ( n170 ) , 
-    .Z ( tmp_net42 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__nand3_1 ctmTdsLR_1_154 ( .A1 ( tmp_net43 ) , 
+    .A2 ( n168 ) , .A3 ( n169 ) , .ZN ( n223 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__or2_1 ctmTdsLR_2_155 ( .A1 ( n171 ) , .A2 ( n170 ) , 
+    .Z ( tmp_net43 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__nand2_1 ctmTdsLR_1_156 ( .A1 ( n145 ) , 
+    .A2 ( tmp_net44 ) , .ZN ( n204 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__inv_1 U104 ( .I ( n58 ) , .ZN ( n53 ) , 
     .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__aoi22_1 U105 ( .A1 ( n55 ) , .A2 ( n54 ) , 
@@ -580,24 +575,24 @@ gf180mcu_fd_sc_mcu7t5v0__nand2_1 U106 ( .A1 ( n2 ) , .A2 ( n86 ) ,
 gf180mcu_fd_sc_mcu7t5v0__oai222_1 ctmTdsLR_1_35 ( .A1 ( req_addr[8] ) , 
     .A2 ( n56 ) , .B1 ( n58 ) , .B2 ( req_addr[16] ) , .C1 ( req_addr[0] ) , 
     .C2 ( n57 ) , .ZN ( n54 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__nand2_1 ctmTdsLR_1_155 ( .A1 ( n145 ) , 
-    .A2 ( tmp_net43 ) , .ZN ( n204 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__or2_1 ctmTdsLR_2_156 ( .A1 ( n159 ) , .A2 ( n185 ) , 
-    .Z ( tmp_net43 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__nand4_1 U110 ( .A1 ( n90 ) , .A2 ( n64 ) , 
-    .A3 ( n63 ) , .A4 ( n62 ) , .ZN ( n69 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__or2_1 ctmTdsLR_2_157 ( .A1 ( n159 ) , .A2 ( n185 ) , 
+    .Z ( tmp_net44 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__nand2_1 ctmTdsLR_1_162 ( .A1 ( n136 ) , 
+    .A2 ( tmp_net49 ) , .ZN ( n208 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__nand4_1 U110 ( .A1 ( n64 ) , .A2 ( n62 ) , 
+    .A3 ( n90 ) , .A4 ( n63 ) , .ZN ( n69 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__aoi22_1 U111 ( .A1 ( n178 ) , .A2 ( n65 ) , 
     .B1 ( cycles_left[1] ) , .B2 ( n1 ) , .ZN ( n67 ) , .VDD ( VDD ) , 
     .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__nand3_1 U112 ( .A1 ( n74 ) , .A2 ( n67 ) , 
     .A3 ( n66 ) , .ZN ( n68 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__nand4_2 U113 ( .A1 ( n71 ) , .A2 ( n70 ) , 
-    .A3 ( n69 ) , .A4 ( n68 ) , .ZN ( dq_out[0] ) , .VDD ( VDD ) , 
+gf180mcu_fd_sc_mcu7t5v0__nand4_2 U113 ( .A1 ( n70 ) , .A2 ( n69 ) , 
+    .A3 ( n71 ) , .A4 ( n68 ) , .ZN ( dq_out[0] ) , .VDD ( VDD ) , 
     .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__inv_1 U114 ( .I ( n72 ) , .ZN ( n73 ) , 
     .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__aoi22_1 U115 ( .A1 ( n178 ) , .A2 ( n74 ) , 
-    .B1 ( n90 ) , .B2 ( n73 ) , .ZN ( n75 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__aoi22_1 U115 ( .A1 ( n74 ) , .A2 ( n178 ) , 
+    .B1 ( n73 ) , .B2 ( n90 ) , .ZN ( n75 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__inv_1 U116 ( .I ( read_data[5] ) , .ZN ( n138 ) , 
     .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__nand2_1 U117 ( .A1 ( write_reg ) , .A2 ( n2 ) , 
@@ -611,10 +606,10 @@ gf180mcu_fd_sc_mcu7t5v0__nor2_1 U120 ( .A1 ( n175 ) , .A2 ( n151 ) ,
 gf180mcu_fd_sc_mcu7t5v0__nor2_1 U121 ( .A1 ( operation[1] ) , 
     .A2 ( operation[0] ) , .ZN ( n173 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__nand2_1 ctmTdsLR_2_32 ( .A1 ( n124 ) , 
-    .A2 ( tmp_net33 ) , .ZN ( dq_oe[1] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .A2 ( tmp_net34 ) , .ZN ( dq_oe[1] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__nor2_1 U123 ( .A1 ( n77 ) , .A2 ( n79 ) , 
     .ZN ( n167 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__nand2_1 U124 ( .A1 ( HFSNET_2 ) , .A2 ( n167 ) , 
+gf180mcu_fd_sc_mcu7t5v0__nand2_1 U124 ( .A1 ( HFSNET_0 ) , .A2 ( n167 ) , 
     .ZN ( n180 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__inv_1 U125 ( .I ( n180 ) , .ZN ( n162 ) , 
     .VDD ( VDD ) , .VSS ( VSS ) ) ;
@@ -634,7 +629,7 @@ gf180mcu_fd_sc_mcu7t5v0__nand3_1 U132 ( .A1 ( n81 ) , .A2 ( n84 ) ,
     .A3 ( n233 ) , .ZN ( n82 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__inv_1 U133 ( .I ( n81 ) , .ZN ( n91 ) , 
     .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__nand2_1 U134 ( .A1 ( n91 ) , .A2 ( HFSNET_2 ) , 
+gf180mcu_fd_sc_mcu7t5v0__nand2_1 U134 ( .A1 ( n91 ) , .A2 ( HFSNET_0 ) , 
     .ZN ( n191 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__inv_1 U135 ( .I ( sck ) , .ZN ( n126 ) , 
     .VDD ( VDD ) , .VSS ( VSS ) ) ;
@@ -667,11 +662,11 @@ gf180mcu_fd_sc_mcu7t5v0__nor4_1 U148 ( .A1 ( n90 ) , .A2 ( n89 ) ,
 gf180mcu_fd_sc_mcu7t5v0__nand2_1 U149 ( .A1 ( sck ) , .A2 ( n91 ) , 
     .ZN ( n171 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__oai211_1 U150 ( .A1 ( n92 ) , .A2 ( n171 ) , 
-    .B ( HFSNET_2 ) , .C ( n233 ) , .ZN ( n102 ) , .VDD ( VDD ) , 
+    .B ( HFSNET_0 ) , .C ( n233 ) , .ZN ( n102 ) , .VDD ( VDD ) , 
     .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__inv_1 U151 ( .I ( n233 ) , .ZN ( n232 ) , 
     .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__nand2_1 U152 ( .A1 ( HFSNET_2 ) , .A2 ( n232 ) , 
+gf180mcu_fd_sc_mcu7t5v0__nand2_1 U152 ( .A1 ( HFSNET_0 ) , .A2 ( n232 ) , 
     .ZN ( n105 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__inv_1 U153 ( .I ( n191 ) , .ZN ( n93 ) , 
     .VDD ( VDD ) , .VSS ( VSS ) ) ;
@@ -718,8 +713,8 @@ gf180mcu_fd_sc_mcu7t5v0__aoi21_1 U172 ( .A1 ( cycles_left[2] ) ,
 gf180mcu_fd_sc_mcu7t5v0__aoi22_1 U173 ( .A1 ( cycles_left[3] ) , 
     .A2 ( n113 ) , .B1 ( n112 ) , .B2 ( n115 ) , .ZN ( n217 ) , .VDD ( VDD ) , 
     .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__nor2_2 ctmTdsLR_1_191 ( .A1 ( n159 ) , 
-    .A2 ( tmp_net70 ) , .ZN ( n141 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__nor2_2 ctmTdsLR_1_187 ( .A1 ( n159 ) , 
+    .A2 ( tmp_net66 ) , .ZN ( n141 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__nand2_1 U175 ( .A1 ( n116 ) , 
     .A2 ( cycles_left[4] ) , .ZN ( n117 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__oai31_1 U176 ( .A1 ( chip[1] ) , .A2 ( n189 ) , 
@@ -730,7 +725,7 @@ gf180mcu_fd_sc_mcu7t5v0__inv_1 U178 ( .I ( n122 ) , .ZN ( n123 ) ,
     .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__clkinv_1 U179 ( .I ( dq_in[1] ) , .ZN ( n120 ) , 
     .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__aoi221_1 U180 ( .A1 ( n120 ) , .A2 ( n123 ) , 
+gf180mcu_fd_sc_mcu7t5v0__aoi221_1 U180 ( .A1 ( n123 ) , .A2 ( n120 ) , 
     .B1 ( n122 ) , .B2 ( n151 ) , .C ( rst_n ) , .ZN ( n215 ) , .VDD ( VDD ) , 
     .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__inv_1 U181 ( .I ( status_shift[1] ) , .ZN ( n121 ) , 
@@ -738,11 +733,11 @@ gf180mcu_fd_sc_mcu7t5v0__inv_1 U181 ( .I ( status_shift[1] ) , .ZN ( n121 ) ,
 gf180mcu_fd_sc_mcu7t5v0__aoi221_1 U182 ( .A1 ( n122 ) , .A2 ( n121 ) , 
     .B1 ( n123 ) , .B2 ( n151 ) , .C ( rst_n ) , .ZN ( n214 ) , .VDD ( VDD ) , 
     .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__nor2_1 ctmTdsLR_2_202 ( .A1 ( n163 ) , 
-    .A2 ( tmp_net76 ) , .ZN ( tmp_net77 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__nor2_1 ctmTdsLR_2_195 ( .A1 ( n163 ) , 
+    .A2 ( tmp_net70 ) , .ZN ( tmp_net71 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__nand2_1 U184 ( .A1 ( req_val ) , .A2 ( req_rdy ) , 
     .ZN ( n168 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__nand2_1 U185 ( .A1 ( HFSNET_2 ) , .A2 ( n168 ) , 
+gf180mcu_fd_sc_mcu7t5v0__nand2_1 U185 ( .A1 ( HFSNET_0 ) , .A2 ( n168 ) , 
     .ZN ( n159 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__inv_1 U186 ( .I ( n168 ) , .ZN ( n144 ) , 
     .VDD ( VDD ) , .VSS ( VSS ) ) ;
@@ -758,8 +753,11 @@ gf180mcu_fd_sc_mcu7t5v0__aoi222_1 U190 ( .A1 ( n141 ) , .A2 ( read_data[1] ) ,
     .ZN ( n131 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__inv_1 U191 ( .I ( n131 ) , .ZN ( n212 ) , 
     .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__and2_1 ctmTdsLR_3_168_roptpi_226 ( .A1 ( n226 ) , 
-    .A2 ( n227 ) , .Z ( tmp_net51 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__aoi222_1 U192 ( .A1 ( n141 ) , .A2 ( read_data[2] ) , 
+    .B1 ( n144 ) , .B2 ( req_data[2] ) , .C1 ( n133 ) , .C2 ( dq_in[2] ) , 
+    .ZN ( n132 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__inv_1 U193 ( .I ( n132 ) , .ZN ( n211 ) , 
+    .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__aoi222_1 U194 ( .A1 ( n141 ) , .A2 ( read_data[3] ) , 
     .B1 ( n144 ) , .B2 ( req_data[3] ) , .C1 ( n133 ) , .C2 ( dq_in[3] ) , 
     .ZN ( n134 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
@@ -772,13 +770,13 @@ gf180mcu_fd_sc_mcu7t5v0__aoi222_1 U197 ( .A1 ( read_data[4] ) , .A2 ( n141 ) ,
     .ZN ( n135 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__inv_1 U198 ( .I ( n135 ) , .ZN ( n209 ) , 
     .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__nand2_1 ctmTdsLR_1_180 ( .A1 ( n148 ) , 
-    .A2 ( tmp_net61 ) , .ZN ( n163 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__nand2_1 ctmTdsLR_1_176 ( .A1 ( n148 ) , 
+    .A2 ( tmp_net57 ) , .ZN ( n163 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__aoi22_1 U200 ( .A1 ( n144 ) , .A2 ( req_data[5] ) , 
     .B1 ( n140 ) , .B2 ( read_data[1] ) , .ZN ( n136 ) , .VDD ( VDD ) , 
     .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__or2_1 ctmTdsLR_2_181 ( .A1 ( n150 ) , .A2 ( n149 ) , 
-    .Z ( tmp_net61 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__or2_1 ctmTdsLR_2_177 ( .A1 ( n150 ) , .A2 ( n149 ) , 
+    .Z ( tmp_net57 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__aoi222_1 U202 ( .A1 ( n141 ) , .A2 ( read_data[6] ) , 
     .B1 ( n144 ) , .B2 ( req_data[6] ) , .C1 ( n140 ) , .C2 ( read_data[2] ) , 
     .ZN ( n139 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
@@ -798,8 +796,8 @@ gf180mcu_fd_sc_mcu7t5v0__inv_1 U208 ( .I ( n143 ) , .ZN ( n205 ) ,
     .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__nand2_1 U209 ( .A1 ( n144 ) , .A2 ( req_write ) , 
     .ZN ( n145 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__nand2_1 ctmTdsLR_1_163 ( .A1 ( n136 ) , 
-    .A2 ( tmp_net50 ) , .ZN ( n208 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__nand2_1 ctmTdsLR_2_163 ( .A1 ( n141 ) , 
+    .A2 ( tmp_net48 ) , .ZN ( tmp_net49 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__inv_1 U211 ( .I ( req_addr[24] ) , .ZN ( n154 ) , 
     .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__oai22_1 U212 ( .A1 ( n2 ) , .A2 ( n159 ) , 
@@ -810,10 +808,10 @@ gf180mcu_fd_sc_mcu7t5v0__aoi22_1 U214 ( .A1 ( n147 ) , .A2 ( n178 ) ,
     .B1 ( n146 ) , .B2 ( n175 ) , .ZN ( n150 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__inv_1 U215 ( .I ( n167 ) , .ZN ( n149 ) , 
     .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__nand2_1 ctmTdsLR_1_186 ( .A1 ( n113 ) , 
-    .A2 ( tmp_net65 ) , .ZN ( n116 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__nand2_1 ctmTdsLR_1_209 ( .A1 ( n158 ) , 
-    .A2 ( tmp_net81 ) , .ZN ( n201 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__nand2_1 ctmTdsLR_1_182 ( .A1 ( n113 ) , 
+    .A2 ( tmp_net61 ) , .ZN ( n116 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__nand2_1 ctmTdsLR_1_202 ( .A1 ( n158 ) , 
+    .A2 ( tmp_net75 ) , .ZN ( n201 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__nor2_1 U218 ( .A1 ( n165 ) , .A2 ( n180 ) , 
     .ZN ( n153 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__nand3_1 U219 ( .A1 ( operation[0] ) , 
@@ -821,8 +819,8 @@ gf180mcu_fd_sc_mcu7t5v0__nand3_1 U219 ( .A1 ( operation[0] ) ,
     .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__aoi22_1 U220 ( .A1 ( req_rdy ) , .A2 ( n154 ) , 
     .B1 ( n153 ) , .B2 ( n152 ) , .ZN ( n155 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__or2_1 ctmTdsLR_2_210 ( .A1 ( n159 ) , .A2 ( n175 ) , 
-    .Z ( tmp_net81 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__or2_1 ctmTdsLR_2_203 ( .A1 ( n159 ) , .A2 ( n175 ) , 
+    .Z ( tmp_net75 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__nand3_1 U222 ( .A1 ( n162 ) , .A2 ( n157 ) , 
     .A3 ( n163 ) , .ZN ( n158 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__nor2_1 U224 ( .A1 ( n160 ) , .A2 ( n185 ) , 
@@ -833,10 +831,10 @@ gf180mcu_fd_sc_mcu7t5v0__oai21_1 U226 ( .A1 ( n178 ) , .A2 ( n165 ) ,
     .B ( n162 ) , .ZN ( n164 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__aoi22_1 U227 ( .A1 ( n166 ) , .A2 ( n165 ) , 
     .B1 ( n164 ) , .B2 ( n163 ) , .ZN ( n200 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__clkinv_1 ctmTdsLR_3_203 ( .I ( n160 ) , 
-    .ZN ( tmp_net76 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__nand2_1 ctmTdsLR_2_164 ( .A1 ( n141 ) , 
-    .A2 ( tmp_net49 ) , .ZN ( tmp_net50 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__nor3_1 U228 ( .A1 ( n232 ) , .A2 ( n167 ) , 
+    .A3 ( n228 ) , .ZN ( n169 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__clkinv_1 ctmTdsLR_3_164 ( .I ( n138 ) , 
+    .ZN ( tmp_net48 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__clkinv_1 U230 ( .I ( n223 ) , .ZN ( n183 ) , 
     .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__nand2_1 U231 ( .A1 ( n173 ) , .A2 ( n172 ) , 
@@ -860,10 +858,10 @@ gf180mcu_fd_sc_mcu7t5v0__aoi21_1 U239 ( .A1 ( n193 ) , .A2 ( n192 ) ,
     .B ( n191 ) , .ZN ( n197 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__nand2_1 U240 ( .A1 ( state[0] ) , .A2 ( n223 ) , 
     .ZN ( n226 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__or2_1 ctmTdsLR_2_187 ( .A1 ( n114 ) , .A2 ( n115 ) , 
-    .Z ( tmp_net65 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__oai31_1 ctmTdsLR_2_192 ( .A1 ( n124 ) , 
-    .A2 ( n125 ) , .A3 ( tmp_net68 ) , .B ( tmp_net69 ) , .ZN ( tmp_net70 ) , 
+gf180mcu_fd_sc_mcu7t5v0__or2_1 ctmTdsLR_2_183 ( .A1 ( n114 ) , .A2 ( n115 ) , 
+    .Z ( tmp_net61 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__oai31_1 ctmTdsLR_2_188 ( .A1 ( n124 ) , 
+    .A2 ( n125 ) , .A3 ( tmp_net64 ) , .B ( tmp_net65 ) , .ZN ( tmp_net66 ) , 
     .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__nor2_1 U243 ( .A1 ( n232 ) , .A2 ( flash_sc_n ) , 
     .ZN ( n230 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
@@ -876,34 +874,25 @@ gf180mcu_fd_sc_mcu7t5v0__aoi22_1 U246 ( .A1 ( psram_a_sc_n ) , .A2 ( n233 ) ,
     .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__nand2_1 U247 ( .A1 ( n235 ) , .A2 ( n234 ) , 
     .ZN ( n194 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__nand2_1 ctmTdsLR_2_34 ( .A1 ( tmp_net34 ) , 
+gf180mcu_fd_sc_mcu7t5v0__nand2_1 ctmTdsLR_2_34 ( .A1 ( tmp_net35 ) , 
     .A2 ( n59 ) , .ZN ( n62 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__clkinv_1 ctmTdsLR_3_165 ( .I ( n138 ) , 
-    .ZN ( tmp_net49 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__nor3_1 ctmTdsLR_1_166 ( .A1 ( tmp_net51 ) , 
-    .A2 ( tmp_net53 ) , .A3 ( tmp_net55 ) , .ZN ( n196 ) , .VDD ( VDD ) , 
+gf180mcu_fd_sc_mcu7t5v0__nor3_1 ctmTdsLR_1_165 ( .A1 ( tmp_net50 ) , 
+    .A2 ( tmp_net51 ) , .A3 ( tmp_net53 ) , .ZN ( n196 ) , .VDD ( VDD ) , 
     .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__nor2_1 ctmTdsLR_4_169 ( .A1 ( n226 ) , .A2 ( n227 ) , 
-    .ZN ( tmp_net53 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__nand2_1 ctmTdsLR_5_170 ( .A1 ( HFSNET_2 ) , 
-    .A2 ( tmp_net54 ) , .ZN ( tmp_net55 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__clkinv_1 ctmTdsLR_6_171 ( .I ( state[3] ) , 
-    .ZN ( tmp_net54 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__clkinv_1 ctmTdsLR_3_193 ( .I ( sck ) , 
-    .ZN ( tmp_net68 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__nand2_1 ctmTdsLR_4_194 ( .A1 ( n127 ) , 
-    .A2 ( n126 ) , .ZN ( tmp_net69 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__nor3_1 ctmTdsLR_1_195 ( .A1 ( n232 ) , .A2 ( n228 ) , 
-    .A3 ( n167 ) , .ZN ( tmp_net71 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__nand3_1 ctmTdsLR_1_211 ( .A1 ( tmp_net82 ) , 
-    .A2 ( tmp_net83 ) , .A3 ( tmp_net84 ) , .ZN ( n211 ) , .VDD ( VDD ) , 
-    .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__nand2_1 ctmTdsLR_2_212 ( .A1 ( n141 ) , 
-    .A2 ( read_data[2] ) , .ZN ( tmp_net82 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__nand2_1 ctmTdsLR_3_213 ( .A1 ( n133 ) , 
-    .A2 ( dq_in[2] ) , .ZN ( tmp_net83 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__nand2_1 ctmTdsLR_4_214 ( .A1 ( n144 ) , 
-    .A2 ( req_data[2] ) , .ZN ( tmp_net84 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__and2_1 ctmTdsLR_2_166 ( .A1 ( n226 ) , .A2 ( n227 ) , 
+    .Z ( tmp_net50 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__nor2_1 ctmTdsLR_3_167 ( .A1 ( n226 ) , .A2 ( n227 ) , 
+    .ZN ( tmp_net51 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__nand2_1 ctmTdsLR_4_168 ( .A1 ( HFSNET_0 ) , 
+    .A2 ( tmp_net52 ) , .ZN ( tmp_net53 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__clkinv_1 ctmTdsLR_5_169 ( .I ( state[3] ) , 
+    .ZN ( tmp_net52 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__clkinv_1 ctmTdsLR_3_189 ( .I ( sck ) , 
+    .ZN ( tmp_net64 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__nand2_1 ctmTdsLR_4_190 ( .A1 ( n127 ) , 
+    .A2 ( n126 ) , .ZN ( tmp_net65 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__clkinv_1 ctmTdsLR_3_196 ( .I ( n160 ) , 
+    .ZN ( tmp_net70 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 endmodule
 
 
@@ -934,12 +923,12 @@ input  VSS ;
 input  HFSNET_0 ;
 input  ZCTSNET_0 ;
 
-wire tmp_net35 ;
-wire tmp_net56 ;
-wire tmp_net57 ;
-wire tmp_net62 ;
-wire tmp_net63 ;
-wire tmp_net64 ;
+wire tmp_net36 ;
+wire tmp_net54 ;
+wire tmp_net55 ;
+wire tmp_net58 ;
+wire tmp_net59 ;
+wire tmp_net60 ;
 wire copy_pending ;
 wire N56 ;
 wire n32 ;
@@ -995,19 +984,18 @@ assign read_data[2] = qspi_read_data[2] ;
 assign read_data[1] = qspi_read_data[1] ;
 assign read_data[0] = qspi_read_data[0] ;
 
-gf180mcu_fd_sc_mcu7t5v0__dffq_1 copy_pending_reg ( .D ( n42 ) , 
-    .CLK ( ZCTSNET_0 ) , .Q ( copy_pending ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__dffq_1 state_reg_0_ ( .D ( n41 ) , 
-    .CLK ( ZCTSNET_0 ) , .Q ( state[0] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__dffq_1 copy_pending_reg ( .D ( n42 ) , .CLK ( clk ) , 
+    .Q ( copy_pending ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__dffq_1 state_reg_0_ ( .D ( n41 ) , .CLK ( clk ) , 
+    .Q ( state[0] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 state_reg_1_ ( .D ( n40 ) , 
     .CLK ( ZCTSNET_0 ) , .Q ( state[1] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 qspi_req_write_reg ( .D ( n43 ) , 
     .CLK ( ZCTSNET_0 ) , .Q ( qspi_req_write ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 read_data_val_reg ( .D ( N56 ) , 
-    .CLK ( ZCTSNET_0 ) , .Q ( read_data_val ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .CLK ( clk ) , .Q ( read_data_val ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 qspi_req_data_reg_7_ ( .D ( n39 ) , 
-    .CLK ( ZCTSNET_0 ) , .Q ( qspi_req_data[7] ) , .VDD ( VDD ) , 
-    .VSS ( VSS ) ) ;
+    .CLK ( clk ) , .Q ( qspi_req_data[7] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 qspi_req_data_reg_6_ ( .D ( n38 ) , 
     .CLK ( ZCTSNET_0 ) , .Q ( qspi_req_data[6] ) , .VDD ( VDD ) , 
     .VSS ( VSS ) ) ;
@@ -1015,42 +1003,43 @@ gf180mcu_fd_sc_mcu7t5v0__dffq_1 qspi_req_data_reg_5_ ( .D ( n37 ) ,
     .CLK ( ZCTSNET_0 ) , .Q ( qspi_req_data[5] ) , .VDD ( VDD ) , 
     .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 qspi_req_data_reg_4_ ( .D ( n36 ) , 
-    .CLK ( ZCTSNET_0 ) , .Q ( qspi_req_data[4] ) , .VDD ( VDD ) , 
-    .VSS ( VSS ) ) ;
+    .CLK ( clk ) , .Q ( qspi_req_data[4] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 qspi_req_data_reg_3_ ( .D ( n35 ) , 
     .CLK ( ZCTSNET_0 ) , .Q ( qspi_req_data[3] ) , .VDD ( VDD ) , 
     .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 qspi_req_data_reg_2_ ( .D ( n34 ) , 
-    .CLK ( clk ) , .Q ( qspi_req_data[2] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .CLK ( ZCTSNET_0 ) , .Q ( qspi_req_data[2] ) , .VDD ( VDD ) , 
+    .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 qspi_req_data_reg_1_ ( .D ( n33 ) , 
     .CLK ( ZCTSNET_0 ) , .Q ( qspi_req_data[1] ) , .VDD ( VDD ) , 
     .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 qspi_req_data_reg_0_ ( .D ( n32 ) , 
-    .CLK ( clk ) , .Q ( qspi_req_data[0] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .CLK ( ZCTSNET_0 ) , .Q ( qspi_req_data[0] ) , .VDD ( VDD ) , 
+    .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__aoi22_1 ctmTdsLR_1_36 ( .A1 ( n17 ) , .A2 ( n23 ) , 
-    .B1 ( HFSNET_0 ) , .B2 ( n16 ) , .ZN ( tmp_net35 ) , .VDD ( VDD ) , 
+    .B1 ( HFSNET_0 ) , .B2 ( n16 ) , .ZN ( tmp_net36 ) , .VDD ( VDD ) , 
     .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__aoi21_1 ctmTdsLR_2_37 ( .A1 ( n17 ) , .A2 ( n18 ) , 
-    .B ( tmp_net35 ) , .ZN ( n41 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .B ( tmp_net36 ) , .ZN ( n41 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__nor3_2 U5 ( .A1 ( n48 ) , .A2 ( rst_n ) , 
     .A3 ( n14 ) , .ZN ( n46 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__oai32_1 ctmTdsLR_1_40 ( .A1 ( n25 ) , 
     .A2 ( qspi_read_data_val ) , .A3 ( state[0] ) , .B1 ( n23 ) , 
     .B2 ( n26 ) , .ZN ( n40 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__nor2_2 ctmTdsLR_1_172 ( .A1 ( n13 ) , 
-    .A2 ( tmp_net57 ) , .ZN ( n48 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__nor3_1 ctmTdsLR_2_173 ( .A1 ( n15 ) , .A2 ( n22 ) , 
-    .A3 ( tmp_net56 ) , .ZN ( tmp_net57 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__inv_1 ctmTdsLR_3_174 ( .I ( qspi_read_data_val ) , 
-    .ZN ( tmp_net56 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__nor2_1 ctmTdsLR_1_182 ( .A1 ( n13 ) , 
-    .A2 ( tmp_net64 ) , .ZN ( n17 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__nand2_1 ctmTdsLR_2_183 ( .A1 ( tmp_net62 ) , 
-    .A2 ( tmp_net63 ) , .ZN ( tmp_net64 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__nand2_1 ctmTdsLR_3_184 ( .A1 ( state[0] ) , 
-    .A2 ( state[1] ) , .ZN ( tmp_net62 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__nand2_1 ctmTdsLR_4_185 ( .A1 ( state[1] ) , 
-    .A2 ( qspi_read_data_val ) , .ZN ( tmp_net63 ) , .VDD ( VDD ) , 
+gf180mcu_fd_sc_mcu7t5v0__nor2_2 ctmTdsLR_1_171 ( .A1 ( n13 ) , 
+    .A2 ( tmp_net55 ) , .ZN ( n48 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__nor3_1 ctmTdsLR_2_172 ( .A1 ( n15 ) , .A2 ( n22 ) , 
+    .A3 ( tmp_net54 ) , .ZN ( tmp_net55 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__inv_1 ctmTdsLR_3_173 ( .I ( qspi_read_data_val ) , 
+    .ZN ( tmp_net54 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__nor2_1 ctmTdsLR_1_178 ( .A1 ( n13 ) , 
+    .A2 ( tmp_net60 ) , .ZN ( n17 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__nand2_1 ctmTdsLR_2_179 ( .A1 ( tmp_net58 ) , 
+    .A2 ( tmp_net59 ) , .ZN ( tmp_net60 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__nand2_1 ctmTdsLR_3_180 ( .A1 ( state[0] ) , 
+    .A2 ( state[1] ) , .ZN ( tmp_net58 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__nand2_1 ctmTdsLR_4_181 ( .A1 ( state[1] ) , 
+    .A2 ( qspi_read_data_val ) , .ZN ( tmp_net59 ) , .VDD ( VDD ) , 
     .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__nand2_1 U16 ( .A1 ( state[1] ) , .A2 ( HFSNET_0 ) , 
     .ZN ( n25 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
@@ -1443,7 +1432,7 @@ endmodule
 
 module vpu ( clk , rst_n , exe_inst_in , exe_inst_in_val , weight_data , 
     weight_data_val , input_data , input_data_val , vpu_res_out , act_op_out , 
-    vpu_res_out_val , VDD , VSS , HFSNET_1 , ZCTSNET_0 ) ;
+    vpu_res_out_val , VDD , VSS , HFSNET_2 , ZCTSNET_0 , ZCTSNET_1 ) ;
 input  clk ;
 input  rst_n ;
 input  [8:0] exe_inst_in ;
@@ -1457,8 +1446,9 @@ output [2:0] act_op_out ;
 output vpu_res_out_val ;
 input  VDD ;
 input  VSS ;
-input  HFSNET_1 ;
+input  HFSNET_2 ;
 input  ZCTSNET_0 ;
+input  ZCTSNET_1 ;
 
 supply1 VDD ;
 wire N132 ;
@@ -1495,7 +1485,6 @@ wire intadd_0_A_1_ ;
 wire intadd_0_A_0_ ;
 wire intadd_0_B_4_ ;
 wire intadd_0_B_3_ ;
-wire tmp_net75 ;
 wire intadd_0_B_1_ ;
 wire intadd_0_B_0_ ;
 wire intadd_0_CI ;
@@ -1537,7 +1526,6 @@ wire n2 ;
 wire n3 ;
 wire n4 ;
 wire tmp_net29 ;
-wire tmp_net30 ;
 wire n7 ;
 wire n8 ;
 wire n9 ;
@@ -1823,56 +1811,56 @@ wire n325 ;
 wire [7:0] x ;
 wire [7:0] w ;
 supply0 VSS ;
+wire tmp_net31 ;
 
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 vpu_res_out_val_reg ( .D ( N132 ) , 
-    .CLK ( ZCTSNET_0 ) , .Q ( vpu_res_out_val ) , .VDD ( VDD ) , 
-    .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__dffq_1 weights_reg_4_ ( .D ( n90 ) , .CLK ( clk ) , 
-    .Q ( w[4] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__dffq_1 weights_reg_3_ ( .D ( n91 ) , .CLK ( clk ) , 
-    .Q ( w[3] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .CLK ( clk ) , .Q ( vpu_res_out_val ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__dffq_1 weights_reg_4_ ( .D ( n90 ) , 
+    .CLK ( ZCTSNET_0 ) , .Q ( w[4] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__dffq_1 weights_reg_3_ ( .D ( n91 ) , 
+    .CLK ( ZCTSNET_0 ) , .Q ( w[3] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 weights_reg_1_ ( .D ( n93 ) , .CLK ( clk ) , 
     .Q ( w[1] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 inputs_reg_6_ ( .D ( n103 ) , 
     .CLK ( ZCTSNET_0 ) , .Q ( x[6] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 inputs_reg_4_ ( .D ( n105 ) , .CLK ( clk ) , 
     .Q ( x[4] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__dffq_1 inputs_reg_2_ ( .D ( n107 ) , 
-    .CLK ( ZCTSNET_0 ) , .Q ( x[2] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__dffq_1 inputs_reg_1_ ( .D ( n108 ) , 
-    .CLK ( ZCTSNET_0 ) , .Q ( x[1] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__dffq_1 inputs_reg_0_ ( .D ( n109 ) , .CLK ( clk ) , 
-    .Q ( x[0] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__dffq_1 inputs_reg_2_ ( .D ( n107 ) , .CLK ( clk ) , 
+    .Q ( x[2] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__dffq_1 inputs_reg_1_ ( .D ( n108 ) , .CLK ( clk ) , 
+    .Q ( x[1] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__dffq_1 inputs_reg_0_ ( .D ( n109 ) , 
+    .CLK ( ZCTSNET_1 ) , .Q ( x[0] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 vpu_res_out_reg_7_ ( .D ( n101 ) , 
-    .CLK ( ZCTSNET_0 ) , .Q ( vpu_res_out[7] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .CLK ( clk ) , .Q ( vpu_res_out[7] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 vpu_res_out_reg_6_ ( .D ( n95 ) , 
-    .CLK ( ZCTSNET_0 ) , .Q ( vpu_res_out[6] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .CLK ( clk ) , .Q ( vpu_res_out[6] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 vpu_res_out_reg_5_ ( .D ( n96 ) , 
-    .CLK ( ZCTSNET_0 ) , .Q ( vpu_res_out[5] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .CLK ( clk ) , .Q ( vpu_res_out[5] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 vpu_res_out_reg_4_ ( .D ( n97 ) , 
-    .CLK ( ZCTSNET_0 ) , .Q ( vpu_res_out[4] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .CLK ( clk ) , .Q ( vpu_res_out[4] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 vpu_res_out_reg_3_ ( .D ( n98 ) , 
-    .CLK ( ZCTSNET_0 ) , .Q ( vpu_res_out[3] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .CLK ( clk ) , .Q ( vpu_res_out[3] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 vpu_res_out_reg_2_ ( .D ( n99 ) , 
-    .CLK ( ZCTSNET_0 ) , .Q ( vpu_res_out[2] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .CLK ( clk ) , .Q ( vpu_res_out[2] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 vpu_res_out_reg_1_ ( .D ( n100 ) , 
-    .CLK ( ZCTSNET_0 ) , .Q ( vpu_res_out[1] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .CLK ( clk ) , .Q ( vpu_res_out[1] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 vpu_res_out_reg_0_ ( .D ( n110 ) , 
-    .CLK ( ZCTSNET_0 ) , .Q ( vpu_res_out[0] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .CLK ( clk ) , .Q ( vpu_res_out[0] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 act_op_out_reg_2_ ( .D ( n86 ) , 
-    .CLK ( ZCTSNET_0 ) , .Q ( act_op_out[2] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .CLK ( clk ) , .Q ( act_op_out[2] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 act_op_out_reg_1_ ( .D ( n85 ) , 
-    .CLK ( ZCTSNET_0 ) , .Q ( act_op_out[1] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .CLK ( clk ) , .Q ( act_op_out[1] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 act_op_out_reg_0_ ( .D ( n84 ) , 
-    .CLK ( ZCTSNET_0 ) , .Q ( act_op_out[0] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .CLK ( clk ) , .Q ( act_op_out[0] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__addf_1 intadd_0_U6 ( .A ( intadd_0_A_0_ ) , 
     .B ( intadd_0_B_0_ ) , .CI ( intadd_0_CI ) , .CO ( intadd_0_n5 ) , 
     .S ( intadd_0_SUM_0_ ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__addf_1 intadd_0_U5 ( .A ( intadd_0_A_1_ ) , 
     .B ( intadd_0_B_1_ ) , .CI ( intadd_0_n5 ) , .CO ( intadd_0_n4 ) , 
     .S ( intadd_0_SUM_1_ ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__nand2_1 ctmTdsLR_1_199 ( .A1 ( n241 ) , 
-    .A2 ( tmp_net75 ) , .ZN ( n302 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__and2_1 ctmTdsLR_1_170 ( .A1 ( tmp_net28 ) , 
+    .A2 ( tmp_net29 ) , .Z ( n148 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__addf_1 intadd_0_U3 ( .A ( intadd_0_A_3_ ) , 
     .B ( intadd_0_B_3_ ) , .CI ( intadd_0_n3 ) , .CO ( intadd_0_n2 ) , 
     .S ( intadd_0_SUM_3_ ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
@@ -1899,21 +1887,21 @@ gf180mcu_fd_sc_mcu7t5v0__addf_1 intadd_2_U2 ( .A ( intadd_2_A_2_ ) ,
     .S ( intadd_2_SUM_2_ ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 weights_reg_7_ ( .D ( n87 ) , .CLK ( clk ) , 
     .Q ( w[7] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__dffq_1 weights_reg_6_ ( .D ( n88 ) , 
-    .CLK ( ZCTSNET_0 ) , .Q ( w[6] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__dffq_1 weights_reg_6_ ( .D ( n88 ) , .CLK ( clk ) , 
+    .Q ( w[6] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 weights_reg_5_ ( .D ( n89 ) , 
     .CLK ( ZCTSNET_0 ) , .Q ( w[5] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 weights_reg_2_ ( .D ( n92 ) , .CLK ( clk ) , 
     .Q ( w[2] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__dffq_1 weights_reg_0_ ( .D ( n94 ) , 
-    .CLK ( ZCTSNET_0 ) , .Q ( w[0] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__dffq_1 inputs_reg_7_ ( .D ( n102 ) , .CLK ( clk ) , 
-    .Q ( x[7] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__dffq_1 inputs_reg_5_ ( .D ( n104 ) , .CLK ( clk ) , 
-    .Q ( x[5] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__dffq_1 inputs_reg_3_ ( .D ( n106 ) , .CLK ( clk ) , 
-    .Q ( x[3] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__nand2_1 ctmTdsLR_1_20 ( .A1 ( n10 ) , .A2 ( n4 ) , 
+gf180mcu_fd_sc_mcu7t5v0__dffq_1 weights_reg_0_ ( .D ( n94 ) , .CLK ( clk ) , 
+    .Q ( w[0] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__dffq_1 inputs_reg_7_ ( .D ( n102 ) , 
+    .CLK ( ZCTSNET_1 ) , .Q ( x[7] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__dffq_1 inputs_reg_5_ ( .D ( n104 ) , 
+    .CLK ( ZCTSNET_0 ) , .Q ( x[5] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__dffq_1 inputs_reg_3_ ( .D ( n106 ) , 
+    .CLK ( ZCTSNET_0 ) , .Q ( x[3] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__nand2_1 ctmTdsLR_1_19 ( .A1 ( n10 ) , .A2 ( n4 ) , 
     .ZN ( tmp_net28 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__inv_1 U4 ( .I ( w[0] ) , .ZN ( n2 ) , .VDD ( VDD ) , 
     .VSS ( VSS ) ) ;
@@ -1921,11 +1909,9 @@ gf180mcu_fd_sc_mcu7t5v0__inv_1 U5 ( .I ( n2 ) , .ZN ( n3 ) , .VDD ( VDD ) ,
     .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__inv_1 U6 ( .I ( n7 ) , .ZN ( n4 ) , .VDD ( VDD ) , 
     .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__aoi22_1 ctmTdsLR_2_21 ( .A1 ( n9 ) , .A2 ( x[4] ) , 
+gf180mcu_fd_sc_mcu7t5v0__aoi22_1 ctmTdsLR_2_20 ( .A1 ( n9 ) , .A2 ( x[4] ) , 
     .B1 ( n7 ) , .B2 ( n206 ) , .ZN ( tmp_net29 ) , .VDD ( VDD ) , 
     .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__and2_1 ctmTdsLR_3_22 ( .A1 ( tmp_net28 ) , 
-    .A2 ( tmp_net29 ) , .Z ( n148 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__inv_1 U9 ( .I ( x[5] ) , .ZN ( n7 ) , .VDD ( VDD ) , 
     .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__inv_1 U10 ( .I ( n4 ) , .ZN ( n8 ) , .VDD ( VDD ) , 
@@ -1939,7 +1925,7 @@ gf180mcu_fd_sc_mcu7t5v0__inv_1 U13 ( .I ( exe_inst_in[1] ) , .ZN ( n11 ) ,
 gf180mcu_fd_sc_mcu7t5v0__inv_1 U14 ( .I ( exe_inst_in[1] ) , .ZN ( n12 ) , 
     .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__inv_1 ctmTdsLR_1_23 ( .I ( intadd_0_n4 ) , 
-    .ZN ( tmp_net30 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .ZN ( tmp_net31 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__inv_1 U16 ( .I ( exe_inst_in[1] ) , .ZN ( n210 ) , 
     .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__nor2_1 U17 ( .A1 ( exe_inst_in[0] ) , .A2 ( n210 ) , 
@@ -2070,8 +2056,6 @@ gf180mcu_fd_sc_mcu7t5v0__aoi22_1 U77 ( .A1 ( w[5] ) , .A2 ( n73 ) ,
     .B1 ( n72 ) , .B2 ( n64 ) , .ZN ( n26 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__oai21_1 U78 ( .A1 ( w[4] ) , .A2 ( n70 ) , 
     .B ( n26 ) , .ZN ( n45 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__or2_1 ctmTdsLR_2_200 ( .A1 ( n245 ) , 
-    .A2 ( exe_inst_in[7] ) , .Z ( tmp_net75 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__aoi22_1 U80 ( .A1 ( x[3] ) , .A2 ( w[1] ) , 
     .B1 ( n57 ) , .B2 ( n9 ) , .ZN ( n32 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__aoi22_1 U81 ( .A1 ( n68 ) , .A2 ( n28 ) , 
@@ -2260,7 +2244,7 @@ gf180mcu_fd_sc_mcu7t5v0__aoi22_1 U166 ( .A1 ( n221 ) , .A2 ( n222 ) ,
     .B1 ( n153 ) , .B2 ( n223 ) , .ZN ( n227 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__xnor3_1 ctmTdsLR_1_42 ( .A1 ( n228 ) , .A2 ( n227 ) , 
     .A3 ( intadd_2_n1 ) , .ZN ( n160 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__xnor3_1 ctmTdsLR_1_152 ( .A1 ( n172 ) , 
+gf180mcu_fd_sc_mcu7t5v0__xnor3_1 ctmTdsLR_1_153 ( .A1 ( n172 ) , 
     .A2 ( n174 ) , .A3 ( intadd_0_n1 ) , .ZN ( n176 ) , .VDD ( VDD ) , 
     .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__addf_1 U170 ( .A ( n158 ) , .B ( n157 ) , 
@@ -2446,15 +2430,14 @@ gf180mcu_fd_sc_mcu7t5v0__nand4_1 U250 ( .A1 ( n246 ) ,
     .A4 ( intadd_1_SUM_0_ ) , .ZN ( n240 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__nand2_1 U251 ( .A1 ( n261 ) , .A2 ( n240 ) , 
     .ZN ( n242 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__oai222_1 ctmTdsLR_2_24 ( .A1 ( n27 ) , .A2 ( n54 ) , 
-    .B1 ( n27 ) , .B2 ( tmp_net30 ) , .C1 ( n54 ) , .C2 ( tmp_net30 ) , 
-    .ZN ( intadd_0_n3 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__nand2_1 U253 ( .A1 ( HFSNET_1 ) , 
-    .A2 ( exe_inst_in[8] ) , .ZN ( n245 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__nand2_1 U253 ( .A1 ( exe_inst_in[8] ) , 
+    .A2 ( HFSNET_2 ) , .ZN ( n245 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__nor2_1 U254 ( .A1 ( rst_n ) , 
     .A2 ( exe_inst_in_val ) , .ZN ( n323 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__clkinv_1 U255 ( .I ( n323 ) , .ZN ( n241 ) , 
     .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__oai21_2 U256 ( .A1 ( exe_inst_in[7] ) , 
+    .A2 ( n245 ) , .B ( n241 ) , .ZN ( n302 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__nor3_1 U257 ( .A1 ( exe_inst_in[7] ) , 
     .A2 ( rst_n ) , .A3 ( n302 ) , .ZN ( n262 ) , .VDD ( VDD ) , 
     .VSS ( VSS ) ) ;
@@ -2571,7 +2554,7 @@ gf180mcu_fd_sc_mcu7t5v0__aoi22_1 U310 ( .A1 ( x[6] ) , .A2 ( n303 ) ,
     .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__oai211_1 U311 ( .A1 ( n307 ) , .A2 ( n306 ) , 
     .B ( n305 ) , .C ( n304 ) , .ZN ( n95 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__nor2_1 U312 ( .A1 ( weight_data_val ) , 
+gf180mcu_fd_sc_mcu7t5v0__nor2_2 U312 ( .A1 ( weight_data_val ) , 
     .A2 ( rst_n ) , .ZN ( n317 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__nor2_1 U313 ( .A1 ( n317 ) , .A2 ( rst_n ) , 
     .ZN ( n316 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
@@ -2617,7 +2600,7 @@ gf180mcu_fd_sc_mcu7t5v0__inv_1 U329 ( .I ( n318 ) , .ZN ( n87 ) ,
     .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__inv_1 U330 ( .I ( exe_inst_in[8] ) , .ZN ( n319 ) , 
     .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__nand2_1 U331 ( .A1 ( HFSNET_1 ) , 
+gf180mcu_fd_sc_mcu7t5v0__nand2_1 U331 ( .A1 ( HFSNET_2 ) , 
     .A2 ( exe_inst_in_val ) , .ZN ( n325 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__aoi21_1 U332 ( .A1 ( exe_inst_in[7] ) , 
     .A2 ( n319 ) , .B ( n325 ) , .ZN ( n322 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
@@ -2638,6 +2621,9 @@ gf180mcu_fd_sc_mcu7t5v0__inv_1 U338 ( .I ( n324 ) , .ZN ( n84 ) ,
     .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__inv_1 U339 ( .I ( n325 ) , .ZN ( N132 ) , 
     .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__oai222_1 ctmTdsLR_2_24 ( .A1 ( n27 ) , .A2 ( n54 ) , 
+    .B1 ( n27 ) , .B2 ( tmp_net31 ) , .C1 ( n54 ) , .C2 ( tmp_net31 ) , 
+    .ZN ( intadd_0_n3 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__xnor3_1 ctmTdsLR_3_25 ( .A1 ( n27 ) , .A2 ( n54 ) , 
     .A3 ( intadd_0_n4 ) , .ZN ( n194 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 endmodule
@@ -2674,11 +2660,11 @@ input  ZCTSNET_0 ;
 input  ZCTSNET_1 ;
 input  ZCTSNET_2 ;
 
+wire tmp_net72 ;
+wire tmp_net73 ;
+wire tmp_net74 ;
 wire tmp_net78 ;
 wire tmp_net79 ;
-wire tmp_net80 ;
-wire tmp_net87 ;
-wire tmp_net88 ;
 wire force_weight ;
 wire n97 ;
 wire n98 ;
@@ -2734,10 +2720,6 @@ wire n147 ;
 wire n148 ;
 wire n149 ;
 wire n150 ;
-wire tmp_net89 ;
-wire tmp_net90 ;
-wire tmp_net91 ;
-wire tmp_net92 ;
 wire n11 ;
 wire n12 ;
 wire HFSNET_0 ;
@@ -2860,35 +2842,35 @@ assign write_data[0] = act_res_in[0] ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 state_reg_0_ ( .D ( n150 ) , .CLK ( clk ) , 
     .Q ( state[0] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 force_weight_reg ( .D ( n149 ) , 
-    .CLK ( ZCTSNET_1 ) , .Q ( force_weight ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .CLK ( ZCTSNET_0 ) , .Q ( force_weight ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 state_reg_1_ ( .D ( n147 ) , .CLK ( clk ) , 
     .Q ( state[1] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__dffq_1 state_reg_2_ ( .D ( n148 ) , 
-    .CLK ( ZCTSNET_1 ) , .Q ( state[2] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__dffq_1 state_reg_2_ ( .D ( n148 ) , .CLK ( clk ) , 
+    .Q ( state[2] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 src_addr_reg_0_ ( .D ( n146 ) , 
-    .CLK ( ZCTSNET_0 ) , .Q ( src_addr[0] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .CLK ( ZCTSNET_1 ) , .Q ( src_addr[0] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 src_addr_reg_12_ ( .D ( n145 ) , 
     .CLK ( ZCTSNET_0 ) , .Q ( src_addr[12] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 src_addr_reg_11_ ( .D ( n144 ) , 
-    .CLK ( ZCTSNET_0 ) , .Q ( src_addr[11] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .CLK ( ZCTSNET_1 ) , .Q ( src_addr[11] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 src_addr_reg_10_ ( .D ( n143 ) , 
     .CLK ( ZCTSNET_0 ) , .Q ( src_addr[10] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 src_addr_reg_9_ ( .D ( n142 ) , 
-    .CLK ( ZCTSNET_0 ) , .Q ( src_addr[9] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .CLK ( ZCTSNET_1 ) , .Q ( src_addr[9] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 src_addr_reg_8_ ( .D ( n141 ) , 
     .CLK ( ZCTSNET_0 ) , .Q ( src_addr[8] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 src_addr_reg_7_ ( .D ( n140 ) , 
-    .CLK ( ZCTSNET_0 ) , .Q ( src_addr[7] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .CLK ( ZCTSNET_1 ) , .Q ( src_addr[7] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 src_addr_reg_6_ ( .D ( n139 ) , 
     .CLK ( ZCTSNET_0 ) , .Q ( src_addr[6] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 src_addr_reg_5_ ( .D ( n138 ) , 
-    .CLK ( ZCTSNET_0 ) , .Q ( src_addr[5] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .CLK ( ZCTSNET_1 ) , .Q ( src_addr[5] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 src_addr_reg_4_ ( .D ( n137 ) , 
-    .CLK ( ZCTSNET_1 ) , .Q ( src_addr[4] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .CLK ( ZCTSNET_0 ) , .Q ( src_addr[4] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 src_addr_reg_3_ ( .D ( n136 ) , 
     .CLK ( ZCTSNET_0 ) , .Q ( src_addr[3] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 src_addr_reg_2_ ( .D ( n135 ) , 
-    .CLK ( ZCTSNET_1 ) , .Q ( src_addr[2] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .CLK ( ZCTSNET_0 ) , .Q ( src_addr[2] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 src_addr_reg_1_ ( .D ( n134 ) , 
     .CLK ( ZCTSNET_0 ) , .Q ( src_addr[1] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 dst_addr_reg_0_ ( .D ( n121 ) , 
@@ -2896,101 +2878,97 @@ gf180mcu_fd_sc_mcu7t5v0__dffq_1 dst_addr_reg_0_ ( .D ( n121 ) ,
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 dst_addr_reg_12_ ( .D ( n120 ) , 
     .CLK ( ZCTSNET_0 ) , .Q ( dst_addr[12] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 dst_addr_reg_11_ ( .D ( n119 ) , 
-    .CLK ( ZCTSNET_0 ) , .Q ( dst_addr[11] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .CLK ( ZCTSNET_1 ) , .Q ( dst_addr[11] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 dst_addr_reg_10_ ( .D ( n118 ) , 
-    .CLK ( ZCTSNET_1 ) , .Q ( dst_addr[10] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .CLK ( ZCTSNET_0 ) , .Q ( dst_addr[10] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 dst_addr_reg_9_ ( .D ( n117 ) , 
-    .CLK ( ZCTSNET_0 ) , .Q ( dst_addr[9] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .CLK ( ZCTSNET_1 ) , .Q ( dst_addr[9] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 dst_addr_reg_8_ ( .D ( n116 ) , 
     .CLK ( ZCTSNET_0 ) , .Q ( dst_addr[8] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 dst_addr_reg_7_ ( .D ( n115 ) , 
-    .CLK ( ZCTSNET_0 ) , .Q ( dst_addr[7] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .CLK ( ZCTSNET_1 ) , .Q ( dst_addr[7] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 dst_addr_reg_6_ ( .D ( n114 ) , 
     .CLK ( ZCTSNET_0 ) , .Q ( dst_addr[6] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 dst_addr_reg_5_ ( .D ( n113 ) , 
-    .CLK ( ZCTSNET_0 ) , .Q ( dst_addr[5] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .CLK ( ZCTSNET_1 ) , .Q ( dst_addr[5] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 dst_addr_reg_4_ ( .D ( n112 ) , 
-    .CLK ( ZCTSNET_1 ) , .Q ( dst_addr[4] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .CLK ( ZCTSNET_0 ) , .Q ( dst_addr[4] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 dst_addr_reg_3_ ( .D ( n111 ) , 
-    .CLK ( ZCTSNET_1 ) , .Q ( dst_addr[3] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .CLK ( ZCTSNET_0 ) , .Q ( dst_addr[3] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 dst_addr_reg_2_ ( .D ( n110 ) , 
-    .CLK ( ZCTSNET_1 ) , .Q ( dst_addr[2] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .CLK ( ZCTSNET_0 ) , .Q ( dst_addr[2] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 dst_addr_reg_1_ ( .D ( n109 ) , 
-    .CLK ( ZCTSNET_1 ) , .Q ( dst_addr[1] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .CLK ( ZCTSNET_0 ) , .Q ( dst_addr[1] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 src_addr_reg_13_ ( .D ( n133 ) , 
-    .CLK ( ZCTSNET_0 ) , .Q ( src_addr[13] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .CLK ( ZCTSNET_1 ) , .Q ( src_addr[13] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 src_addr_reg_24_ ( .D ( n132 ) , 
-    .CLK ( ZCTSNET_1 ) , .Q ( src_addr[24] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .CLK ( ZCTSNET_2 ) , .Q ( src_addr[24] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 src_addr_reg_23_ ( .D ( n131 ) , 
-    .CLK ( ZCTSNET_1 ) , .Q ( src_addr[23] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .CLK ( ZCTSNET_0 ) , .Q ( src_addr[23] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 src_addr_reg_22_ ( .D ( n130 ) , 
     .CLK ( ZCTSNET_0 ) , .Q ( src_addr[22] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 src_addr_reg_21_ ( .D ( n129 ) , 
     .CLK ( ZCTSNET_1 ) , .Q ( src_addr[21] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 src_addr_reg_20_ ( .D ( n128 ) , 
-    .CLK ( ZCTSNET_0 ) , .Q ( src_addr[20] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .CLK ( ZCTSNET_1 ) , .Q ( src_addr[20] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 src_addr_reg_19_ ( .D ( n127 ) , 
     .CLK ( ZCTSNET_1 ) , .Q ( src_addr[19] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 src_addr_reg_18_ ( .D ( n126 ) , 
-    .CLK ( ZCTSNET_0 ) , .Q ( src_addr[18] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .CLK ( ZCTSNET_1 ) , .Q ( src_addr[18] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 src_addr_reg_17_ ( .D ( n125 ) , 
     .CLK ( ZCTSNET_1 ) , .Q ( src_addr[17] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 src_addr_reg_16_ ( .D ( n124 ) , 
-    .CLK ( ZCTSNET_0 ) , .Q ( src_addr[16] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .CLK ( ZCTSNET_1 ) , .Q ( src_addr[16] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 src_addr_reg_15_ ( .D ( n123 ) , 
-    .CLK ( ZCTSNET_0 ) , .Q ( src_addr[15] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .CLK ( ZCTSNET_1 ) , .Q ( src_addr[15] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 src_addr_reg_14_ ( .D ( n122 ) , 
     .CLK ( ZCTSNET_0 ) , .Q ( src_addr[14] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 dst_addr_reg_13_ ( .D ( n108 ) , 
-    .CLK ( ZCTSNET_0 ) , .Q ( dst_addr[13] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .CLK ( ZCTSNET_1 ) , .Q ( dst_addr[13] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 dst_addr_reg_24_ ( .D ( n107 ) , 
     .CLK ( ZCTSNET_1 ) , .Q ( dst_addr[24] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 dst_addr_reg_23_ ( .D ( n106 ) , 
     .CLK ( ZCTSNET_1 ) , .Q ( dst_addr[23] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 dst_addr_reg_22_ ( .D ( n105 ) , 
-    .CLK ( ZCTSNET_0 ) , .Q ( dst_addr[22] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .CLK ( ZCTSNET_1 ) , .Q ( dst_addr[22] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 dst_addr_reg_21_ ( .D ( n104 ) , 
     .CLK ( ZCTSNET_1 ) , .Q ( dst_addr[21] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 dst_addr_reg_20_ ( .D ( n103 ) , 
-    .CLK ( ZCTSNET_0 ) , .Q ( dst_addr[20] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .CLK ( ZCTSNET_1 ) , .Q ( dst_addr[20] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 dst_addr_reg_19_ ( .D ( n102 ) , 
-    .CLK ( ZCTSNET_0 ) , .Q ( dst_addr[19] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .CLK ( ZCTSNET_1 ) , .Q ( dst_addr[19] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 dst_addr_reg_18_ ( .D ( n101 ) , 
-    .CLK ( ZCTSNET_0 ) , .Q ( dst_addr[18] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .CLK ( ZCTSNET_1 ) , .Q ( dst_addr[18] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 dst_addr_reg_17_ ( .D ( n100 ) , 
-    .CLK ( ZCTSNET_2 ) , .Q ( dst_addr[17] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .CLK ( ZCTSNET_1 ) , .Q ( dst_addr[17] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 dst_addr_reg_16_ ( .D ( n99 ) , 
-    .CLK ( ZCTSNET_0 ) , .Q ( dst_addr[16] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .CLK ( ZCTSNET_1 ) , .Q ( dst_addr[16] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 dst_addr_reg_15_ ( .D ( n98 ) , 
-    .CLK ( ZCTSNET_0 ) , .Q ( dst_addr[15] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .CLK ( ZCTSNET_1 ) , .Q ( dst_addr[15] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 dst_addr_reg_14_ ( .D ( n97 ) , 
     .CLK ( ZCTSNET_0 ) , .Q ( dst_addr[14] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__oai21_1 ctmTdsLR_1_204 ( .A1 ( n29 ) , .A2 ( n30 ) , 
-    .B ( tmp_net79 ) , .ZN ( n149 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__nand2_1 ctmTdsLR_2_205 ( .A1 ( n29 ) , 
-    .A2 ( tmp_net78 ) , .ZN ( tmp_net79 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__nor2_1 ctmTdsLR_3_206 ( .A1 ( rst_n ) , 
-    .A2 ( n171 ) , .ZN ( tmp_net78 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__oai21_1 ctmTdsLR_1_207 ( .A1 ( n92 ) , 
-    .A2 ( tmp_net80 ) , .B ( HFSNET_1 ) , .ZN ( n43 ) , .VDD ( VDD ) , 
+gf180mcu_fd_sc_mcu7t5v0__oai21_1 ctmTdsLR_1_197 ( .A1 ( n29 ) , .A2 ( n30 ) , 
+    .B ( tmp_net73 ) , .ZN ( n149 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__nand2_1 ctmTdsLR_2_198 ( .A1 ( n29 ) , 
+    .A2 ( tmp_net72 ) , .ZN ( tmp_net73 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__nor2_1 ctmTdsLR_3_199 ( .A1 ( rst_n ) , 
+    .A2 ( n171 ) , .ZN ( tmp_net72 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__oai21_1 ctmTdsLR_1_200 ( .A1 ( n92 ) , 
+    .A2 ( tmp_net74 ) , .B ( HFSNET_1 ) , .ZN ( n43 ) , .VDD ( VDD ) , 
     .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__or2_1 ctmTdsLR_2_208 ( .A1 ( mem_inst_in[14] ) , 
-    .A2 ( mem_inst_in[13] ) , .Z ( tmp_net80 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__nand2_1 ctmTdsLR_1_218 ( .A1 ( tmp_net87 ) , 
-    .A2 ( tmp_net89 ) , .ZN ( n148 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__or2_1 ctmTdsLR_2_219 ( .A1 ( n37 ) , .A2 ( n36 ) , 
-    .Z ( tmp_net87 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__nand2_1 ctmTdsLR_3_220 ( .A1 ( n37 ) , 
-    .A2 ( tmp_net88 ) , .ZN ( tmp_net89 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__nor2_1 ctmTdsLR_4_221 ( .A1 ( n32 ) , .A2 ( n33 ) , 
-    .ZN ( tmp_net88 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__nand2_1 ctmTdsLR_1_222 ( .A1 ( tmp_net92 ) , 
-    .A2 ( HFSNET_1 ) , .ZN ( n72 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__or2_1 ctmTdsLR_2_201 ( .A1 ( mem_inst_in[14] ) , 
+    .A2 ( mem_inst_in[13] ) , .Z ( tmp_net74 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__oai21_1 ctmTdsLR_1_207 ( .A1 ( n37 ) , .A2 ( n36 ) , 
+    .B ( tmp_net79 ) , .ZN ( n148 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__nand2_1 ctmTdsLR_2_208 ( .A1 ( n37 ) , 
+    .A2 ( tmp_net78 ) , .ZN ( tmp_net79 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__nor2_1 ctmTdsLR_3_209 ( .A1 ( n32 ) , .A2 ( n33 ) , 
+    .ZN ( tmp_net78 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__clkinv_1 U13 ( .I ( n43 ) , .ZN ( n11 ) , 
     .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__clkinv_1 U14 ( .I ( n75 ) , .ZN ( n12 ) , 
     .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__buf_1 HFSBUF_541_5 ( .I ( n173 ) , .Z ( HFSNET_0 ) , 
+gf180mcu_fd_sc_mcu7t5v0__buf_1 HFSBUF_423_4 ( .I ( n173 ) , .Z ( HFSNET_0 ) , 
     .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__inv_1 U16 ( .I ( read_data[5] ) , .ZN ( n21 ) , 
     .VDD ( VDD ) , .VSS ( VSS ) ) ;
@@ -3004,12 +2982,6 @@ gf180mcu_fd_sc_mcu7t5v0__inv_1 U20 ( .I ( n16 ) , .ZN ( input_data[0] ) ,
     .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__inv_1 U21 ( .I ( n15 ) , .ZN ( input_data[6] ) , 
     .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__nand2_1 ctmTdsLR_2_223 ( .A1 ( tmp_net90 ) , 
-    .A2 ( tmp_net91 ) , .ZN ( tmp_net92 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__clkinv_1 ctmTdsLR_3_224 ( .I ( n92 ) , 
-    .ZN ( tmp_net90 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__clkinv_1 ctmTdsLR_4_225 ( .I ( n59 ) , 
-    .ZN ( tmp_net91 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__inv_1 U30 ( .I ( read_data[7] ) , .ZN ( n14 ) , 
     .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__inv_1 U31 ( .I ( n14 ) , .ZN ( weight_data[7] ) , 
@@ -3085,7 +3057,7 @@ gf180mcu_fd_sc_mcu7t5v0__aoi21_1 U66 ( .A1 ( read_data_val ) , .A2 ( n28 ) ,
     .B ( state[1] ) , .ZN ( n25 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__nand2_1 U67 ( .A1 ( mem_rdy ) , 
     .A2 ( mem_inst_in_val ) , .ZN ( n41 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__oai21_1 U68 ( .A1 ( mem_inst_in[15] ) , .A2 ( n41 ) , 
+gf180mcu_fd_sc_mcu7t5v0__oai21_1 U68 ( .A1 ( n41 ) , .A2 ( mem_inst_in[15] ) , 
     .B ( HFSNET_1 ) , .ZN ( n29 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__aoi21_1 U69 ( .A1 ( mem_itf_rdy ) , .A2 ( n24 ) , 
     .B ( n29 ) , .ZN ( n35 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
@@ -3189,6 +3161,8 @@ gf180mcu_fd_sc_mcu7t5v0__inv_1 U117 ( .I ( n58 ) , .ZN ( n134 ) ,
     .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__inv_1 U118 ( .I ( mem_inst_in[0] ) , .ZN ( n151 ) , 
     .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__oai21_2 U119 ( .A1 ( n59 ) , .A2 ( n92 ) , 
+    .B ( HFSNET_1 ) , .ZN ( n72 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__nand2_1 U120 ( .A1 ( HFSNET_1 ) , .A2 ( n72 ) , 
     .ZN ( n73 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__inv_1 U121 ( .I ( src_addr[13] ) , .ZN ( n60 ) , 
@@ -3207,8 +3181,8 @@ gf180mcu_fd_sc_mcu7t5v0__inv_1 U127 ( .I ( mem_inst_in[9] ) , .ZN ( n157 ) ,
     .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__inv_1 U128 ( .I ( src_addr[22] ) , .ZN ( n63 ) , 
     .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__oai22_1 U129 ( .A1 ( n72 ) , .A2 ( n63 ) , 
-    .B1 ( n73 ) , .B2 ( n157 ) , .ZN ( n130 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__oai22_1 U129 ( .A1 ( n157 ) , .A2 ( n73 ) , 
+    .B1 ( n72 ) , .B2 ( n63 ) , .ZN ( n130 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__inv_1 U130 ( .I ( mem_inst_in[8] ) , .ZN ( n159 ) , 
     .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__inv_1 U131 ( .I ( src_addr[21] ) , .ZN ( n64 ) , 
@@ -3219,8 +3193,8 @@ gf180mcu_fd_sc_mcu7t5v0__inv_1 U133 ( .I ( mem_inst_in[7] ) , .ZN ( n161 ) ,
     .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__inv_1 U134 ( .I ( src_addr[20] ) , .ZN ( n65 ) , 
     .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__oai22_1 U135 ( .A1 ( n72 ) , .A2 ( n65 ) , 
-    .B1 ( n73 ) , .B2 ( n161 ) , .ZN ( n128 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__oai22_1 U135 ( .A1 ( n161 ) , .A2 ( n73 ) , 
+    .B1 ( n72 ) , .B2 ( n65 ) , .ZN ( n128 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__inv_1 U136 ( .I ( mem_inst_in[6] ) , .ZN ( n163 ) , 
     .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__inv_1 U137 ( .I ( src_addr[19] ) , .ZN ( n66 ) , 
@@ -3243,18 +3217,18 @@ gf180mcu_fd_sc_mcu7t5v0__inv_1 U145 ( .I ( mem_inst_in[3] ) , .ZN ( n169 ) ,
     .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__inv_1 U146 ( .I ( src_addr[16] ) , .ZN ( n69 ) , 
     .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__oai22_1 U147 ( .A1 ( n169 ) , .A2 ( n73 ) , 
-    .B1 ( n72 ) , .B2 ( n69 ) , .ZN ( n124 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__oai22_1 U147 ( .A1 ( n72 ) , .A2 ( n69 ) , 
+    .B1 ( n73 ) , .B2 ( n169 ) , .ZN ( n124 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__inv_1 U148 ( .I ( src_addr[15] ) , .ZN ( n70 ) , 
     .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__oai22_1 U149 ( .A1 ( n171 ) , .A2 ( n73 ) , 
-    .B1 ( n72 ) , .B2 ( n70 ) , .ZN ( n123 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__oai22_1 U149 ( .A1 ( n72 ) , .A2 ( n70 ) , 
+    .B1 ( n73 ) , .B2 ( n171 ) , .ZN ( n123 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__inv_1 U150 ( .I ( mem_inst_in[1] ) , .ZN ( n175 ) , 
     .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__inv_1 U151 ( .I ( src_addr[14] ) , .ZN ( n71 ) , 
     .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__oai22_1 U152 ( .A1 ( n175 ) , .A2 ( n73 ) , 
-    .B1 ( n72 ) , .B2 ( n71 ) , .ZN ( n122 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__oai22_1 U152 ( .A1 ( n72 ) , .A2 ( n71 ) , 
+    .B1 ( n73 ) , .B2 ( n175 ) , .ZN ( n122 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__oai21_1 U153 ( .A1 ( n74 ) , .A2 ( n92 ) , 
     .B ( HFSNET_1 ) , .ZN ( n75 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__clkinv_1 U154 ( .I ( n75 ) , .ZN ( n89 ) , 
@@ -3338,8 +3312,8 @@ gf180mcu_fd_sc_mcu7t5v0__oai22_1 U185 ( .A1 ( n151 ) , .A2 ( n174 ) ,
     .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__inv_1 U186 ( .I ( dst_addr[24] ) , .ZN ( n152 ) , 
     .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__oai22_1 U187 ( .A1 ( HFSNET_0 ) , .A2 ( n152 ) , 
-    .B1 ( n174 ) , .B2 ( n153 ) , .ZN ( n107 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__oai22_1 U187 ( .A1 ( n153 ) , .A2 ( n174 ) , 
+    .B1 ( n173 ) , .B2 ( n152 ) , .ZN ( n107 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__inv_1 U188 ( .I ( dst_addr[23] ) , .ZN ( n154 ) , 
     .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__oai22_1 U189 ( .A1 ( n155 ) , .A2 ( n174 ) , 
@@ -3352,14 +3326,12 @@ gf180mcu_fd_sc_mcu7t5v0__oai22_1 U191 ( .A1 ( n157 ) , .A2 ( n174 ) ,
     .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__inv_1 U192 ( .I ( dst_addr[21] ) , .ZN ( n158 ) , 
     .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__oai22_1 U193 ( .A1 ( n159 ) , .A2 ( n174 ) , 
-    .B1 ( HFSNET_0 ) , .B2 ( n158 ) , .ZN ( n104 ) , .VDD ( VDD ) , 
-    .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__oai22_1 U193 ( .A1 ( HFSNET_0 ) , .A2 ( n158 ) , 
+    .B1 ( n174 ) , .B2 ( n159 ) , .ZN ( n104 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__inv_1 U194 ( .I ( dst_addr[20] ) , .ZN ( n160 ) , 
     .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__oai22_1 U195 ( .A1 ( n161 ) , .A2 ( n174 ) , 
-    .B1 ( HFSNET_0 ) , .B2 ( n160 ) , .ZN ( n103 ) , .VDD ( VDD ) , 
-    .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__oai22_1 U195 ( .A1 ( HFSNET_0 ) , .A2 ( n160 ) , 
+    .B1 ( n174 ) , .B2 ( n161 ) , .ZN ( n103 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__inv_1 U196 ( .I ( dst_addr[19] ) , .ZN ( n162 ) , 
     .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__oai22_1 U197 ( .A1 ( n163 ) , .A2 ( n174 ) , 
@@ -3372,8 +3344,9 @@ gf180mcu_fd_sc_mcu7t5v0__oai22_1 U199 ( .A1 ( n165 ) , .A2 ( n174 ) ,
     .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__inv_1 U200 ( .I ( dst_addr[17] ) , .ZN ( n166 ) , 
     .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__oai22_1 U201 ( .A1 ( HFSNET_0 ) , .A2 ( n166 ) , 
-    .B1 ( n174 ) , .B2 ( n167 ) , .ZN ( n100 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__oai22_1 U201 ( .A1 ( n167 ) , .A2 ( n174 ) , 
+    .B1 ( HFSNET_0 ) , .B2 ( n166 ) , .ZN ( n100 ) , .VDD ( VDD ) , 
+    .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__inv_1 U202 ( .I ( dst_addr[16] ) , .ZN ( n168 ) , 
     .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__oai22_1 U203 ( .A1 ( n169 ) , .A2 ( n174 ) , 
@@ -3409,12 +3382,10 @@ input  VDD ;
 input  VSS ;
 input  HFSNET_0 ;
 
-wire tmp_net32 ;
-wire tmp_net44 ;
+wire tmp_net33 ;
 wire tmp_net45 ;
 wire tmp_net46 ;
 wire tmp_net47 ;
-wire tmp_net48 ;
 supply1 VDD ;
 wire n3 ;
 wire n4 ;
@@ -3447,22 +3418,18 @@ assign mem_inst_out[1] = inst_in[1] ;
 assign mem_inst_out[0] = inst_in[0] ;
 
 gf180mcu_fd_sc_mcu7t5v0__clkinv_1 ctmTdsLR_1_28 ( .I ( inst_in[14] ) , 
-    .ZN ( tmp_net32 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .ZN ( tmp_net33 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__or4_1 ctmTdsLR_2_29 ( .A1 ( mem_inst_out[15] ) , 
-    .A2 ( tmp_net32 ) , .A3 ( inst_in[13] ) , .A4 ( inst_in[12] ) , 
+    .A2 ( tmp_net33 ) , .A3 ( inst_in[13] ) , .A4 ( inst_in[12] ) , 
     .Z ( n6 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__clkinv_1 ctmTdsLR_1_157 ( .I ( tmp_net48 ) , 
-    .ZN ( core_rdy ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__oai211_1 ctmTdsLR_2_158 ( .A1 ( tmp_net44 ) , 
-    .A2 ( tmp_net45 ) , .B ( tmp_net46 ) , .C ( tmp_net47 ) , 
-    .ZN ( tmp_net48 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__clkinv_1 ctmTdsLR_3_159 ( .I ( n10 ) , 
-    .ZN ( tmp_net44 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__clkinv_1 ctmTdsLR_4_160 ( .I ( n9 ) , 
+gf180mcu_fd_sc_mcu7t5v0__and3_1 ctmTdsLR_1_158 ( .A1 ( tmp_net45 ) , 
+    .A2 ( tmp_net46 ) , .A3 ( tmp_net47 ) , .Z ( core_rdy ) , .VDD ( VDD ) , 
+    .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__clkinv_1 ctmTdsLR_2_159 ( .I ( n7 ) , 
     .ZN ( tmp_net45 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__clkinv_1 ctmTdsLR_5_161 ( .I ( n7 ) , 
+gf180mcu_fd_sc_mcu7t5v0__nand2_1 ctmTdsLR_3_160 ( .A1 ( n9 ) , .A2 ( n10 ) , 
     .ZN ( tmp_net46 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__clkinv_1 ctmTdsLR_6_162 ( .I ( rst_n ) , 
+gf180mcu_fd_sc_mcu7t5v0__clkinv_1 ctmTdsLR_4_161 ( .I ( rst_n ) , 
     .ZN ( tmp_net47 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__inv_1 U13 ( .I ( inst_in[15] ) , .ZN ( n21 ) , 
     .VDD ( VDD ) , .VSS ( VSS ) ) ;
@@ -3486,8 +3453,8 @@ gf180mcu_fd_sc_mcu7t5v0__and2_1 U25 ( .A1 ( n17 ) , .A2 ( mem_inst_out[0] ) ,
     .Z ( exe_inst_out[0] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__inv_1 U26 ( .I ( exe_rdy ) , .ZN ( n3 ) , 
     .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__nand2_1 U28 ( .A1 ( HFSNET_0 ) , 
-    .A2 ( inst_in_val ) , .ZN ( n13 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__nand2_1 U28 ( .A1 ( inst_in_val ) , 
+    .A2 ( HFSNET_0 ) , .ZN ( n13 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__nor3_1 U29 ( .A1 ( n3 ) , .A2 ( n6 ) , .A3 ( n13 ) , 
     .ZN ( exe_inst_out_val ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__nand4_1 U30 ( .A1 ( inst_in[14] ) , 
@@ -3495,7 +3462,7 @@ gf180mcu_fd_sc_mcu7t5v0__nand4_1 U30 ( .A1 ( inst_in[14] ) ,
     .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__aoi211_1 U31 ( .A1 ( inst_in[9] ) , .A2 ( mem_rdy ) , 
     .B ( n20 ) , .C ( n4 ) , .ZN ( n10 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__oai21_1 U32 ( .A1 ( inst_in[15] ) , .A2 ( exe_rdy ) , 
+gf180mcu_fd_sc_mcu7t5v0__oai21_1 U32 ( .A1 ( exe_rdy ) , .A2 ( inst_in[15] ) , 
     .B ( n18 ) , .ZN ( n9 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__nor4_1 U33 ( .A1 ( inst_in[14] ) , 
     .A2 ( inst_in[13] ) , .A3 ( inst_in[12] ) , .A4 ( inst_in[11] ) , 
@@ -3572,7 +3539,7 @@ wire n19 ;
 wire n20 ;
 wire n21 ;
 wire n22 ;
-wire tmp_net60 ;
+wire tmp_net56 ;
 wire n3 ;
 wire n4 ;
 wire n23 ;
@@ -3584,10 +3551,10 @@ gf180mcu_fd_sc_mcu7t5v0__dffq_1 count_reg_0_ ( .D ( n22 ) , .CLK ( clk ) ,
     .Q ( count_0_ ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 words_reg_0__0_ ( .D ( n21 ) , .CLK ( clk ) , 
     .Q ( inst_out[0] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__dffq_1 words_reg_0__1_ ( .D ( n20 ) , 
-    .CLK ( ZCTSNET_0 ) , .Q ( inst_out[1] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__dffq_1 words_reg_0__2_ ( .D ( n19 ) , 
-    .CLK ( ZCTSNET_0 ) , .Q ( inst_out[2] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__dffq_1 words_reg_0__1_ ( .D ( n20 ) , .CLK ( clk ) , 
+    .Q ( inst_out[1] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__dffq_1 words_reg_0__2_ ( .D ( n19 ) , .CLK ( clk ) , 
+    .Q ( inst_out[2] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 words_reg_0__3_ ( .D ( n18 ) , 
     .CLK ( ZCTSNET_0 ) , .Q ( inst_out[3] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 words_reg_0__4_ ( .D ( n17 ) , 
@@ -3602,25 +3569,25 @@ gf180mcu_fd_sc_mcu7t5v0__dffq_1 words_reg_0__8_ ( .D ( n13 ) ,
     .CLK ( ZCTSNET_0 ) , .Q ( inst_out[8] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 words_reg_0__9_ ( .D ( n12 ) , 
     .CLK ( ZCTSNET_0 ) , .Q ( inst_out[9] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__dffq_1 words_reg_0__10_ ( .D ( n11 ) , 
-    .CLK ( ZCTSNET_0 ) , .Q ( inst_out[10] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__dffq_1 words_reg_0__10_ ( .D ( n11 ) , .CLK ( clk ) , 
+    .Q ( inst_out[10] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 words_reg_0__11_ ( .D ( n10 ) , 
     .CLK ( ZCTSNET_0 ) , .Q ( inst_out[11] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 words_reg_0__12_ ( .D ( n9 ) , 
     .CLK ( ZCTSNET_0 ) , .Q ( inst_out[12] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 words_reg_0__13_ ( .D ( n8 ) , 
     .CLK ( ZCTSNET_0 ) , .Q ( inst_out[13] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__dffq_1 words_reg_0__14_ ( .D ( n7 ) , .CLK ( clk ) , 
-    .Q ( inst_out[14] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__dffq_1 words_reg_0__15_ ( .D ( n6 ) , .CLK ( clk ) , 
-    .Q ( inst_out[15] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__or2_2 ctmTdsLR_1_178 ( .A1 ( n4 ) , 
-    .A2 ( tmp_net60 ) , .Z ( n24 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__clkinv_1 ctmTdsLR_2_179 ( .I ( inst_val ) , 
-    .ZN ( tmp_net60 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__dffq_1 words_reg_0__14_ ( .D ( n7 ) , 
+    .CLK ( ZCTSNET_0 ) , .Q ( inst_out[14] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__dffq_1 words_reg_0__15_ ( .D ( n6 ) , 
+    .CLK ( ZCTSNET_0 ) , .Q ( inst_out[15] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__or2_2 ctmTdsLR_1_174 ( .A1 ( n4 ) , 
+    .A2 ( tmp_net56 ) , .Z ( n24 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__clkinv_1 ctmTdsLR_2_175 ( .I ( inst_val ) , 
+    .ZN ( tmp_net56 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__inv_1 U5 ( .I ( count_0_ ) , .ZN ( n3 ) , 
     .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__nand2_1 U6 ( .A1 ( n3 ) , .A2 ( rst_n ) , 
+gf180mcu_fd_sc_mcu7t5v0__nand2_1 U6 ( .A1 ( rst_n ) , .A2 ( n3 ) , 
     .ZN ( n4 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__nor2_1 U7 ( .A1 ( inst_val ) , .A2 ( n4 ) , 
     .ZN ( fifo_rdy ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
@@ -3671,7 +3638,8 @@ gf180mcu_fd_sc_mcu7t5v0__mux2_1 U28 ( .I0 ( inst[15] ) ,
 endmodule
 
 
-module uart_tx ( clk , rst_n , inst_fifo_rdy , tx , VDD , VSS , HFSNET_0 ) ;
+module uart_tx ( clk , rst_n , inst_fifo_rdy , tx , VDD , VSS , HFSNET_0 , 
+    ZCTSNET_0 ) ;
 input  clk ;
 input  rst_n ;
 input  inst_fifo_rdy ;
@@ -3679,6 +3647,7 @@ output tx ;
 input  VDD ;
 input  VSS ;
 input  HFSNET_0 ;
+input  ZCTSNET_0 ;
 
 wire state ;
 wire ready_sent ;
@@ -3752,17 +3721,16 @@ wire [3:0] bit_idx ;
 wire [6:0] clk_cnt ;
 supply1 VDD ;
 supply0 VSS ;
-wire tmp_net58 ;
-wire tmp_net72 ;
-wire tmp_net73 ;
-wire tmp_net74 ;
+wire tmp_net67 ;
+wire tmp_net68 ;
+wire tmp_net69 ;
 
-gf180mcu_fd_sc_mcu7t5v0__dffq_1 bit_idx_reg_0_ ( .D ( n53 ) , .CLK ( clk ) , 
-    .Q ( bit_idx[0] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__dffq_1 bit_idx_reg_0_ ( .D ( n53 ) , 
+    .CLK ( ZCTSNET_0 ) , .Q ( bit_idx[0] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 state_reg ( .D ( n41 ) , .CLK ( clk ) , 
     .Q ( state ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__dffq_1 ready_sent_reg ( .D ( n52 ) , .CLK ( clk ) , 
-    .Q ( ready_sent ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__dffq_1 ready_sent_reg ( .D ( n52 ) , 
+    .CLK ( ZCTSNET_0 ) , .Q ( ready_sent ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 clk_cnt_reg_6_ ( .D ( n42 ) , .CLK ( clk ) , 
     .Q ( clk_cnt[6] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 clk_cnt_reg_0_ ( .D ( n48 ) , .CLK ( clk ) , 
@@ -3777,8 +3745,8 @@ gf180mcu_fd_sc_mcu7t5v0__dffq_1 clk_cnt_reg_4_ ( .D ( n44 ) , .CLK ( clk ) ,
     .Q ( clk_cnt[4] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 clk_cnt_reg_5_ ( .D ( n43 ) , .CLK ( clk ) , 
     .Q ( clk_cnt[5] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__dffq_1 bit_idx_reg_1_ ( .D ( n51 ) , .CLK ( clk ) , 
-    .Q ( bit_idx[1] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__dffq_1 bit_idx_reg_1_ ( .D ( n51 ) , 
+    .CLK ( ZCTSNET_0 ) , .Q ( bit_idx[1] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 bit_idx_reg_2_ ( .D ( n50 ) , .CLK ( clk ) , 
     .Q ( bit_idx[2] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 bit_idx_reg_3_ ( .D ( n49 ) , .CLK ( clk ) , 
@@ -3791,14 +3759,13 @@ gf180mcu_fd_sc_mcu7t5v0__nand3_1 U5 ( .A1 ( bit_idx[0] ) , .A2 ( n17 ) ,
     .A3 ( n10 ) , .ZN ( n61 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__nand2_1 U6 ( .A1 ( state ) , .A2 ( n61 ) , 
     .ZN ( tx ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__nand3_1 ctmTdsLR_1_175 ( .A1 ( n18 ) , 
-    .A2 ( tmp_net58 ) , .A3 ( state ) , .ZN ( n8 ) , .VDD ( VDD ) , 
-    .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__nor2_1 ctmTdsLR_1_191 ( .A1 ( n40 ) , 
+    .A2 ( tmp_net67 ) , .ZN ( tmp_net68 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__nand2_1 U8 ( .A1 ( HFSNET_0 ) , .A2 ( state ) , 
     .ZN ( n33 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__clkinv_1 U9 ( .I ( inst_fifo_rdy ) , .ZN ( n1 ) , 
     .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__oai21_1 U10 ( .A1 ( ready_sent ) , .A2 ( n1 ) , 
+gf180mcu_fd_sc_mcu7t5v0__oai21_1 U10 ( .A1 ( n1 ) , .A2 ( ready_sent ) , 
     .B ( HFSNET_0 ) , .ZN ( n64 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__inv_1 U11 ( .I ( bit_idx[3] ) , .ZN ( n63 ) , 
     .VDD ( VDD ) , .VSS ( VSS ) ) ;
@@ -3812,13 +3779,13 @@ gf180mcu_fd_sc_mcu7t5v0__nand4_1 U14 ( .A1 ( clk_cnt[1] ) ,
 gf180mcu_fd_sc_mcu7t5v0__nor4_1 U15 ( .A1 ( clk_cnt[3] ) , 
     .A2 ( clk_cnt[0] ) , .A3 ( n35 ) , .A4 ( n2 ) , .ZN ( n18 ) , 
     .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__nor2_1 ctmTdsLR_1_196 ( .A1 ( n40 ) , 
-    .A2 ( tmp_net72 ) , .ZN ( tmp_net73 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__oai211_1 U16 ( .A1 ( n63 ) , .A2 ( n61 ) , 
+    .B ( state ) , .C ( n18 ) , .ZN ( n8 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__inv_1 U17 ( .I ( n8 ) , .ZN ( n3 ) , .VDD ( VDD ) , 
     .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__aoi21_1 U18 ( .A1 ( n33 ) , .A2 ( n64 ) , .B ( n3 ) , 
     .ZN ( n7 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__nor2_1 U19 ( .A1 ( n33 ) , .A2 ( bit_idx[0] ) , 
+gf180mcu_fd_sc_mcu7t5v0__nor2_1 U19 ( .A1 ( bit_idx[0] ) , .A2 ( n33 ) , 
     .ZN ( n6 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__aoi22_1 U20 ( .A1 ( bit_idx[0] ) , .A2 ( n7 ) , 
     .B1 ( n3 ) , .B2 ( n6 ) , .ZN ( n4 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
@@ -3878,8 +3845,8 @@ gf180mcu_fd_sc_mcu7t5v0__clkinv_1 U45 ( .I ( clk_cnt[1] ) , .ZN ( n23 ) ,
 gf180mcu_fd_sc_mcu7t5v0__oai32_1 U46 ( .A1 ( clk_cnt[1] ) , .A2 ( n33 ) , 
     .A3 ( n21 ) , .B1 ( n20 ) , .B2 ( n23 ) , .ZN ( n47 ) , .VDD ( VDD ) , 
     .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__nand2_1 U47 ( .A1 ( clk_cnt[0] ) , 
-    .A2 ( clk_cnt[1] ) , .ZN ( n25 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__nand2_1 U47 ( .A1 ( clk_cnt[1] ) , 
+    .A2 ( clk_cnt[0] ) , .ZN ( n25 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__aoi21_1 U48 ( .A1 ( n57 ) , .A2 ( n23 ) , 
     .B ( n22 ) , .ZN ( n24 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__clkinv_1 U49 ( .I ( clk_cnt[2] ) , .ZN ( n26 ) , 
@@ -3887,7 +3854,7 @@ gf180mcu_fd_sc_mcu7t5v0__clkinv_1 U49 ( .I ( clk_cnt[2] ) , .ZN ( n26 ) ,
 gf180mcu_fd_sc_mcu7t5v0__oai32_1 U50 ( .A1 ( clk_cnt[2] ) , .A2 ( n33 ) , 
     .A3 ( n25 ) , .B1 ( n24 ) , .B2 ( n26 ) , .ZN ( n46 ) , .VDD ( VDD ) , 
     .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__nor2_1 U51 ( .A1 ( n25 ) , .A2 ( n26 ) , 
+gf180mcu_fd_sc_mcu7t5v0__nor2_1 U51 ( .A1 ( n26 ) , .A2 ( n25 ) , 
     .ZN ( n29 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__clkinv_1 U52 ( .I ( n29 ) , .ZN ( n28 ) , 
     .VDD ( VDD ) , .VSS ( VSS ) ) ;
@@ -3907,7 +3874,7 @@ gf180mcu_fd_sc_mcu7t5v0__aoi21_1 U58 ( .A1 ( n55 ) , .A2 ( n31 ) ,
 gf180mcu_fd_sc_mcu7t5v0__oai32_1 U59 ( .A1 ( clk_cnt[4] ) , .A2 ( n33 ) , 
     .A3 ( n34 ) , .B1 ( n32 ) , .B2 ( n35 ) , .ZN ( n44 ) , .VDD ( VDD ) , 
     .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__nor2_1 U60 ( .A1 ( n35 ) , .A2 ( n34 ) , 
+gf180mcu_fd_sc_mcu7t5v0__nor2_1 U60 ( .A1 ( n34 ) , .A2 ( n35 ) , 
     .ZN ( n56 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__inv_1 U61 ( .I ( n56 ) , .ZN ( n38 ) , .VDD ( VDD ) , 
     .VSS ( VSS ) ) ;
@@ -3918,13 +3885,11 @@ gf180mcu_fd_sc_mcu7t5v0__clkinv_1 U63 ( .I ( n40 ) , .ZN ( n37 ) ,
 gf180mcu_fd_sc_mcu7t5v0__oai32_1 U64 ( .A1 ( clk_cnt[5] ) , .A2 ( n39 ) , 
     .A3 ( n38 ) , .B1 ( n37 ) , .B2 ( n54 ) , .ZN ( n43 ) , .VDD ( VDD ) , 
     .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__or2_1 ctmTdsLR_3_177_roptpi_227 ( .A1 ( n61 ) , 
-    .A2 ( n63 ) , .Z ( tmp_net58 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__nand3_1 U66 ( .A1 ( n57 ) , .A2 ( clk_cnt[5] ) , 
     .A3 ( n56 ) , .ZN ( n59 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__inv_1 U67 ( .I ( clk_cnt[6] ) , .ZN ( n58 ) , 
     .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__aoi22_1 U68 ( .A1 ( tmp_net73 ) , .A2 ( tmp_net74 ) , 
+gf180mcu_fd_sc_mcu7t5v0__aoi22_1 U68 ( .A1 ( tmp_net68 ) , .A2 ( tmp_net69 ) , 
     .B1 ( n59 ) , .B2 ( n58 ) , .ZN ( n42 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__nor3_1 U69 ( .A1 ( n63 ) , .A2 ( n62 ) , 
     .A3 ( n61 ) , .ZN ( n68 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
@@ -3933,10 +3898,10 @@ gf180mcu_fd_sc_mcu7t5v0__clkinv_1 U70 ( .I ( n64 ) , .ZN ( n67 ) ,
 gf180mcu_fd_sc_mcu7t5v0__aoi221_1 U71 ( .A1 ( n68 ) , .A2 ( state ) , 
     .B1 ( n67 ) , .B2 ( n66 ) , .C ( rst_n ) , .ZN ( n41 ) , .VDD ( VDD ) , 
     .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__clkinv_1 ctmTdsLR_2_197 ( .I ( clk_cnt[6] ) , 
-    .ZN ( tmp_net72 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__nand2_1 ctmTdsLR_3_198 ( .A1 ( n55 ) , .A2 ( n54 ) , 
-    .ZN ( tmp_net74 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__clkinv_1 ctmTdsLR_2_192 ( .I ( clk_cnt[6] ) , 
+    .ZN ( tmp_net67 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__nand2_1 ctmTdsLR_3_193 ( .A1 ( n55 ) , .A2 ( n54 ) , 
+    .ZN ( tmp_net69 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 endmodule
 
 
@@ -4003,7 +3968,7 @@ wire n14 ;
 wire n15 ;
 wire n17 ;
 wire n18 ;
-wire tmp_net66 ;
+wire tmp_net62 ;
 wire n20 ;
 wire n21 ;
 wire n22 ;
@@ -4045,7 +4010,7 @@ wire n58 ;
 wire n59 ;
 wire n60 ;
 wire n61 ;
-wire tmp_net67 ;
+wire tmp_net63 ;
 wire n63 ;
 wire n64 ;
 wire n65 ;
@@ -4082,86 +4047,86 @@ wire [6:0] clk_cnt ;
 supply1 VDD ;
 supply0 VSS ;
 wire HFSNET_1 ;
-wire tmp_net85 ;
-wire tmp_net86 ;
+wire tmp_net76 ;
+wire tmp_net77 ;
 
-gf180mcu_fd_sc_mcu7t5v0__dffq_1 rx_meta_reg ( .D ( N143 ) , .CLK ( clk ) , 
-    .Q ( rx_meta ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__dffq_1 rx_sync_reg ( .D ( N144 ) , .CLK ( clk ) , 
-    .Q ( rx_sync ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__dffq_1 bit_idx_reg_0_ ( .D ( n102 ) , .CLK ( clk ) , 
-    .Q ( bit_idx[0] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__dffq_1 state_reg_0_ ( .D ( n104 ) , .CLK ( clk ) , 
-    .Q ( state[0] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__dffq_1 clk_cnt_reg_0_ ( .D ( n98 ) , .CLK ( clk ) , 
-    .Q ( clk_cnt[0] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__dffq_1 clk_cnt_reg_1_ ( .D ( n97 ) , .CLK ( clk ) , 
-    .Q ( clk_cnt[1] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__dffq_1 clk_cnt_reg_2_ ( .D ( n96 ) , .CLK ( clk ) , 
-    .Q ( clk_cnt[2] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__dffq_1 clk_cnt_reg_3_ ( .D ( n95 ) , .CLK ( clk ) , 
-    .Q ( clk_cnt[3] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__dffq_1 clk_cnt_reg_4_ ( .D ( n94 ) , .CLK ( clk ) , 
-    .Q ( clk_cnt[4] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__dffq_1 clk_cnt_reg_5_ ( .D ( n93 ) , .CLK ( clk ) , 
-    .Q ( clk_cnt[5] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__dffq_1 clk_cnt_reg_6_ ( .D ( n92 ) , .CLK ( clk ) , 
-    .Q ( clk_cnt[6] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__dffq_1 bit_idx_reg_1_ ( .D ( n101 ) , .CLK ( clk ) , 
-    .Q ( bit_idx[1] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__dffq_1 bit_idx_reg_2_ ( .D ( n100 ) , .CLK ( clk ) , 
-    .Q ( bit_idx[2] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__dffq_1 bit_idx_reg_3_ ( .D ( n99 ) , .CLK ( clk ) , 
-    .Q ( bit_idx[3] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__dffq_1 state_reg_1_ ( .D ( n103 ) , .CLK ( clk ) , 
-    .Q ( state[1] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__dffq_1 inst_reg_15_ ( .D ( n76 ) , 
-    .CLK ( ZCTSNET_0 ) , .Q ( inst[15] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__dffq_1 rx_meta_reg ( .D ( N143 ) , 
+    .CLK ( ZCTSNET_1 ) , .Q ( rx_meta ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__dffq_1 rx_sync_reg ( .D ( N144 ) , 
+    .CLK ( ZCTSNET_1 ) , .Q ( rx_sync ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__dffq_1 bit_idx_reg_0_ ( .D ( n102 ) , 
+    .CLK ( ZCTSNET_1 ) , .Q ( bit_idx[0] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__dffq_1 state_reg_0_ ( .D ( n104 ) , 
+    .CLK ( ZCTSNET_1 ) , .Q ( state[0] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__dffq_1 clk_cnt_reg_0_ ( .D ( n98 ) , 
+    .CLK ( ZCTSNET_1 ) , .Q ( clk_cnt[0] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__dffq_1 clk_cnt_reg_1_ ( .D ( n97 ) , 
+    .CLK ( ZCTSNET_1 ) , .Q ( clk_cnt[1] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__dffq_1 clk_cnt_reg_2_ ( .D ( n96 ) , 
+    .CLK ( ZCTSNET_1 ) , .Q ( clk_cnt[2] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__dffq_1 clk_cnt_reg_3_ ( .D ( n95 ) , 
+    .CLK ( ZCTSNET_1 ) , .Q ( clk_cnt[3] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__dffq_1 clk_cnt_reg_4_ ( .D ( n94 ) , 
+    .CLK ( ZCTSNET_1 ) , .Q ( clk_cnt[4] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__dffq_1 clk_cnt_reg_5_ ( .D ( n93 ) , 
+    .CLK ( ZCTSNET_1 ) , .Q ( clk_cnt[5] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__dffq_1 clk_cnt_reg_6_ ( .D ( n92 ) , 
+    .CLK ( ZCTSNET_1 ) , .Q ( clk_cnt[6] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__dffq_1 bit_idx_reg_1_ ( .D ( n101 ) , 
+    .CLK ( ZCTSNET_1 ) , .Q ( bit_idx[1] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__dffq_1 bit_idx_reg_2_ ( .D ( n100 ) , 
+    .CLK ( ZCTSNET_1 ) , .Q ( bit_idx[2] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__dffq_1 bit_idx_reg_3_ ( .D ( n99 ) , 
+    .CLK ( ZCTSNET_1 ) , .Q ( bit_idx[3] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__dffq_1 state_reg_1_ ( .D ( n103 ) , 
+    .CLK ( ZCTSNET_1 ) , .Q ( state[1] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__dffq_1 inst_reg_15_ ( .D ( n76 ) , .CLK ( clk ) , 
+    .Q ( inst[15] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 inst_reg_14_ ( .D ( n77 ) , 
     .CLK ( ZCTSNET_0 ) , .Q ( inst[14] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 inst_reg_13_ ( .D ( n78 ) , 
     .CLK ( ZCTSNET_0 ) , .Q ( inst[13] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 inst_reg_12_ ( .D ( n79 ) , 
-    .CLK ( ZCTSNET_1 ) , .Q ( inst[12] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .CLK ( ZCTSNET_0 ) , .Q ( inst[12] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 inst_reg_11_ ( .D ( n80 ) , 
-    .CLK ( ZCTSNET_1 ) , .Q ( inst[11] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .CLK ( ZCTSNET_0 ) , .Q ( inst[11] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 inst_reg_10_ ( .D ( n81 ) , 
-    .CLK ( ZCTSNET_1 ) , .Q ( inst[10] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .CLK ( ZCTSNET_0 ) , .Q ( inst[10] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 inst_reg_9_ ( .D ( n82 ) , 
-    .CLK ( ZCTSNET_1 ) , .Q ( inst[9] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .CLK ( ZCTSNET_0 ) , .Q ( inst[9] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 inst_reg_8_ ( .D ( n83 ) , 
-    .CLK ( ZCTSNET_1 ) , .Q ( inst[8] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .CLK ( ZCTSNET_0 ) , .Q ( inst[8] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 inst_reg_7_ ( .D ( n84 ) , 
-    .CLK ( ZCTSNET_1 ) , .Q ( inst[7] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .CLK ( ZCTSNET_0 ) , .Q ( inst[7] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 inst_reg_6_ ( .D ( n85 ) , 
-    .CLK ( ZCTSNET_1 ) , .Q ( inst[6] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .CLK ( ZCTSNET_0 ) , .Q ( inst[6] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 inst_reg_5_ ( .D ( n86 ) , 
-    .CLK ( ZCTSNET_1 ) , .Q ( inst[5] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .CLK ( ZCTSNET_0 ) , .Q ( inst[5] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 inst_reg_4_ ( .D ( n87 ) , 
-    .CLK ( ZCTSNET_1 ) , .Q ( inst[4] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .CLK ( ZCTSNET_0 ) , .Q ( inst[4] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 inst_reg_3_ ( .D ( n88 ) , 
-    .CLK ( ZCTSNET_1 ) , .Q ( inst[3] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+    .CLK ( ZCTSNET_0 ) , .Q ( inst[3] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 inst_reg_2_ ( .D ( n89 ) , 
-    .CLK ( ZCTSNET_1 ) , .Q ( inst[2] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__dffq_1 inst_reg_1_ ( .D ( n90 ) , 
-    .CLK ( ZCTSNET_0 ) , .Q ( inst[1] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__dffq_1 inst_reg_0_ ( .D ( n91 ) , 
-    .CLK ( ZCTSNET_0 ) , .Q ( inst[0] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__dffq_1 byte_idx_reg_0_ ( .D ( n105 ) , .CLK ( clk ) , 
-    .Q ( byte_idx_0_ ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__dffq_1 inst_val_reg ( .D ( n75 ) , .CLK ( clk ) , 
-    .Q ( inst_val ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__aoi221_1 ctmTdsLR_1_188 ( .A1 ( n17 ) , .A2 ( n44 ) , 
-    .B1 ( n15 ) , .B2 ( state[0] ) , .C ( tmp_net67 ) , .ZN ( n26 ) , 
+    .CLK ( ZCTSNET_0 ) , .Q ( inst[2] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__dffq_1 inst_reg_1_ ( .D ( n90 ) , .CLK ( clk ) , 
+    .Q ( inst[1] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__dffq_1 inst_reg_0_ ( .D ( n91 ) , .CLK ( clk ) , 
+    .Q ( inst[0] ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__dffq_1 byte_idx_reg_0_ ( .D ( n105 ) , 
+    .CLK ( ZCTSNET_1 ) , .Q ( byte_idx_0_ ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__dffq_1 inst_val_reg ( .D ( n75 ) , 
+    .CLK ( ZCTSNET_1 ) , .Q ( inst_val ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__aoi221_1 ctmTdsLR_1_184 ( .A1 ( n17 ) , .A2 ( n44 ) , 
+    .B1 ( n15 ) , .B2 ( state[0] ) , .C ( tmp_net63 ) , .ZN ( n26 ) , 
     .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__aoi21_1 ctmTdsLR_2_189 ( .A1 ( n14 ) , .A2 ( n18 ) , 
-    .B ( tmp_net66 ) , .ZN ( tmp_net67 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__clkbuf_2 HFSBUF_637_9 ( .I ( n117 ) , 
+gf180mcu_fd_sc_mcu7t5v0__aoi21_1 ctmTdsLR_2_185 ( .A1 ( n14 ) , .A2 ( n18 ) , 
+    .B ( tmp_net62 ) , .ZN ( tmp_net63 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__clkbuf_2 HFSBUF_743_8 ( .I ( n117 ) , 
     .Z ( HFSNET_2 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__clkinv_1 ctmTdsLR_3_190 ( .I ( state[1] ) , 
-    .ZN ( tmp_net66 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__oai31_1 ctmTdsLR_1_215 ( .A1 ( n26 ) , .A2 ( n44 ) , 
-    .A3 ( state[1] ) , .B ( tmp_net86 ) , .ZN ( n103 ) , .VDD ( VDD ) , 
+gf180mcu_fd_sc_mcu7t5v0__clkinv_1 ctmTdsLR_3_186 ( .I ( state[1] ) , 
+    .ZN ( tmp_net62 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__oai31_1 ctmTdsLR_1_204 ( .A1 ( n26 ) , .A2 ( n44 ) , 
+    .A3 ( state[1] ) , .B ( tmp_net77 ) , .ZN ( n103 ) , .VDD ( VDD ) , 
     .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__and2_1 U8 ( .A1 ( HFSNET_3 ) , .A2 ( rx_meta ) , 
     .Z ( N144 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
@@ -4196,11 +4161,11 @@ gf180mcu_fd_sc_mcu7t5v0__nand3_1 U21 ( .A1 ( n28 ) , .A2 ( n42 ) ,
     .A3 ( rx_sync ) , .ZN ( n121 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__nand2_1 U22 ( .A1 ( state[1] ) , .A2 ( n121 ) , 
     .ZN ( n20 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__nor2_1 U23 ( .A1 ( n20 ) , .A2 ( rst_n ) , 
+gf180mcu_fd_sc_mcu7t5v0__nor2_1 U23 ( .A1 ( rst_n ) , .A2 ( n20 ) , 
     .ZN ( n10 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__nand2_1 U24 ( .A1 ( HFSNET_3 ) , .A2 ( state[1] ) , 
     .ZN ( n123 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__nor2_1 U25 ( .A1 ( n123 ) , .A2 ( state[0] ) , 
+gf180mcu_fd_sc_mcu7t5v0__nor2_1 U25 ( .A1 ( state[0] ) , .A2 ( n123 ) , 
     .ZN ( n119 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__inv_1 U26 ( .I ( n119 ) , .ZN ( n43 ) , 
     .VDD ( VDD ) , .VSS ( VSS ) ) ;
@@ -4216,8 +4181,8 @@ gf180mcu_fd_sc_mcu7t5v0__clkinv_1 U31 ( .I ( clk_cnt[0] ) , .ZN ( n46 ) ,
     .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__nand2_1 U32 ( .A1 ( clk_cnt[5] ) , .A2 ( n46 ) , 
     .ZN ( n13 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__clkinv_1 U33 ( .I ( n11 ) , .ZN ( n21 ) , 
-    .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__inv_1 U33 ( .I ( n11 ) , .ZN ( n21 ) , .VDD ( VDD ) , 
+    .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__inv_1 U34 ( .I ( clk_cnt[6] ) , .ZN ( n66 ) , 
     .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__nand4_1 U35 ( .A1 ( clk_cnt[1] ) , .A2 ( n21 ) , 
@@ -4238,10 +4203,10 @@ gf180mcu_fd_sc_mcu7t5v0__clkinv_1 U41 ( .I ( state[0] ) , .ZN ( n18 ) ,
     .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__nand2_1 U42 ( .A1 ( n28 ) , .A2 ( n42 ) , 
     .ZN ( n14 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__nand2_1 ctmTdsLR_2_216 ( .A1 ( n26 ) , 
-    .A2 ( tmp_net85 ) , .ZN ( tmp_net86 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__clkinv_1 ctmTdsLR_3_217 ( .I ( n24 ) , 
-    .ZN ( tmp_net85 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__nand2_1 ctmTdsLR_2_205 ( .A1 ( n26 ) , 
+    .A2 ( tmp_net76 ) , .ZN ( tmp_net77 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__clkinv_1 ctmTdsLR_3_206 ( .I ( n24 ) , 
+    .ZN ( tmp_net76 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__oai211_1 U45 ( .A1 ( n21 ) , .A2 ( n20 ) , 
     .B ( HFSNET_3 ) , .C ( n18 ) , .ZN ( n23 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__nand2_1 U46 ( .A1 ( n26 ) , .A2 ( state[0] ) , 
@@ -4295,7 +4260,7 @@ gf180mcu_fd_sc_mcu7t5v0__clkinv_1 U72 ( .I ( clk_cnt[2] ) , .ZN ( n50 ) ,
 gf180mcu_fd_sc_mcu7t5v0__oai32_1 U73 ( .A1 ( clk_cnt[2] ) , .A2 ( n65 ) , 
     .A3 ( n49 ) , .B1 ( n48 ) , .B2 ( n50 ) , .ZN ( n96 ) , .VDD ( VDD ) , 
     .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__nor2_1 U74 ( .A1 ( n49 ) , .A2 ( n50 ) , 
+gf180mcu_fd_sc_mcu7t5v0__nor2_1 U74 ( .A1 ( n50 ) , .A2 ( n49 ) , 
     .ZN ( n52 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__clkinv_1 U75 ( .I ( n52 ) , .ZN ( n53 ) , 
     .VDD ( VDD ) , .VSS ( VSS ) ) ;
@@ -4306,16 +4271,16 @@ gf180mcu_fd_sc_mcu7t5v0__clkinv_1 U77 ( .I ( clk_cnt[3] ) , .ZN ( n54 ) ,
 gf180mcu_fd_sc_mcu7t5v0__oai32_1 U78 ( .A1 ( clk_cnt[3] ) , .A2 ( n65 ) , 
     .A3 ( n53 ) , .B1 ( n51 ) , .B2 ( n54 ) , .ZN ( n95 ) , .VDD ( VDD ) , 
     .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__nand2_1 U79 ( .A1 ( n52 ) , .A2 ( clk_cnt[3] ) , 
+gf180mcu_fd_sc_mcu7t5v0__nand2_1 U79 ( .A1 ( clk_cnt[3] ) , .A2 ( n52 ) , 
     .ZN ( n56 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__aoi221_1 U80 ( .A1 ( n54 ) , .A2 ( HFSNET_1 ) , 
     .B1 ( n53 ) , .B2 ( HFSNET_1 ) , .C ( n58 ) , .ZN ( n55 ) , .VDD ( VDD ) , 
     .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__inv_1 U81 ( .I ( clk_cnt[4] ) , .ZN ( n57 ) , 
     .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__oai32_1 U82 ( .A1 ( n65 ) , .A2 ( n56 ) , 
-    .A3 ( clk_cnt[4] ) , .B1 ( n55 ) , .B2 ( n57 ) , .ZN ( n94 ) , 
-    .VDD ( VDD ) , .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__oai32_1 U82 ( .A1 ( clk_cnt[4] ) , .A2 ( n65 ) , 
+    .A3 ( n56 ) , .B1 ( n55 ) , .B2 ( n57 ) , .ZN ( n94 ) , .VDD ( VDD ) , 
+    .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__nor2_1 U83 ( .A1 ( n57 ) , .A2 ( n56 ) , 
     .ZN ( n64 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__inv_1 U84 ( .I ( n64 ) , .ZN ( n60 ) , .VDD ( VDD ) , 
@@ -4324,16 +4289,16 @@ gf180mcu_fd_sc_mcu7t5v0__aoi21_1 U85 ( .A1 ( n60 ) , .A2 ( HFSNET_1 ) ,
     .B ( n58 ) , .ZN ( n61 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__inv_1 U86 ( .I ( clk_cnt[5] ) , .ZN ( n59 ) , 
     .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__oai32_1 U87 ( .A1 ( clk_cnt[5] ) , .A2 ( n65 ) , 
-    .A3 ( n60 ) , .B1 ( n61 ) , .B2 ( n59 ) , .ZN ( n93 ) , .VDD ( VDD ) , 
-    .VSS ( VSS ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__oai32_1 U87 ( .A1 ( n65 ) , .A2 ( n60 ) , 
+    .A3 ( clk_cnt[5] ) , .B1 ( n61 ) , .B2 ( n59 ) , .ZN ( n93 ) , 
+    .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__oai21_1 U88 ( .A1 ( n65 ) , .A2 ( clk_cnt[5] ) , 
     .B ( n61 ) , .ZN ( n63 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__clkinv_1 U89 ( .I ( n63 ) , .ZN ( n68 ) , 
     .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__nand3_1 U90 ( .A1 ( clk_cnt[5] ) , .A2 ( HFSNET_1 ) , 
     .A3 ( n64 ) , .ZN ( n67 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__aoi22_1 U91 ( .A1 ( n68 ) , .A2 ( clk_cnt[6] ) , 
+gf180mcu_fd_sc_mcu7t5v0__aoi22_1 U91 ( .A1 ( clk_cnt[6] ) , .A2 ( n68 ) , 
     .B1 ( n67 ) , .B2 ( n66 ) , .ZN ( n92 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__and2_2 U92 ( .A1 ( n119 ) , .A2 ( n69 ) , 
     .Z ( n116 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
@@ -4423,7 +4388,7 @@ gf180mcu_fd_sc_mcu7t5v0__nand2_1 U126 ( .A1 ( n119 ) , .A2 ( byte_idx_0_ ) ,
     .ZN ( n120 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__oai22_1 U127 ( .A1 ( n123 ) , .A2 ( n122 ) , 
     .B1 ( n121 ) , .B2 ( n120 ) , .ZN ( n75 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__clkinv_1 HFSINV_324_7 ( .I ( n65 ) , 
+gf180mcu_fd_sc_mcu7t5v0__clkinv_1 HFSINV_425_6 ( .I ( n65 ) , 
     .ZN ( HFSNET_1 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__or3_1 U64 ( .A1 ( n43 ) , .A2 ( n42 ) , .A3 ( n41 ) , 
     .Z ( n65 ) , .VDD ( VDD ) , .VSS ( VSS ) ) ;
@@ -4447,9 +4412,11 @@ wire ZCTSNET_0 ;
 wire ZCTSNET_1 ;
 wire ZCTSNET_2 ;
 wire ZCTSNET_3 ;
-wire optlc_net_93 ;
-wire optlc_net_94 ;
-wire optlc_net_95 ;
+wire ZCTSNET_4 ;
+wire ctosc_gls_0 ;
+wire optlc_net_80 ;
+wire optlc_net_81 ;
+wire optlc_net_82 ;
 wire rx_inst_val ;
 wire fifo_rdy ;
 wire host_inst_val ;
@@ -4501,15 +4468,15 @@ wire SYNOPSYS_UNCONNECTED_2 ;
 uart_rx_WORD_WIDTH16 receiver ( .clk ( ZCTSNET_0 ) , .rst_n ( HFSNET_1 ) , 
     .inst ( rx_inst ) , .inst_val ( rx_inst_val ) , .rx ( ui_in[3] ) , 
     .VDD ( VPWR ) , .VSS ( VGND ) , .HFSNET_3 ( HFSNET_2 ) , 
-    .ZCTSNET_0 ( ZCTSNET_1 ) , .ZCTSNET_1 ( ZCTSNET_3 ) ) ;
+    .ZCTSNET_0 ( ZCTSNET_1 ) , .ZCTSNET_1 ( ZCTSNET_2 ) ) ;
 uart_tx transmitter ( .clk ( ZCTSNET_2 ) , .rst_n ( HFSNET_1 ) , 
     .inst_fifo_rdy ( fifo_rdy ) , .tx ( uo_out[4] ) , .VDD ( VPWR ) , 
-    .VSS ( VGND ) , .HFSNET_0 ( HFSNET_2 ) ) ;
-inst_fifo_WORD_WIDTH16 fifo ( .clk ( ZCTSNET_1 ) , .rst_n ( HFSNET_2 ) , 
+    .VSS ( VGND ) , .HFSNET_0 ( HFSNET_2 ) , .ZCTSNET_0 ( ZCTSNET_3 ) ) ;
+inst_fifo_WORD_WIDTH16 fifo ( .clk ( ZCTSNET_0 ) , .rst_n ( HFSNET_2 ) , 
     .inst ( rx_inst ) , .inst_val ( rx_inst_val ) , .fifo_rdy ( fifo_rdy ) , 
     .core_rdy ( uo_out[0] ) , .inst_out ( host_inst ) , 
     .inst_out_val ( host_inst_val ) , .VDD ( VPWR ) , .VSS ( VGND ) , 
-    .ZCTSNET_0 ( ZCTSNET_3 ) ) ;
+    .ZCTSNET_0 ( ZCTSNET_1 ) ) ;
 decoder decode ( .rst_n ( HFSNET_1 ) , .inst_in ( host_inst ) , 
     .inst_in_val ( host_inst_val ) , .core_rdy ( uo_out[0] ) , 
     .mem_rdy ( mem_rdy ) , .exe_rdy ( n5 ) , .mem_inst_out ( mem_inst ) , 
@@ -4519,7 +4486,7 @@ decoder decode ( .rst_n ( HFSNET_1 ) , .inst_in ( host_inst ) ,
         exe_inst[0] } ) ,
     .exe_inst_out_val ( exe_inst_val ) , .VDD ( VPWR ) , .VSS ( VGND ) , 
     .HFSNET_0 ( HFSNET_2 ) ) ;
-mem_ctrl memory ( .clk ( ZCTSNET_1 ) , .rst_n ( HFSNET_1 ) , 
+mem_ctrl memory ( .clk ( ZCTSNET_0 ) , .rst_n ( HFSNET_1 ) , 
     .mem_inst_in ( mem_inst ) , .mem_inst_in_val ( mem_inst_val ) , 
     .mem_rdy ( mem_rdy ) , .mem_itf_rdy ( mem_itf_rdy ) , 
     .read_en ( read_en ) , .write_en ( write_en ) , .copy_en ( copy_en ) , 
@@ -4529,7 +4496,8 @@ mem_ctrl memory ( .clk ( ZCTSNET_1 ) , .rst_n ( HFSNET_1 ) ,
     .weight_data_val ( weight_data_val ) , .input_data ( input_data ) , 
     .input_data_val ( input_data_val ) , .act_res_in ( act_result ) , 
     .VDD ( VPWR ) , .VSS ( VGND ) , .HFSNET_1 ( HFSNET_2 ) , 
-    .ZCTSNET_0 ( ZCTSNET_2 ) , .ZCTSNET_1 ( ZCTSNET_3 ) , .ZCTSNET_2 ( clk ) ) ;
+    .ZCTSNET_0 ( ZCTSNET_1 ) , .ZCTSNET_1 ( ZCTSNET_4 ) , 
+    .ZCTSNET_2 ( ctosc_gls_0 ) ) ;
 vpu compute ( .clk ( ZCTSNET_0 ) , .rst_n ( HFSNET_1 ) ,
     .exe_inst_in ( { exe_inst[8] , exe_inst[7] , SYNOPSYS_UNCONNECTED_2 , 
         exe_inst[5] , exe_inst[4] , exe_inst[3] , exe_inst[2] , exe_inst[1] , 
@@ -4538,9 +4506,9 @@ vpu compute ( .clk ( ZCTSNET_0 ) , .rst_n ( HFSNET_1 ) ,
     .weight_data_val ( weight_data_val ) , .input_data ( input_data ) , 
     .input_data_val ( input_data_val ) , .vpu_res_out ( vpu_result ) , 
     .act_op_out ( act_op ) , .vpu_res_out_val ( vpu_result_val ) , 
-    .VDD ( VPWR ) , .VSS ( VGND ) , .HFSNET_1 ( HFSNET_2 ) , 
-    .ZCTSNET_0 ( ZCTSNET_1 ) ) ;
-act activation ( .clk ( ZCTSNET_1 ) , .rst_n ( HFSNET_1 ) , 
+    .VDD ( VPWR ) , .VSS ( VGND ) , .HFSNET_2 ( HFSNET_2 ) , 
+    .ZCTSNET_0 ( ZCTSNET_2 ) , .ZCTSNET_1 ( ZCTSNET_3 ) ) ;
+act activation ( .clk ( ZCTSNET_0 ) , .rst_n ( HFSNET_1 ) , 
     .vpu_res_in ( vpu_result ) , .act_op_in ( act_op ) , 
     .vpu_res_in_val ( vpu_result_val ) , .act_res_out ( act_result ) , 
     .act_res_out_val ( act_result_val ) , .VDD ( VPWR ) , .VSS ( VGND ) , 
@@ -4554,7 +4522,7 @@ mem_itf itf ( .clk ( ZCTSNET_0 ) , .rst_n ( HFSNET_1 ) ,
     .qspi_req_addr ( qspi_req_addr ) , .qspi_req_data ( qspi_req_data ) , 
     .qspi_read_data ( qspi_read_data ) , 
     .qspi_read_data_val ( qspi_read_data_val ) , .VDD ( VPWR ) , .VSS ( VGND ) , 
-    .HFSNET_0 ( HFSNET_2 ) , .ZCTSNET_0 ( ZCTSNET_1 ) ) ;
+    .HFSNET_0 ( HFSNET_2 ) , .ZCTSNET_0 ( ZCTSNET_3 ) ) ;
 qspi_ctrl serial_memory ( .clk ( ZCTSNET_0 ) , .rst_n ( HFSNET_1 ) , 
     .req_val ( qspi_req_val ) , .req_rdy ( qspi_req_rdy ) , 
     .req_write ( qspi_req_write ) , .req_addr ( qspi_req_addr ) , 
@@ -4565,40 +4533,40 @@ qspi_ctrl serial_memory ( .clk ( ZCTSNET_0 ) , .rst_n ( HFSNET_1 ) ,
     .dq_in ( { uio_in[5] , uio_in[4] , uio_in[2] , uio_in[1] } ) ,
     .dq_out ( { uio_out[5] , uio_out[4] , uio_out[2] , uio_out[1] } ) ,
     .dq_oe ( { uio_oe[5] , uio_oe[4] , uio_oe[2] , uio_oe[1] } ) ,
-    .VDD ( VPWR ) , .VSS ( VGND ) , .HFSNET_2 ( HFSNET_2 ) , 
-    .ZCTSNET_0 ( ZCTSNET_1 ) , .ZCTSNET_1 ( ZCTSNET_2 ) , 
-    .ZCTSNET_2 ( ZCTSNET_3 ) , .ZCTSNET_4 ( clk ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__dffrnq_1 reset_sync_reg_0_ ( .D ( optlc_net_94 ) , 
-    .CLK ( ZCTSNET_1 ) , .RN ( rst_n ) , .Q ( reset_sync[0] ) , .VDD ( VPWR ) , 
+    .VDD ( VPWR ) , .VSS ( VGND ) , .HFSNET_0 ( HFSNET_2 ) , 
+    .ZCTSNET_0 ( ZCTSNET_3 ) , .ZCTSNET_1 ( ZCTSNET_4 ) , 
+    .ZCTSNET_2 ( ctosc_gls_0 ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__dffrnq_1 reset_sync_reg_0_ ( .D ( optlc_net_82 ) , 
+    .CLK ( ZCTSNET_3 ) , .RN ( rst_n ) , .Q ( reset_sync[0] ) , .VDD ( VPWR ) , 
     .VSS ( VGND ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffrnq_1 reset_sync_reg_1_ ( .D ( reset_sync[0] ) , 
-    .CLK ( ZCTSNET_1 ) , .RN ( rst_n ) , .Q ( reset_sync[1] ) , .VDD ( VPWR ) , 
+    .CLK ( ZCTSNET_3 ) , .RN ( rst_n ) , .Q ( reset_sync[1] ) , .VDD ( VPWR ) , 
     .VSS ( VGND ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__dffq_1 exe_active_reg ( .D ( n4 ) , 
-    .CLK ( ZCTSNET_1 ) , .Q ( exe_active ) , .VDD ( VPWR ) , .VSS ( VGND ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__inv_1 U11 ( .I ( optlc_net_93 ) , .ZN ( uio_oe[0] ) , 
+    .CLK ( ZCTSNET_0 ) , .Q ( exe_active ) , .VDD ( VPWR ) , .VSS ( VGND ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__inv_1 U11 ( .I ( optlc_net_80 ) , .ZN ( uio_oe[0] ) , 
     .VDD ( VPWR ) , .VSS ( VGND ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__inv_1 U12 ( .I ( optlc_net_93 ) , .ZN ( uio_oe[3] ) , 
+gf180mcu_fd_sc_mcu7t5v0__inv_1 U12 ( .I ( optlc_net_80 ) , .ZN ( uio_oe[3] ) , 
     .VDD ( VPWR ) , .VSS ( VGND ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__inv_1 U13 ( .I ( optlc_net_93 ) , .ZN ( uio_oe[6] ) , 
+gf180mcu_fd_sc_mcu7t5v0__inv_1 U13 ( .I ( optlc_net_80 ) , .ZN ( uio_oe[6] ) , 
     .VDD ( VPWR ) , .VSS ( VGND ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__inv_1 U14 ( .I ( optlc_net_93 ) , .ZN ( uio_oe[7] ) , 
+gf180mcu_fd_sc_mcu7t5v0__inv_1 U14 ( .I ( optlc_net_80 ) , .ZN ( uio_oe[7] ) , 
     .VDD ( VPWR ) , .VSS ( VGND ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__inv_1 U15 ( .I ( optlc_net_95 ) , .ZN ( uo_out[1] ) , 
+gf180mcu_fd_sc_mcu7t5v0__inv_1 U15 ( .I ( optlc_net_82 ) , .ZN ( uo_out[1] ) , 
     .VDD ( VPWR ) , .VSS ( VGND ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__inv_1 U16 ( .I ( optlc_net_95 ) , .ZN ( uo_out[2] ) , 
+gf180mcu_fd_sc_mcu7t5v0__inv_1 U16 ( .I ( optlc_net_82 ) , .ZN ( uo_out[2] ) , 
     .VDD ( VPWR ) , .VSS ( VGND ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__inv_1 U17 ( .I ( optlc_net_95 ) , .ZN ( uo_out[3] ) , 
+gf180mcu_fd_sc_mcu7t5v0__inv_1 U17 ( .I ( optlc_net_82 ) , .ZN ( uo_out[3] ) , 
     .VDD ( VPWR ) , .VSS ( VGND ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__inv_1 U18 ( .I ( optlc_net_94 ) , .ZN ( uo_out[5] ) , 
+gf180mcu_fd_sc_mcu7t5v0__inv_1 U18 ( .I ( optlc_net_81 ) , .ZN ( uo_out[5] ) , 
     .VDD ( VPWR ) , .VSS ( VGND ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__inv_1 U19 ( .I ( optlc_net_94 ) , .ZN ( uo_out[6] ) , 
+gf180mcu_fd_sc_mcu7t5v0__inv_1 U19 ( .I ( optlc_net_81 ) , .ZN ( uo_out[6] ) , 
     .VDD ( VPWR ) , .VSS ( VGND ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__inv_1 U20 ( .I ( optlc_net_94 ) , .ZN ( uo_out[7] ) , 
+gf180mcu_fd_sc_mcu7t5v0__inv_1 U20 ( .I ( optlc_net_81 ) , .ZN ( uo_out[7] ) , 
     .VDD ( VPWR ) , .VSS ( VGND ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__clkinv_4 HFSINV_1762_10 ( .I ( reset_sync[1] ) , 
+gf180mcu_fd_sc_mcu7t5v0__inv_2 HFSINV_3138_9 ( .I ( reset_sync[1] ) , 
     .ZN ( HFSNET_1 ) , .VDD ( VPWR ) , .VSS ( VGND ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__buf_3 HFSBUF_1649_11 ( .I ( reset_sync[1] ) , 
+gf180mcu_fd_sc_mcu7t5v0__buf_3 HFSBUF_3067_10 ( .I ( reset_sync[1] ) , 
     .Z ( HFSNET_2 ) , .VDD ( VPWR ) , .VSS ( VGND ) ) ;
 gf180mcu_fd_sc_mcu7t5v0__inv_1 U23 ( .I ( exe_active ) , .ZN ( n5 ) , 
     .VDD ( VPWR ) , .VSS ( VGND ) ) ;
@@ -4607,19 +4575,23 @@ gf180mcu_fd_sc_mcu7t5v0__inv_1 U24 ( .I ( exe_inst_val ) , .ZN ( n19 ) ,
 gf180mcu_fd_sc_mcu7t5v0__aoi221_1 U25 ( .A1 ( act_result_val ) , .A2 ( n19 ) , 
     .B1 ( n5 ) , .B2 ( n19 ) , .C ( HFSNET_1 ) , .ZN ( n4 ) , .VDD ( VPWR ) , 
     .VSS ( VGND ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__clkbuf_12 ZCTSBUF_10349_59 ( .I ( clk ) , 
+gf180mcu_fd_sc_mcu7t5v0__clkbuf_12 ZCTSBUF_12653_59 ( .I ( clk ) , 
     .Z ( ZCTSNET_0 ) , .VDD ( VPWR ) , .VSS ( VGND ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__clkbuf_16 ZCTSBUF_7701_60 ( .I ( clk ) , 
+gf180mcu_fd_sc_mcu7t5v0__clkbuf_12 ZCTSBUF_14740_60 ( .I ( clk ) , 
     .Z ( ZCTSNET_1 ) , .VDD ( VPWR ) , .VSS ( VGND ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__clkbuf_12 ZCTSBUF_17453_61 ( .I ( clk ) , 
+gf180mcu_fd_sc_mcu7t5v0__clkbuf_8 ZCTSBUF_6337_61 ( .I ( clk ) , 
     .Z ( ZCTSNET_2 ) , .VDD ( VPWR ) , .VSS ( VGND ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__clkbuf_12 ZCTSBUF_14453_63 ( .I ( clk ) , 
+gf180mcu_fd_sc_mcu7t5v0__clkbuf_8 ZCTSBUF_3488_62 ( .I ( clk ) , 
     .Z ( ZCTSNET_3 ) , .VDD ( VPWR ) , .VSS ( VGND ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__tiel optlc_233 ( .ZN ( optlc_net_93 ) , 
+gf180mcu_fd_sc_mcu7t5v0__clkbuf_12 ZCTSBUF_8801_63 ( .I ( clk ) , 
+    .Z ( ZCTSNET_4 ) , .VDD ( VPWR ) , .VSS ( VGND ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__clkbuf_2 ctosc_gls_inst_128 ( .I ( clk ) , 
+    .Z ( ctosc_gls_0 ) , .VDD ( VPWR ) , .VSS ( VGND ) ) ;
+gf180mcu_fd_sc_mcu7t5v0__tiel optlc_215 ( .ZN ( optlc_net_80 ) , 
     .VDD ( VPWR ) , .VSS ( VGND ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__tieh optlc_234 ( .Z ( optlc_net_94 ) , .VDD ( VPWR ) , 
+gf180mcu_fd_sc_mcu7t5v0__tieh optlc_216 ( .Z ( optlc_net_81 ) , .VDD ( VPWR ) , 
     .VSS ( VGND ) ) ;
-gf180mcu_fd_sc_mcu7t5v0__tieh optlc_235 ( .Z ( optlc_net_95 ) , .VDD ( VPWR ) , 
+gf180mcu_fd_sc_mcu7t5v0__tieh optlc_217 ( .Z ( optlc_net_82 ) , .VDD ( VPWR ) , 
     .VSS ( VGND ) ) ;
 endmodule
 
