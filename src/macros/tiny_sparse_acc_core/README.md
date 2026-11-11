@@ -15,6 +15,11 @@ wrapper standard-cell grid, with eight VPWR/VGND feed pairs; the default Metal4-
 because the macro already has its own power network and Metal4 terminals. No signoff checks are
 suppressed specifically for this experiment.
 
+Two Metal3 buses above the macro (VPWR y=148.96 um, VGND y=152.26 um)
+join the macro-aligned Metal4 stripes to the ninth stripe pair in the right
+wrapper cell area. PDN generation inserts Metal3--Metal4 vias at same-net
+crossings; opposite supplies cross on separate layers without a via.
+
 The SPEF contains only nominal 25C RC. It is reused across the flow's corners
 for this integration experiment; this is not multi-corner RC signoff.
 The original export's unused VDD/VSS alias ports had no LEF geometry. The
