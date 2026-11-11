@@ -62,5 +62,11 @@
     "core VPWR VGND VPWR VGND"
   ],
   "PDN_HORIZONTAL_HALO": 0,
-  "PDN_VERTICAL_HALO": 0
+  "PDN_VERTICAL_HALO": 0,
+  "CELL_PAD_EXCLUDE": [
+    "gf180mcu_fd_sc_mcu7t5v0__filltie",
+    "gf180mcu_fd_sc_mcu7t5v0__fill_*",
+    "gf180mcu_fd_sc_mcu7t5v0__endcap",
+    "tiny_sparse_acc_core"
+  ]
 }
