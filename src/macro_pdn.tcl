@@ -14,12 +14,11 @@ if {$::env(PDN_MULTILAYER) || $::env(PDN_CORE_RING) ||
 
 set_voltage_domain -name CORE -power $::env(VDD_NET) -ground $::env(GND_NET)
 
-set pin_args {}
-if {$::env(PDN_ENABLE_PINS)} {
-    lappend pin_args -pins $::env(PDN_VERTICAL_LAYER)
-}
+# Do not promote the short stripe fragments above the macro as separate
+# external pins: TT requires each power-pin rectangle to span the tile height
+# to within 10 um of both edges. Full-height pins are defined below instead.
 define_pdn_grid -name stdcell_grid -starts_with POWER \
-    -voltage_domain CORE {*}$pin_args
+    -voltage_domain CORE
 
 set extend_args {}
 if {$::env(PDN_EXTEND_TO) eq "core_ring"} {
@@ -74,6 +73,33 @@ foreach net_name {VPWR VGND} first_center {19.68 22.98} {
             set y1 [expr {round($bottom * $dbu)}]
             set y2 [expr {round($top * $dbu)}]
             odb::dbSBox_create $wire $layer $x1 $y1 $x2 $y2 STRIPE
+        }
+    }
+}
+
+# The first eight pairs follow continuous Metal4 already present in the core
+# GDS plus the overlapping feeds above. Pair nine is the wrapper PDN stripe.
+# These are pin descriptions of real metal, not additional routing through
+# the macro. Keep all nine supply pairs accessible to the shuttle power grid.
+if {$::env(PDN_ENABLE_PINS)} {
+    foreach net_name {VPWR VGND} first_center {19.68 22.98} {
+        set net [$block findNet $net_name]
+        set terminal [$block findBTerm $net_name]
+        if {$terminal == "NULL"} {
+            set terminal [odb::dbBTerm_create $net $net_name]
+        }
+        $terminal setIoType INOUT
+        $terminal setSigType [$net getSigType]
+        $terminal setSpecial
+        set pin [odb::dbBPin_create $terminal]
+        $pin setPlacementStatus FIRM
+        for {set i 0} {$i < 9} {incr i} {
+            set center [expr {$first_center + 38.87 * $i}]
+            odb::dbBox_create $pin $layer \
+                [expr {round(($center - 0.8) * $dbu)}] \
+                [expr {round(3.62 * $dbu)}] \
+                [expr {round(($center + 0.8) * $dbu)}] \
+                [expr {round(157.10 * $dbu)}]
         }
     }
 }

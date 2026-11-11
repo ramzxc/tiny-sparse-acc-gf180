@@ -22,6 +22,13 @@ crossings; opposite supplies cross on separate layers without a via.
 The buses lie between the right-hand M1 rail via stacks, leaving clearance
 to their intermediate Metal3 landing shapes during PDN generation.
 
+External supply pins describe nine full-height Metal4 stripes per supply
+(1.6 um wide, y=3.62..157.10 um), rather than promoting short upper fragments.
+The first eight pairs are covered by the core GDS stripes and wrapper feeds;
+the ninth pair is generated in the right-hand wrapper area. This preserves
+access for the shuttle grid and the TT precheck requirement that every power
+pin be on Metal4, at least 0.8 um wide, and within 10 um of both tile edges.
+
 The SPEF contains only nominal 25C RC. It is reused across the flow's corners
 for this integration experiment; this is not multi-corner RC signoff.
 The original export's unused VDD/VSS alias ports had no LEF geometry. The
