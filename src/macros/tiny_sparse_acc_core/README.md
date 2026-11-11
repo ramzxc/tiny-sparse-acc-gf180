@@ -15,7 +15,7 @@ wrapper standard-cell grid, with eight VPWR/VGND feed pairs; the default Metal4-
 because the macro already has its own power network and Metal4 terminals. No signoff checks are
 suppressed specifically for this experiment.
 
-Two Metal3 buses above the macro (VPWR y=147.00 um, VGND y=150.90 um)
+Two Metal3 buses above the macro (VPWR y=147.40 um, VGND y=150.90 um)
 join the macro-aligned Metal4 stripes to the ninth stripe pair in the right
 wrapper cell area. PDN generation inserts Metal3--Metal4 vias at same-net
 crossings; opposite supplies cross on separate layers without a via.
@@ -44,6 +44,10 @@ For Magic LEF compatibility, Manhattan obstruction polygons are decomposed
 into rectangles with an exact geometric XOR check. Pin access and routing
 obstructions are preserved. The redundant ICC2 OVERLAP placement outline
 and its layer declaration are removed after checking against LEF SIZE.
+The continuous Metal4 supply stripes are exposed as full-height LEF power
+pins after verifying their metal coverage in the GDS. The matching strips
+are subtracted from Metal4 OBS so Magic's abstract extraction does not treat
+valid power-pin metal as an overlap with a routing obstruction.
 
 Main RTL remains available in `project.v` and `generated/design.v`. The
 experiment's `info.yaml` selects `hardmacro_wrapper.v` instead.

@@ -15,5 +15,6 @@
     141.12
   ],
   "gds_precision_m": 1e-09,
+  "lef_power_pins": "Expose GDS-verified continuous Metal4 stripes; subtract only these stripes from Metal4 OBS.",
   "changes": "Remove unused SPEF filler names; rename top; remove geometry-free VDD/VSS aliases, use existing VPWR/VGND terminals; add missing PR_bndry (0/0) from LEF SIZE; normalize GDS precision to 1 nm after grid checks; convert LEF polygons to equivalent rectangles and remove redundant OVERLAP outline. Circuit geometry unchanged."
 }

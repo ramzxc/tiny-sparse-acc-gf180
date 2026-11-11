@@ -74,8 +74,8 @@ lef = re.sub(r'^LAYER OVERLAP\s+TYPE OVERLAP\s*;\s*END OVERLAP\s*\n', '', lef, f
 
 # Magic rejects the long notched POLYGON records emitted by ICC2. Split
 # Manhattan polygons into rectangles, preserving pin-access notches exactly.
-def polygon_rectangles(match):
-    values = list(map(float, match[1].split()))
+def polygon_rectangles(coordinates):
+    values = list(map(float, coordinates.split()))
     assert len(values) >= 8 and len(values) % 2 == 0
     points = list(zip(values[::2], values[1::2]))
     for a, b in zip(points, points[1:] + points[:1]):
@@ -95,7 +95,48 @@ def polygon_rectangles(match):
                      for point in r.bounding_box() for v in point) + ' ;'
                      for r in rectangles)
 
-lef = re.sub(r'\s*POLYGON\s+([^;]+);', lambda m: '\n' + polygon_rectangles(m), lef)
+lef = re.sub(r'\s*POLYGON\s+([^;]+);', lambda m: '\n' + polygon_rectangles(m[1]), lef)
+
+# The GDS supply stripes run continuously between the original end pins.
+# Expose that real metal in the abstract as well: full-height wrapper power
+# pins must not land on an OBS-only representation of the same supply.
+supplies = []
+metal4 = top.get_polygons(layer=46, datatype=0)
+for name in ('VPWR', 'VGND'):
+    pattern = rf'  PIN {name}\n.*?  END {name}'
+    match = re.search(pattern, lef, re.S)
+    assert match
+    pin = match[0]
+    assert re.findall(r'LAYER (\w+)\s*;', pin) == ['Metal4']
+    rects = [tuple(map(float, m)) for m in re.findall(
+        r'RECT ([\d.]+) ([\d.]+) ([\d.]+) ([\d.]+)\s*;', pin)]
+    columns = sorted({(x1, x2) for x1, y1, x2, y2 in rects})
+    assert len(columns) == 8 and len(rects) == 16
+    lines = []
+    for x1, x2 in columns:
+        assert (x1, 0, x2, 1) in rects and (x1, height - 1, x2, height) in rects
+        stripe = gdstk.rectangle((x1, 0), (x2, height))
+        assert not gdstk.boolean([stripe], metal4, 'not', precision=0.0005), \
+            f'Missing GDS supply metal for {name} at {x1}'
+        supplies.append(stripe)
+        lines.append(f'        RECT {x1:g} 0 {x2:g} {height:g} ;')
+    pin = re.sub(r'        RECT[^;]+;\n', '', pin)
+    pin = pin.replace('      LAYER Metal4 ;', '      LAYER Metal4 ;\n' + '\n'.join(lines))
+    lef = lef[:match.start()] + pin + lef[match.end():]
+
+def clear_supply_obstructions(match):
+    header, body = match.groups()
+    rectangles = [gdstk.rectangle(v[:2], v[2:]) for v in
+                  (list(map(float, raw.split())) for raw in re.findall(r'RECT\s+([^;]+);', body))]
+    remainder = gdstk.boolean(rectangles, supplies, 'not', precision=0.0005)
+    lines = []
+    for poly in remainder:
+        raw = ' '.join(str(v) for point in poly.points for v in point)
+        lines.append(polygon_rectangles(raw))
+    return header + '\n' + '\n'.join(lines) + '\n'
+
+lef = re.sub(r'^(    LAYER Metal4(?: SPACING 0)? ;)(.*?)(?=^    LAYER|^  END)',
+             clear_supply_obstructions, lef, flags=re.S | re.M)
 (out / 'core.lef').write_text(lef)
 for filename in ('core.v', 'core.pg.v'):
     text = (a.export / filename).read_text()
@@ -141,6 +182,7 @@ print(f'Removed {removed} unreferenced filler NAME_MAP entries')
     'removed_unused_spef_fillers': removed,
     'pr_boundary_um': [0, 0, width, height],
     'gds_precision_m': lib.precision,
+    'lef_power_pins': 'Expose GDS-verified continuous Metal4 stripes; subtract only these stripes from Metal4 OBS.',
     'changes': 'Remove unused SPEF filler names; rename top; remove geometry-free VDD/VSS aliases, use existing VPWR/VGND terminals; add missing PR_bndry (0/0) from LEF SIZE; normalize GDS precision to 1 nm after grid checks; convert LEF polygons to equivalent rectangles and remove redundant OVERLAP outline. Circuit geometry unchanged.'
 }, indent=2) + '\n')
 print(out)
