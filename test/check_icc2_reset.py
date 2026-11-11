@@ -12,7 +12,7 @@ from functools import reduce
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-NETLIST = ROOT / 'src/macros/tiny_sparse_acc_core/core.pg.v'
+NETLIST = ROOT / 'src/physical/macros/tiny_sparse_acc_core/core.pg.v'
 CASES = [
     ('uart_tx', 'HFSNET_0', {'n42': 'clk_cnt[6]', 'n50': 'bit_idx[2]'}),
     ('uart_rx_WORD_WIDTH16', 'HFSNET_3', {

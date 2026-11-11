@@ -22,7 +22,7 @@ with open(sys.argv[1], 'w') as f:
         control=(sparse<<6)|(rng.randrange(5)<<3)|(accumulate<<2)|op
         f.write(f'{x:02x} {w:02x} {old:02x} {control:02x} {result:02x}\n')
 PY
-iverilog -g2012 -I src -I src/core -s tb_vpu_mac -o "$build_dir/test" \
-    src/core/vpu.v test/tb_vpu_mac.sv
+iverilog -g2012 -I src/rtl -I src/rtl/core -s tb_vpu_mac -o "$build_dir/test" \
+    src/rtl/core/vpu.v test/tb_vpu_mac.sv
 vvp "$build_dir/test" +vectors="$build_dir/vectors.txt"
-verilator --lint-only -Wall -I./src -I./src/core --top-module vpu src/core/vpu.v
+verilator --lint-only -Wall -Isrc/rtl -I./src/rtl/core --top-module vpu src/rtl/core/vpu.v

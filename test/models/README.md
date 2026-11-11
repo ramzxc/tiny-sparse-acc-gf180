@@ -1,6 +1,6 @@
 These three Apache-2.0 GF180 SRAM simulation models were copied from the local
 GF180 PDK used by the source accelerator. Copyright/license headers are preserved;
-the full upstream license is in ../../src/macros/LICENSE.
+the full upstream license is in ../../src/physical/macros/LICENSE.
 
 Compatibility patch: under VERILATOR, the specify block (unsupported timing checks)
 is omitted and its only externally used specparam, Tdly, is a localparam with the

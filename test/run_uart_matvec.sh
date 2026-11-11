@@ -3,10 +3,10 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 build_dir=$(mktemp -d /tmp/uart-matvec-test.XXXXXX)
 trap 'rm -rf "$build_dir"' EXIT
-sources=(src/core/micro_ctrl.v test/micro_core_fixture.sv src/core/decoder.v src/core/mem_ctrl.v src/core/vpu.v
-    src/core/act.v src/core/inst_fifo.v src/uart/uart_tx.v src/uart/uart_rx.v)
-iverilog -g2012 -I src -I src/core -s tb_uart_matvec -o "$build_dir/test" \
-    "${sources[@]}" src/mem_itf.v src/qspi_ctrl.v \
+sources=(src/rtl/core/micro_ctrl.v test/micro_core_fixture.sv src/rtl/core/decoder.v src/rtl/core/mem_ctrl.v src/rtl/core/vpu.v
+    src/rtl/core/act.v src/rtl/core/inst_fifo.v src/rtl/uart/uart_tx.v src/rtl/uart/uart_rx.v)
+iverilog -g2012 -I src/rtl -I src/rtl/core -s tb_uart_matvec -o "$build_dir/test" \
+    "${sources[@]}" src/rtl/mem_itf.v src/rtl/qspi_ctrl.v \
     test/qspi_psram_model.sv test/qspi_nor_model.sv test/tb_uart_matvec.sv
 vvp "$build_dir/test"
-verilator --lint-only -Wall -I./src -I./src/core --top-module micro_core_fixture "${sources[@]}"
+verilator --lint-only -Wall -Isrc/rtl -I./src/rtl/core --top-module micro_core_fixture "${sources[@]}"

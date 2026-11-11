@@ -26,7 +26,7 @@ set REPORTS [file join $OUT reports]
 file mkdir $REPORTS
 proc synthesize {} {
     global ROOT TOP VARIANT STD_DB SDC RTL OUT REPORTS
-    set_app_var search_path [concat [list [file join $ROOT src] [file join $ROOT src core]] $::search_path]
+    set_app_var search_path [concat [list [file join $ROOT src rtl] [file join $ROOT src rtl core]] $::search_path]
     set_app_var target_library [list $STD_DB]
     set_app_var link_library [list * $STD_DB]
     read_db $STD_DB
@@ -36,7 +36,7 @@ proc synthesize {} {
     if {$VARIANT eq "direct"} {lappend defines TT_DIRECT_UCODE}
     set fd [open [file join $REPORTS inputs.txt] w]
     puts $fd "VARIANT $VARIANT\nSTD_DB $STD_DB\nDEFINES $defines"
-    foreach path [concat $RTL [glob [file join $ROOT src defs *.vh]] [list $SDC]] {
+    foreach path [concat $RTL [glob [file join $ROOT src rtl defs *.vh]] [list $SDC]] {
         puts $fd [exec sha256sum $path]
     }
     close $fd

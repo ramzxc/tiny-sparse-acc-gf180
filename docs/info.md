@@ -29,7 +29,7 @@ produces its result on the accepting clock edge. Simultaneous operand updates
 use the previous operand values for that instruction. Only MUL supports
 accumulation; ADD/SUB/RSUB ignore the accumulate bit.
 
-`FIXED_FRAC_BITS` in `src/defs/defs.vh` is a compile-time setting from 1 to 6.
+`FIXED_FRAC_BITS` in `src/rtl/defs/defs.vh` is a compile-time setting from 1 to 6.
 Real value = signed(byte) / 2**FIXED_FRAC_BITS. The default is 4: range
 -8 through 7.9375, resolution 0.0625. No runtime format register or new opcode.
 All operands, accumulator and activation results use the same scale. The
@@ -105,7 +105,7 @@ implemented in this checkpoint.
 Matrix jobs compute C[M,N] = activation(A[M,K] * B[K,N]). Bit 63 is zero;
 bit 62 enables B-zero skipping; bits 61:60 select activation; bits 59:52,
 51:44 and 43:36 encode M, K and N (1..255). Bits 35:24, 23:12 and 11:0
-are A, B and C byte offsets from the bases in src/defs/micro_defs.vh.
+are A, B and C byte offsets from the bases in src/rtl/defs/micro_defs.vh.
 Storage is packed column-major, one byte per element, with no padding.
 
 Vector jobs set bit 63. Bit 62 enables sparse multiplication; bits 61:60
@@ -128,7 +128,7 @@ python3 test/evaluate_egru_accuracy.py evaluates three full trials in software.
 These dataset-dependent tests are optional and do not run in GitHub CI.
 
 src/sources.f lists editable RTL. scripts/generate_verilog.py uses sv2v 0.0.13
-to produce src/generated/design.v, which Tiny Tapeout synthesizes. Regenerate it
+to produce src/rtl/generated/design.v, which Tiny Tapeout synthesizes. Regenerate it
 after RTL changes; CI checks that it matches the source.
 
 ## External hardware
@@ -165,4 +165,4 @@ fixed16-exported weights/input, using the same hard activations. It covers the
 first timestep with initial state zero, not recurrent sequence or FC/label accuracy.
 For the default F=4, this sample gives h R²=99.35%, y R²=99.55%, and event
 agreement=99.61%. These figures do not establish full-network task accuracy.
-After changing defs, regenerate `src/generated/design.v` before synthesis/push.
+After changing defs, regenerate `src/rtl/generated/design.v` before synthesis/push.

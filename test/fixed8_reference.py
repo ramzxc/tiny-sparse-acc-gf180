@@ -5,7 +5,7 @@ import os
 import re
 
 DEFAULT_FRAC_BITS = int(re.search(r'`define FIXED_FRAC_BITS (\d+)',
-    (Path(__file__).resolve().parents[1] / 'src/defs/defs.vh').read_text())[1])
+    (Path(__file__).resolve().parents[1] / 'src/rtl/defs/defs.vh').read_text())[1])
 FRAC_BITS = int(os.environ.get('FIXED_FRAC_BITS', DEFAULT_FRAC_BITS))
 SCALE = 1 << FRAC_BITS
 

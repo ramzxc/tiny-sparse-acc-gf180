@@ -36,7 +36,7 @@ COMPILE_ARGS    += -DUNIT_DELAY=\#1
 VERILOG_SOURCES += $(PDK_ROOT)/gf180mcuD/libs.ref/gf180mcu_fd_sc_mcu7t5v0/verilog/primitives.v
 VERILOG_SOURCES += $(PDK_ROOT)/gf180mcuD/libs.ref/gf180mcu_fd_sc_mcu7t5v0/verilog/gf180mcu_fd_sc_mcu7t5v0.v
 
-VERILOG_SOURCES += $(SRC_DIR)/macros/tiny_sparse_acc_core/core.pg.v
+VERILOG_SOURCES += $(SRC_DIR)/physical/macros/tiny_sparse_acc_core/core.pg.v
 
 # this gets copied in by the GDS action workflow
 VERILOG_SOURCES += $(CURDIR)/gate_level_netlist.v
@@ -44,7 +44,7 @@ VERILOG_SOURCES += $(CURDIR)/gate_level_netlist.v
 endif
 
 # Allow sharing configuration between design and testbench via `include`:
-COMPILE_ARGS 		+= -I$(SRC_DIR) -I$(SRC_DIR)/core
+COMPILE_ARGS 		+= -I$(SRC_DIR)/rtl -I$(SRC_DIR)/rtl/core
 
 # Include the testbench sources:
 VERILOG_SOURCES += $(CURDIR)/tb.v

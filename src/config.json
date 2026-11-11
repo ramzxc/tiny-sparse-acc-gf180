@@ -27,23 +27,23 @@
   "MACROS": {
     "tiny_sparse_acc_core": {
       "gds": [
-        "dir::macros/tiny_sparse_acc_core/core.gds"
+        "dir::physical/macros/tiny_sparse_acc_core/core.gds"
       ],
       "lef": [
-        "dir::macros/tiny_sparse_acc_core/core.lef"
+        "dir::physical/macros/tiny_sparse_acc_core/core.lef"
       ],
       "vh": [
-        "dir::macros/tiny_sparse_acc_core/core.bb.v"
+        "dir::physical/macros/tiny_sparse_acc_core/core.bb.v"
       ],
       "nl": [
-        "dir::macros/tiny_sparse_acc_core/core.v"
+        "dir::physical/macros/tiny_sparse_acc_core/core.v"
       ],
       "pnl": [
-        "dir::macros/tiny_sparse_acc_core/core.pg.v"
+        "dir::physical/macros/tiny_sparse_acc_core/core.pg.v"
       ],
       "spef": {
         "*": [
-          "dir::macros/tiny_sparse_acc_core/core.spef"
+          "dir::physical/macros/tiny_sparse_acc_core/core.spef"
         ]
       },
       "instances": {
@@ -57,7 +57,7 @@
       }
     }
   },
-  "PDN_CFG": "dir::macro_pdn.tcl",
+  "PDN_CFG": "dir::physical/macro_pdn.tcl",
   "PDN_MACRO_CONNECTIONS": [
     "core VPWR VGND VPWR VGND"
   ],

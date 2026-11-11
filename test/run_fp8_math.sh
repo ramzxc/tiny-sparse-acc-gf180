@@ -18,6 +18,6 @@ with (out/'pack.hex').open('w') as f:
         for magnitude in range(256):
             f.write(f'{encode8(F(magnitude)*F(2)**scale):02x}\n')
 PY
-iverilog -g2012 -I src -s tb_fp8_math -o "$build_dir/test" test/tb_fp8_math.sv
+iverilog -g2012 -I src/rtl -s tb_fp8_math -o "$build_dir/test" test/tb_fp8_math.sv
 vvp "$build_dir/test" +binary="$build_dir/binary.hex" +pack="$build_dir/pack.hex"
-verilator --lint-only -Wall -I./src -I./src/core --top-module vpu src/core/vpu.v
+verilator --lint-only -Wall -Isrc/rtl -I./src/rtl/core --top-module vpu src/rtl/core/vpu.v
