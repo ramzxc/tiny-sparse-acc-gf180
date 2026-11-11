@@ -51,9 +51,11 @@ if {$::env(PDN_ENABLE_RAILS)} {
 # keeps the upper portions of the eight macro-aligned stripes from trimming
 # away and connects them to the ninth pair serving the right-hand rows.
 # Offset is relative to the wrapper core lower edge (y=3.92 um).
+# Leave extension at its default core bounds (x=3.36..343.28), not the die
+# boundary. Magic otherwise exports the bus ends as forbidden M3 power pins.
 add_pdn_stripe -grid stdcell_grid -layer Metal3 \
     -width 1.6 -pitch 38.87 -spacing 1.9 -offset 143.48 \
-    -starts_with POWER -extend_to_boundary
+    -starts_with POWER
 add_pdn_connect -grid stdcell_grid -layers {Metal3 Metal4}
 
 # The macro already contains its power grid. Connect the existing terminals

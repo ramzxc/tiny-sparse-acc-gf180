@@ -21,6 +21,9 @@ wrapper cell area. PDN generation inserts Metal3--Metal4 vias at same-net
 crossings; opposite supplies cross on separate layers without a via.
 The buses lie between the right-hand M1 rail via stacks, leaving clearance
 to their intermediate Metal3 landing shapes during PDN generation.
+Their ends remain inside the wrapper core bounds (x=3.36..343.28 um),
+covering all nine stripe pairs without touching the tile boundary. This
+prevents Magic LEF export from creating extra Metal3 power ports at the edges.
 
 External supply pins describe nine full-height Metal4 stripes per supply
 (1.6 um wide, y=3.62..157.10 um), rather than promoting short upper fragments.
