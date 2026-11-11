@@ -15,9 +15,23 @@ out = root / 'src/macros/tiny_sparse_acc_core'
 out.mkdir(parents=True, exist_ok=True)
 old, new = 'tt_um_tiny_sparse_acc_ramzxc', 'tiny_sparse_acc_core'
 lib = gdstk.read_gds(a.export / 'core.gds')
-next(c for c in lib.cells if c.name == old).name = new
-lib.write_gds(out / 'core.gds')
+top = next(c for c in lib.cells if c.name == old)
+top.name = new
 lef = (a.export / 'core.lef').read_text().replace(old, new)
+# ICC2 can export the routed shapes without a PR boundary polygon. Magic's
+# macro streamout needs GF180 PR_bndry (0/0); use the declared LEF dimensions,
+# never the bounding box of the routed metal or standard cells.
+size = re.search(r'^\s*SIZE\s+([\d.]+)\s+BY\s+([\d.]+)\s*;', lef, re.M)
+assert size, 'Missing LEF SIZE'
+width, height = map(float, size.groups())
+boundary = gdstk.rectangle((0, 0), (width, height), layer=0, datatype=0)
+existing = [p for p in top.polygons if (p.layer, p.datatype) == (0, 0)]
+if existing:
+    assert not gdstk.boolean(existing, [boundary], 'xor', precision=0.0005), \
+        'GDS PR boundary differs from LEF SIZE'
+else:
+    top.add(boundary)
+lib.write_gds(out / 'core.gds')
 for name in ('VDD', 'VSS'):
     pattern = rf'  PIN {name}\n.*?  END {name}\n'
     match = re.search(pattern, lef, re.S)
@@ -66,6 +80,7 @@ print(f'Removed {removed} unreferenced filler NAME_MAP entries')
     'source_sha256': {f: hashlib.sha256((a.export / f).read_bytes()).hexdigest()
                       for f in ('core.gds', 'core.lef', 'core.v', 'core.pg.v', 'core.gf180_nominal_25.spef')},
     'removed_unused_spef_fillers': removed,
-    'changes': 'Remove unused SPEF filler names; rename top; remove geometry-free VDD/VSS aliases, use existing VPWR/VGND terminals. GDS geometry unchanged.'
+    'pr_boundary_um': [0, 0, width, height],
+    'changes': 'Remove unused SPEF filler names; rename top; remove geometry-free VDD/VSS aliases, use existing VPWR/VGND terminals; add missing PR_bndry (0/0) from LEF SIZE. Circuit geometry unchanged.'
 }, indent=2) + '\n')
 print(out)

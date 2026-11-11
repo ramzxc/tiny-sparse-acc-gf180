@@ -8,5 +8,11 @@
     "core.gf180_nominal_25.spef": "2998993aa60eff82cb36443882f136a3aae2e2a91aa02823f9779b9994b40fde"
   },
   "removed_unused_spef_fillers": 1062,
-  "changes": "Remove unused SPEF filler names; rename top; remove geometry-free VDD/VSS aliases, use existing VPWR/VGND terminals. GDS geometry unchanged."
+  "pr_boundary_um": [
+    0,
+    0,
+    299.6,
+    141.12
+  ],
+  "changes": "Remove unused SPEF filler names; rename top; remove geometry-free VDD/VSS aliases, use existing VPWR/VGND terminals; add missing PR_bndry (0/0) from LEF SIZE. Circuit geometry unchanged."
 }

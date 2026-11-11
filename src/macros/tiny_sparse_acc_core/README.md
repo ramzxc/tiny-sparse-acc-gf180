@@ -34,6 +34,9 @@ for this integration experiment; this is not multi-corner RC signoff.
 The original export's unused VDD/VSS alias ports had no LEF geometry. The
 packaging script removes these aliases and connects the existing VPWR/VGND
 ports directly, without modifying physical geometry.
+Packaging also adds the missing GF180 PR_bndry rectangle on GDS layer 0/0,
+using the LEF size (299.60 x 141.12 um). This boundary marker is required by
+Magic macro streamout; device and routing geometry remain unchanged.
 
 Main RTL remains available in `project.v` and `generated/design.v`. The
 experiment's `info.yaml` selects `hardmacro_wrapper.v` instead.
