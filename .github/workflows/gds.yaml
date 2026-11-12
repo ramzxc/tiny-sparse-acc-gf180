@@ -32,7 +32,15 @@ jobs:
           text = action.read_text()
           if text.count(original) != 1:
               raise SystemExit('GDS action changed; review diagnostic wrapper insertion')
-          action.write_text(text.replace(original, replacement))
+          text = text.replace(original, replacement)
+          original = 'run: ./tt/tt_tool.py --print-stats $TT_ARGS >> $GITHUB_STEP_SUMMARY'
+          replacement = ('run: |\n'
+                         '        python3 scripts/connect_tt_summary.py tt/project.py\n'
+                         '        ./tt/tt_tool.py --print-stats $TT_ARGS >> $GITHUB_STEP_SUMMARY')
+          if text.count(original) != 1:
+              raise SystemExit('GDS action changed; review summary integration')
+          text = text.replace(original, replacement)
+          action.write_text(text)
           PYTHON
 
       - name: Build GDS
@@ -42,9 +50,6 @@ jobs:
 
       - name: Check physical core is included in final GDS
         run: python3 scripts/check_core_gds.py runs/wokwi/final/gds/*.gds tt_submission/*.gds
-
-      - name: Summarize core and wrapper
-        run: python3 scripts/summarize_hardmacro.py runs/wokwi/final/gds/*.gds >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload build diagnostics
         if: always()
