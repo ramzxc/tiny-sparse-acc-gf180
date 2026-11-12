@@ -359,7 +359,7 @@ MACRO tiny_sparse_acc_core
     END
   END rst_n
   PIN VPWR
-    DIRECTION INOUT ;
+    DIRECTION INPUT ;
     USE POWER ;
     PORT
       LAYER Metal4 ;
@@ -374,7 +374,7 @@ MACRO tiny_sparse_acc_core
     END
   END VPWR
   PIN VGND
-    DIRECTION INOUT ;
+    DIRECTION INPUT ;
     USE GROUND ;
     PORT
       LAYER Metal4 ;
@@ -576,17 +576,21 @@ MACRO tiny_sparse_acc_core
     LAYER Metal2 ;
       RECT 0.3 0.3 299.3 140.82 ;
     LAYER Via2 ;
-      RECT 14.99 140.43 15.25 140.69 ;
-      RECT 149.39 139.87 149.65 140.13 ;
-      RECT 82.19 139.87 82.45 140.13 ;
+      RECT 149.39 140.43 149.65 140.69 ;
+      RECT 82.19 140.43 82.45 140.69 ;
+      RECT 76.03 140.43 76.29 140.69 ;
+      RECT 203.71 139.87 203.97 140.13 ;
+      RECT 156.67 139.87 156.93 140.13 ;
+      RECT 41.87 139.87 42.13 140.13 ;
     LAYER Via3 ;
       RECT 277.07 140.43 277.33 140.69 ;
-      RECT 203.15 140.43 203.41 140.69 ;
-      RECT 102.35 140.43 102.61 140.69 ;
-      RECT 69.31 140.43 69.57 140.69 ;
-      RECT 28.43 140.43 28.69 140.69 ;
+      RECT 129.79 140.43 130.05 140.69 ;
+      RECT 122.51 140.43 122.77 140.69 ;
+      RECT 109.07 140.43 109.33 140.69 ;
+      RECT 88.91 140.43 89.17 140.69 ;
+      RECT 163.39 139.87 163.65 140.13 ;
   END
-  PROPERTY expanded_util 0.845 ;
+  PROPERTY expanded_util 0.887 ;
 END tiny_sparse_acc_core
 
 END LIBRARY

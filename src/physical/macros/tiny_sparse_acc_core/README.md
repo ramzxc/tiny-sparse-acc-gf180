@@ -4,9 +4,15 @@ This branch tests the manually routed ICC2 core as a fixed macro inside the
 Tiny Tapeout 1x1 wrapper. The RTL tests still use the original RTL; the GDS and
 gate-level jobs use the packaged core. No synthesis or PnR was run to package it.
 
-Source export: `20261111_192348_1794392628598485`. Source hashes and the exact
+Source export: `20261112_152302_1794464582869583`. Source hashes and the exact
 packaging transformations are in `provenance.json`; reproduce with
 `python scripts/package_icc2_macro.py /path/to/export` (requires gdstk).
+
+The new core includes 374 filltie cells inserted before placement at 28 um
+pitch on every row. Local KLayout 0.30.7 checks using PDK revision
+54435919abffb937387ec956209f9cf5fd2dfbee passed with zero DRC and antenna
+markers (decks `all,-density,-antenna` and `antenna`, deep mode). These are
+core-only checks; the regenerated wrapper still requires Actions validation.
 
 The macro is 299.60 x 141.12 um, at (3.36, 3.92), orientation N. Its existing
 Metal4 VPWR/VGND terminals align with the parent grid. `src/physical/macro_pdn.tcl` adds
@@ -57,7 +63,7 @@ experiment's `info.yaml` selects `rtl/hardmacro_wrapper.v` instead.
 
 Compatibility fixes:
 
-- Remove 1,062 unreferenced physical filler NAME_MAP entries from SPEF.
+- Remove 827 unreferenced physical filler NAME_MAP entries from SPEF.
   Packaging aborts if a candidate entry has any references. R/C data and
   connectivity are unchanged; this avoids the OpenSTA parser failure at
   the first `xofiller!` entry.

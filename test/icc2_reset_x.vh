@@ -15,9 +15,9 @@ always @(user_project.core.transmitter.rst_n or
 end
 
 always @(user_project.core.receiver.rst_n or
-         user_project.core.receiver.HFSNET_3) begin
+         user_project.core.receiver.HFSNET_2) begin
     if (user_project.core.receiver.rst_n === 1'b1 &&
-        user_project.core.receiver.HFSNET_3 === 1'b0) begin
+        user_project.core.receiver.HFSNET_2 === 1'b0) begin
         force user_project.core.receiver.n98 = 1'b0;  // clk_cnt[0]
         force user_project.core.receiver.n92 = 1'b0;  // clk_cnt[6]
         force user_project.core.receiver.n101 = 1'b0; // bit_idx[1]

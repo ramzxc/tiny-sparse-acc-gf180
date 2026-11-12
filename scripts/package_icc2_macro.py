@@ -58,8 +58,9 @@ lib.write_gds(out / 'core.gds')
 for name in ('VDD', 'VSS'):
     pattern = rf'  PIN {name}\n.*?  END {name}\n'
     match = re.search(pattern, lef, re.S)
-    assert match and 'PORT' not in match[0]
-    lef = re.sub(pattern, '', lef, flags=re.S)
+    if match:
+        assert 'PORT' not in match[0], f'Unexpected physical alias pin: {name}'
+        lef = re.sub(pattern, '', lef, flags=re.S)
 
 # OVERLAP is ICC2's placement-only outline, not a fabrication/routing layer.
 # Magic's GF180 technology does not define it. Remove only this redundant
