@@ -46,7 +46,7 @@ def patch(path):
     end_text = '            util = re.sub(util_regexp, "", util_line).strip()'
     end = source.index(end_text, start) + len(end_text)
     source = (source[:start] +
-              '            util = f\'{100 * self.metrics["design__instance__utilization"]:.2f}\'' +
+              '            util = f\'{100 * float(self.metrics["design__instance__utilization"]):.2f}\'' +
               source[end:])
     ast.parse(source)
     path.write_text(source)
