@@ -28,7 +28,7 @@ else
 
 # Gate level simulation:
 SIM_BUILD				= sim_build/gl
-COMPILE_ARGS    += -DGL_TEST
+COMPILE_ARGS    += -DGL_TEST -DTT_ICC2_HARDMACRO
 COMPILE_ARGS    += -DFUNCTIONAL
 COMPILE_ARGS    += -DUSE_POWER_PINS
 COMPILE_ARGS    += -DSIM
@@ -36,6 +36,7 @@ COMPILE_ARGS    += -DUNIT_DELAY=\#1
 VERILOG_SOURCES += $(PDK_ROOT)/gf180mcuD/libs.ref/gf180mcu_fd_sc_mcu7t5v0/verilog/primitives.v
 VERILOG_SOURCES += $(PDK_ROOT)/gf180mcuD/libs.ref/gf180mcu_fd_sc_mcu7t5v0/verilog/gf180mcu_fd_sc_mcu7t5v0.v
 
+VERILOG_SOURCES += $(SRC_DIR)/physical/macros/tiny_sparse_acc_core/core.pg.v
 
 # this gets copied in by the GDS action workflow
 VERILOG_SOURCES += $(CURDIR)/gate_level_netlist.v
@@ -54,3 +55,10 @@ COCOTB_TEST_MODULES = test
 
 # include cocotb's make rules to take care of the simulator setup
 include $(shell cocotb-config --makefiles)/Makefile.sim
+
+ifeq ($(GATES),yes)
+.PHONY: check-icc2-reset
+check-icc2-reset:
+	python3 $(CURDIR)/check_icc2_reset.py
+$(SIM_BUILD)/sim.vvp: check-icc2-reset
+endif

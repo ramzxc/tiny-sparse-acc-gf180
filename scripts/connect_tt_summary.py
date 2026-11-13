@@ -17,22 +17,34 @@ def patch(path):
         # Imported macro instances are absent from the wrapper netlist.
         import gdstk
         from collections import Counter
+        from pathlib import Path
         layout = gdstk.read_gds(self.get_final_gds())
         tops = layout.top_level()
         if len(tops) != 1:
             raise ValueError("Expected one final GDS top")
         counts = Counter()
+        cell_area = 0.0
+        categories = json.loads((Path(SCRIPT_DIR) / "tech" / self.pdk / "categories.json").read_text())
         def visit(cell, multiplicity=1):
+            nonlocal cell_area
             for ref in cell.references:
                 copies = multiplicity * (ref.repetition.size or 1)
                 if ref.cell_name.startswith("gf180mcu_fd_sc_mcu7t5v0__"):
                     name = ref.cell_name.split("__", 1)[1]
-                    counts[re.sub(r"_\\d+$", "", name)] += copies
+                    base = re.sub(r"_\\d+$", "", name)
+                    counts[base] += copies
+                    category = categories["categories"][categories["map"][base]]
+                    if category not in ("Fill", "Tap"):
+                        boundaries = [p for p in ref.cell.polygons if (p.layer, p.datatype) == (0, 0)]
+                        if len(boundaries) != 1:
+                            raise ValueError("Expected one standard-cell PR boundary: " + ref.cell_name)
+                        cell_area += copies * boundaries[0].area() * (layout.unit / 1e-6) ** 2
                 else:
                     if not isinstance(ref.cell, gdstk.Cell):
                         raise ValueError("Unresolved GDS reference: " + ref.cell_name)
                     visit(ref.cell, copies)
         visit(tops[0])
+        self._physical_cell_area = cell_area
         return dict(counts)
     '''
     lines = source.splitlines(keepends=True)
@@ -40,14 +52,24 @@ def patch(path):
         textwrap.indent(textwrap.dedent(replacement).strip(), '    ') + '\n'
     ]
     source = ''.join(lines)
-    # Macro-only placement need not print GPL-0019. Use the final flow metric;
-    # leave the existing routing table and error handling unchanged.
+    # Report actual cell area separately from reserved hard-macro footprint.
+    # Both percentages use the wrapper's placeable core area as denominator.
     start = source.index('            util_glob =', source.index('    def print_stats('))
     end_text = '            util = re.sub(util_regexp, "", util_line).strip()'
     end = source.index(end_text, start) + len(end_text)
     source = (source[:start] +
-              '            util = f\'{100 * float(self.metrics["design__instance__utilization"]):.2f}\'' +
+              '            self.get_cell_counts_from_gl()\n'
+              '            util = f\'{100 * self._physical_cell_area / float(self.metrics["design__core__area"]):.2f}\'\n'
+              '            footprint_util = f\'{100 * float(self.metrics["design__instance__utilization"]):.2f}\'' +
               source[end:])
+    source = source.replace(
+        '| Utilisation (%) | Wire length (um) |',
+        '| Cell utilisation incl. core (%) | Placement utilisation incl. macro footprint (%) | Wrapper wire length (um) |')
+    source = source.replace('|-------------|------------------|', '|-------------|-------------|------------------|')
+    source = source.replace('"| {} | {} |".format(util, wire_length)',
+                            '"| {} | {} | {} |".format(util, footprint_util, wire_length)')
+    line = '            print("| {} | {} | {} |".format(util, footprint_util, wire_length))'
+    source = source.replace(line, line + '\n            print("\\nCell utilisation sums standard-cell PR areas inside the core and wrapper, excluding fill and tap cells. Both percentages use the wrapper core area; placement utilisation reserves the entire macro footprint.")')
     ast.parse(source)
     path.write_text(source)
 
