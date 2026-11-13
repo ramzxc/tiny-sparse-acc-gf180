@@ -52,24 +52,17 @@ def patch(path):
         textwrap.indent(textwrap.dedent(replacement).strip(), '    ') + '\n'
     ]
     source = ''.join(lines)
-    # Report actual cell area separately from reserved hard-macro footprint.
-    # Both percentages use the wrapper's placeable core area as denominator.
+    # Treat the hierarchy as one design: cell PR area / top-level core area.
+    # Do not count the macro footprint again on top of its internal cells.
     start = source.index('            util_glob =', source.index('    def print_stats('))
     end_text = '            util = re.sub(util_regexp, "", util_line).strip()'
     end = source.index(end_text, start) + len(end_text)
     source = (source[:start] +
               '            self.get_cell_counts_from_gl()\n'
-              '            util = f\'{100 * self._physical_cell_area / float(self.metrics["design__core__area"]):.2f}\'\n'
-              '            footprint_util = f\'{100 * float(self.metrics["design__instance__utilization"]):.2f}\'' +
+              '            util = f\'{100 * self._physical_cell_area / float(self.metrics["design__core__area"]):.2f}\'' +
               source[end:])
-    source = source.replace(
-        '| Utilisation (%) | Wire length (um) |',
-        '| Cell utilisation incl. core (%) | Placement utilisation incl. macro footprint (%) | Wrapper wire length (um) |')
-    source = source.replace('|-------------|------------------|', '|-------------|-------------|------------------|')
-    source = source.replace('"| {} | {} |".format(util, wire_length)',
-                            '"| {} | {} | {} |".format(util, footprint_util, wire_length)')
-    line = '            print("| {} | {} | {} |".format(util, footprint_util, wire_length))'
-    source = source.replace(line, line + '\n            print("\\nCell utilisation sums standard-cell PR areas inside the core and wrapper, excluding fill and tap cells. Both percentages use the wrapper core area; placement utilisation reserves the entire macro footprint.")')
+    # LibreLane only measures new wrapper routing, not the imported core wires.
+    source = source.replace('| Wire length (um) |', '| Wrapper wire length (um) |')
     ast.parse(source)
     path.write_text(source)
 
