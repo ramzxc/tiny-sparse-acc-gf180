@@ -40,7 +40,7 @@
         "dir::physical/macros/tiny_sparse_acc_core/core.v"
       ],
       "pnl": [
-        "dir::physical/macros/tiny_sparse_acc_core/core.pg.v"
+        "dir::physical/macros/tiny_sparse_acc_core/core.lvs.v"
       ],
       "spef": {
         "*": [
@@ -69,5 +69,8 @@
     "gf180mcu_fd_sc_mcu7t5v0__fill_*",
     "gf180mcu_fd_sc_mcu7t5v0__endcap",
     "tiny_sparse_acc_core"
-  ]
+  ],
+  "MAGIC_EXT_USE_GDS": true,
+  "MAGIC_EXT_ABSTRACT": false,
+  "LVS_INCLUDE_MARCO_NETLISTS": true
 }

@@ -6,6 +6,7 @@ import json
 import re
 from pathlib import Path
 import gdstk
+from prepare_macro_lvs import prepare_lvs
 
 p = argparse.ArgumentParser()
 p.add_argument('export', type=Path)
@@ -151,6 +152,8 @@ for filename in ('core.v', 'core.pg.v'):
         # Preserve named child ports .VDD/.VSS; replace their connection nets.
         top = re.sub(rf'(?<!\.)\b{alias}\b', actual, top)
     (out / filename).write_text(text[:start] + top + text[end:])
+# Keep simulation/timing views unchanged; only LVS uses explicit well pins.
+(out / 'core.lvs.v').write_text(prepare_lvs((out / 'core.pg.v').read_text()))
 spef = (a.export / 'core.gf180_nominal_25.spef').read_text()
 spef = spef.replace(f'*DESIGN "{old}"', f'*DESIGN "{new}"')
 # ICC2 includes physical-only fillers in NAME_MAP, although they have no
