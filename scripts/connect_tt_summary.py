@@ -16,6 +16,7 @@ def patch(path):
     def get_cell_counts_from_gl(self):
         # Imported macro instances are absent from the wrapper netlist.
         import gdstk
+        import hashlib
         from collections import Counter
         from pathlib import Path
         layout = gdstk.read_gds(self.get_final_gds())
@@ -24,9 +25,10 @@ def patch(path):
             raise ValueError("Expected one final GDS top")
         counts = Counter()
         cell_area = 0.0
+        core_copies = 0
         categories = json.loads((Path(SCRIPT_DIR) / "tech" / self.pdk / "categories.json").read_text())
         def visit(cell, multiplicity=1):
-            nonlocal cell_area
+            nonlocal cell_area, core_copies
             for ref in cell.references:
                 copies = multiplicity * (ref.repetition.size or 1)
                 if ref.cell_name.startswith("gf180mcu_fd_sc_mcu7t5v0__"):
@@ -42,9 +44,18 @@ def patch(path):
                 else:
                     if not isinstance(ref.cell, gdstk.Cell):
                         raise ValueError("Unresolved GDS reference: " + ref.cell_name)
+                    if ref.cell_name == "tiny_sparse_acc_core":
+                        core_copies += copies
                     visit(ref.cell, copies)
         visit(tops[0])
         self._physical_cell_area = cell_area
+        macro_dir = Path(self.local_dir) / "src/physical/macros/tiny_sparse_acc_core"
+        metrics = json.loads((macro_dir / "core.metrics.json").read_text())
+        if hashlib.sha256((macro_dir / "core.gds").read_bytes()).hexdigest() != metrics["packaged_gds_sha256"]:
+            raise ValueError("Core route metrics do not match the packaged GDS; repackage the export")
+        if core_copies != 1:
+            raise ValueError("Expected one physical accelerator core")
+        self._physical_core_wire_length = core_copies * float(metrics["wire_length_um"])
         return dict(counts)
     '''
     lines = source.splitlines(keepends=True)
@@ -61,8 +72,12 @@ def patch(path):
               '            self.get_cell_counts_from_gl()\n'
               '            util = f\'{100 * self._physical_cell_area / float(self.metrics["design__core__area"]):.2f}\'' +
               source[end:])
-    # LibreLane only measures new wrapper routing, not the imported core wires.
-    source = source.replace('| Wire length (um) |', '| Wrapper wire length (um) |')
+    # Add imported signal/clock routing to LibreLane's new wrapper routing.
+    start = source.index('    def print_stats(')
+    end = source.index('        except (IndexError, KeyError, StopIteration):', start)
+    source = (source[:end] +
+              '            wire_length = f\'{float(wire_length) + self._physical_core_wire_length:.2f}\'\n\n' +
+              source[end:])
     ast.parse(source)
     path.write_text(source)
 

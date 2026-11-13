@@ -7,6 +7,7 @@ import re
 from pathlib import Path
 import gdstk
 from prepare_macro_lvs import prepare_lvs
+from macro_route_metrics import write_metrics
 
 p = argparse.ArgumentParser()
 p.add_argument('export', type=Path)
@@ -178,6 +179,7 @@ for line in lines:
     else:
         kept.append(line)
 (out / 'core.spef').write_text(''.join(kept))
+write_metrics(a.export / 'core.def', out / 'core.gds', out / 'core.metrics.json')
 print(f'Removed {removed} unreferenced filler NAME_MAP entries')
 (out / 'provenance.json').write_text(json.dumps({
     'export': a.export.name,
