@@ -13,7 +13,7 @@ p = argparse.ArgumentParser()
 p.add_argument('export', type=Path)
 a = p.parse_args()
 root = Path(__file__).resolve().parents[1]
-out = root / 'src/physical/macros/tiny_sparse_acc_core'
+out = root / 'macro/tiny_sparse_acc_core'
 out.mkdir(parents=True, exist_ok=True)
 old, new = 'tt_um_tiny_sparse_acc_ramzxc', 'tiny_sparse_acc_core'
 lib = gdstk.read_gds(a.export / 'core.gds')

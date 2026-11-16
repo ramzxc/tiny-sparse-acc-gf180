@@ -1,3 +1,4 @@
+# Only macro-specific PDN operations live here; grid dimensions are in config.json.
 # Parent rails/stripes use the standard TT grid. Macro power terminals are
 # on that same Metal4 grid, so connect with Metal4 overlap, not Metal5 vias.
 # Define only the wrapper grid. The default pdn_cfg.tcl also creates a
@@ -53,10 +54,12 @@ if {$::env(PDN_ENABLE_RAILS)} {
 # Offset is relative to the wrapper core lower edge (y=3.92 um).
 # Leave extension at its default core bounds (x=3.36..343.28), not the die
 # boundary. Magic otherwise exports the bus ends as forbidden M3 power pins.
-add_pdn_stripe -grid stdcell_grid -layer Metal3 \
-    -width 1.6 -pitch 38.87 -spacing 1.9 -offset 143.48 \
+add_pdn_stripe -grid stdcell_grid -layer $::env(PDN_HORIZONTAL_LAYER) \
+    -width $::env(PDN_HWIDTH) -pitch $::env(PDN_HPITCH) \
+    -spacing $::env(PDN_HSPACING) -offset $::env(PDN_HOFFSET) \
     -starts_with POWER
-add_pdn_connect -grid stdcell_grid -layers {Metal3 Metal4}
+add_pdn_connect -grid stdcell_grid \
+    -layers "$::env(PDN_HORIZONTAL_LAYER) $::env(PDN_VERTICAL_LAYER)"
 
 # The macro already contains its power grid. Connect the existing terminals
 # using same-layer feed shapes below; do not create an empty macro grid.

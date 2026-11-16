@@ -21,7 +21,7 @@ def check(path):
         raise ValueError("core has no GF180 metal geometry")
 
     source_path = Path(__file__).resolve().parents[1] / (
-        "src/physical/macros/tiny_sparse_acc_core/core.gds"
+        "macro/tiny_sparse_acc_core/core.gds"
     )
     source = gdstk.read_gds(source_path)
     original = next(c for c in source.cells if c.name == core.name)

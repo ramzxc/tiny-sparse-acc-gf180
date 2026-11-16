@@ -1,6 +1,6 @@
-# ICC2 hard-macro experiment
+# ICC2 hard macro
 
-This branch tests the manually routed ICC2 core as a fixed macro inside the
+The current main build uses the manually routed ICC2 core as a fixed macro inside the
 Tiny Tapeout 1x1 wrapper. The RTL tests still use the original RTL; the GDS and
 gate-level jobs use the packaged core. No synthesis or PnR was run to package it.
 
@@ -15,7 +15,7 @@ markers (decks `all,-density,-antenna` and `antenna`, deep mode). These are
 core-only checks; the regenerated wrapper still requires Actions validation.
 
 The macro is 299.60 x 141.12 um, at (3.36, 3.92), orientation N. Its existing
-Metal4 VPWR/VGND terminals align with the parent grid. `src/physical/macro_pdn.tcl` adds
+Metal4 VPWR/VGND terminals align with the parent grid. `src/tcl/pdn.tcl` adds
 same-layer feeds overlapping those terminals by 1 um. It defines only the
 wrapper standard-cell grid, with eight VPWR/VGND feed pairs; the default Metal4--Metal5 macro grid is omitted
 because the macro already has its own power network and Metal4 terminals. No signoff checks are
@@ -59,7 +59,7 @@ are subtracted from Metal4 OBS so Magic's abstract extraction does not treat
 valid power-pin metal as an overlap with a routing obstruction.
 
 Main RTL remains available in `src/rtl/project.v` and `src/rtl/generated/design.v`. The
-experiment's `info.yaml` selects `rtl/hardmacro_wrapper.v` instead.
+current `info.yaml` selects `wrapper/project.v` instead.
 
 Compatibility fixes:
 

@@ -20,31 +20,29 @@
   "GRT_ALLOW_CONGESTION": 1,
   "FP_IO_HLENGTH": 2,
   "FP_IO_VLENGTH": 2,
-  "FP_PDN_VPITCH": 38.87,
   "RUN_CTS": 1,
-  "FP_PDN_MULTILAYER": 0,
   "MAGIC_DEF_LABELS": 0,
   "MAGIC_WRITE_LEF_PINONLY": 1,
   "MACROS": {
     "tiny_sparse_acc_core": {
       "gds": [
-        "dir::physical/macros/tiny_sparse_acc_core/core.gds"
+        "dir::../macro/tiny_sparse_acc_core/core.gds"
       ],
       "lef": [
-        "dir::physical/macros/tiny_sparse_acc_core/core.lef"
+        "dir::../macro/tiny_sparse_acc_core/core.lef"
       ],
       "vh": [
-        "dir::physical/macros/tiny_sparse_acc_core/core.bb.v"
+        "dir::../macro/tiny_sparse_acc_core/core.bb.v"
       ],
       "nl": [
-        "dir::physical/macros/tiny_sparse_acc_core/core.v"
+        "dir::../macro/tiny_sparse_acc_core/core.v"
       ],
       "pnl": [
-        "dir::physical/macros/tiny_sparse_acc_core/core.lvs.v"
+        "dir::../macro/tiny_sparse_acc_core/core.lvs.v"
       ],
       "spef": {
         "*": [
-          "dir::physical/macros/tiny_sparse_acc_core/core.spef"
+          "dir::../macro/tiny_sparse_acc_core/core.spef"
         ]
       },
       "instances": {
@@ -58,7 +56,7 @@
       }
     }
   },
-  "PDN_CFG": "dir::physical/macro_pdn.tcl",
+  "PDN_CFG": "dir::tcl/pdn.tcl",
   "PDN_MACRO_CONNECTIONS": [
     "core VPWR VGND VPWR VGND"
   ],
@@ -72,5 +70,15 @@
   ],
   "MAGIC_EXT_USE_GDS": true,
   "MAGIC_EXT_ABSTRACT": false,
-  "LVS_INCLUDE_MARCO_NETLISTS": true
+  "LVS_INCLUDE_MARCO_NETLISTS": true,
+  "PDN_VPITCH": 38.87,
+  "PDN_MULTILAYER": false,
+  "PDN_CORE_RING": false,
+  "PDN_ENABLE_RAILS": true,
+  "PDN_ENABLE_PINS": true,
+  "PDN_HORIZONTAL_LAYER": "Metal3",
+  "PDN_HWIDTH": 1.6,
+  "PDN_HPITCH": 38.87,
+  "PDN_HSPACING": 1.9,
+  "PDN_HOFFSET": 143.48
 }

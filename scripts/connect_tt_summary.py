@@ -49,7 +49,7 @@ def patch(path):
                     visit(ref.cell, copies)
         visit(tops[0])
         self._physical_cell_area = cell_area
-        macro_dir = Path(self.local_dir) / "src/physical/macros/tiny_sparse_acc_core"
+        macro_dir = Path(self.local_dir) / "macro/tiny_sparse_acc_core"
         metrics = json.loads((macro_dir / "core.metrics.json").read_text())
         if hashlib.sha256((macro_dir / "core.gds").read_bytes()).hexdigest() != metrics["packaged_gds_sha256"]:
             raise ValueError("Core route metrics do not match the packaged GDS; repackage the export")

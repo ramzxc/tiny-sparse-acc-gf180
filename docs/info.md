@@ -1,168 +1,238 @@
-## Current build variant
+## Overview
 
-The Actions build currently selects `direct` in src/build_mode.txt. UART accepts
-two little-endian bytes per READY credit, carrying the internal 16-bit ISA.
-Normal instructions use opcode[15:9] (0..63) and payload[8:0].
-Address instructions use command[15:13] (4..7) and fragment[12:0].
-micro_ctrl is omitted. This format is incompatible with the old four-byte stream.
+A single-lane signed fixed8 accelerator with UART instruction input and external
+QSPI Flash / PSRAM. The core clock is 10 MHz; QSPI SCK is 5 MHz. No on-chip SRAM
+macros are used. Operands and results are stored in registers or external PSRAM.
 
-| Address command | [15:13] | Updated bits |
+The current design uses **direct mode**: the PC sends low-level 16-bit
+instructions for address setup, memory transfers, arithmetic and synchronization.
+The PC constructs matrix loops and schedules operations; there is no on-chip
+high-level job sequencer (`micro_ctrl`) in this build. This reduces hardware area.
+
+The current Tiny Tapeout build integrates the manually placed-and-routed ICC2
+core as a hard macro. Actions places and routes the surrounding wrapper; it does
+not re-synthesize or re-route the core. Editable RTL remains available for
+simulation and future implementation. Earlier micro-mode interfaces and numerical
+experiments are documented separately in [Development history](archive/history.md).
+
+## Data flow
+
+```text
+PC UART -> uart_rx -> inst_fifo -> decoder
+                                    |-> mem_ctrl -> mem_itf -> qspi_ctrl -> Flash / PSRAM
+                                    |      |                         |
+                                    |      +<- read data <------------+
+                                    |      +-> VPU operand registers
+                                    +-> vpu -> act -> mem_ctrl -> PSRAM
+
+inst_fifo READY request -> uart_tx -> PC UART
+```
+
+The FIFO holds one waiting instruction. The decoder dispatches its head when the
+relevant memory or execution path is ready, without storing another instruction.
+Memory and execution can progress independently; software must synchronize shared
+operand/result accesses. VPU weight and input registers retain their values until
+updated. The VPU result register is also the accumulator; activation has a
+separate result register used by memory stores.
+
+A typical operation is: set SRC, load a weight, MEM_SYNC; set SRC, load an input,
+MEM_SYNC; EXECUTE, EXE_SYNC; set DST, ACT_TO_SRAM, MEM_SYNC. Synchronize the store
+before another execution can overwrite the activation result.
+
+## Repository layout
+
+```text
+src/rtl/                         Editable accelerator RTL and generated Verilog
+src/wrapper/project.v            Tiny Tapeout hard-macro wrapper
+src/config.json                  Build, macro placement and PDN parameters
+src/tcl/pdn.tcl                  Required macro-specific power connections
+macro/tiny_sparse_acc_core/      Packaged ICC2 GDS, LEF, netlists, SPEF and metadata
+scripts/                         Packaging, validation and Actions summary tools
+test/                            RTL and gate-level tests
+docs/info.md                    Current design and usage
+docs/archive/                   Earlier interfaces and experiment records
+```
+
+`syn/`, `pnr/`, `sta/` and `sim/` are local-only workspaces excluded from Git.
+The submission uses the packaged files under `macro/`, so these local workspaces
+are not required by Actions. The PDN Tcl remains necessary for same-layer Metal4
+macro feeds and full-height supply pins; grid parameters are in `src/config.json`.
+
+## RTL used by the current design
+
+Paths below are relative to `src/rtl/`.
+
+| File | Role |
+| --- | --- |
+| `project.v` | Accelerator top: reset synchronization, module connections, execution completion tracking and Tiny Tapeout pin mapping. |
+| `uart/uart_rx.v` | Synchronizes UART RX, receives bytes and assembles a 16-bit instruction. |
+| `uart/uart_tx.v` | Sends the READY credit byte to the host. |
+| `core/inst_fifo.v` | Holds one waiting instruction and advances when the decoder accepts it. |
+| `core/decoder.v` | Decodes instructions, dispatches memory/execution requests and handles synchronization. |
+| `core/mem_ctrl.v` | Holds SRC/DST addresses, schedules transfers and routes read data to input or weight registers. |
+| `core/vpu.v` | One fixed8 lane with operand registers, a multiplier, a shared adder and an accumulator/result register. |
+| `core/act.v` | Applies the selected activation and registers its result. |
+| `mem_itf.v` | Converts read/write/copy requests into QSPI transactions; copies read then write one byte. |
+| `qspi_ctrl.v` | Controls serial memory commands, addresses, data, Flash polling and chip selects. |
+| `../wrapper/project.v` | Current Actions top: connects Tiny Tapeout ports to the packaged `tiny_sparse_acc_core`. |
+
+Shared definitions are `defs/defs.vh` (widths and fixed-point scale),
+`defs/inst_defs.vh` (instructions and execution options), and `defs/mem_defs.vh`
+(memory map). `generated/design.v` is the sv2v-generated Verilog representation of
+the editable RTL, not another hardware block.
+
+`src/sources.f` also lists `core/micro_ctrl.v`, but `TT_DIRECT_UCODE` excludes its
+instance. `defs/micro_defs.vh` and `defs/fp8_math.vh` are not part of the active
+direct fixed8 datapath.
+
+## Host interface and instructions
+
+UART uses 8N1, approximately 115200 baud at 10 MHz (87 clocks per bit).
+The chip sends READY `0x01` for each instruction admission credit. The host then
+sends **exactly two bytes**, least-significant byte first. READY means that an
+instruction can be received, not that a computation has completed. Reset clears
+the instruction and datapath state.
+
+Normal instructions use opcode `[15:9]` and payload `[8:0]`. Address commands use
+command `[15:13]` and fragment `[12:0]`.
+
+| Instruction | Opcode | Purpose |
 | --- | --- | --- |
-| SET_SRC_LO | 4 | SRC[12:0] |
-| SET_DST_LO | 5 | DST[12:0] |
-| SET_SRC_HI | 6 | SRC[24:13] from payload[11:0] |
-| SET_DST_HI | 7 | DST[24:13] from payload[11:0] |
+| FLASH_TO_SRAM | 0 | Copy one byte from saved SRC to saved DST. |
+| SRAM_TO_VPU | 1 | Load an operand from saved SRC. |
+| ACT_TO_SRAM | 2 | Store one activation-result byte at saved DST. |
+| SRAM_TO_FLASH | 3 | Copy one byte from saved SRC to saved DST. |
+| EXECUTE | 32 | Arithmetic, optional MUL accumulation and activation selection. |
+| ACC_CLEAR | 33 | Clear the VPU accumulator/result. |
+| ACTIVATE | 34 | Apply activation to the held VPU result. |
+| VECTOR_PASS | 35 | Pass the input register through the selected activation. |
+| EXE_SYNC | 60 | Wait for the VPU/activation path to finish. |
+| MEM_SYNC | 61 | Wait for the memory path to finish. |
+| INST_NOP | 62 | No operation. |
 
-SRC/DST remain 25-bit absolute byte addresses, including memory selection.
-Each half preserves the other half; HIGH payload[12] is ignored.
-There is no extra base register or base-plus-offset adder. Set both halves before
-a transfer, or update only the changed half. Address updates wait for mem_rdy.
-EXE_SYNC/MEM_SYNC/NOP opcodes are now 60/61/62; other normal opcodes are unchanged.
-For example PSRAM A address 0x1000020 in SRC is encoded as words 0x8020, 0xC800
-(UART bytes 20 80, then 00 C8, each word requiring its own READY credit).
+The historical `SRAM` instruction names refer to **external PSRAM** here.
+EXECUTE payload `[1:0]` selects ADD, SUB, MUL or RSUB; bit 2 enables MUL
+accumulation, `[5:3]` selects activation and bit 6 enables sparse MUL behavior.
+ADD/SUB/RSUB ignore accumulation. Sparse MUL with zero input returns zero, or
+preserves the accumulator when accumulating; avoiding the weight fetch and
+scheduling sparse loops remain host responsibilities.
 
-The host supplies address setup, transfers, execution and EXE_SYNC/MEM_SYNC.
-Done/error outputs are tied low because this mode has no high-level job boundary.
-VPU, activation and PSRAM operations use one signed fixed8 element per request.
-The single VPU lane has one signed multiplier and one adder; each instruction
-produces its result on the accepting clock edge. Simultaneous operand updates
-use the previous operand values for that instruction. Only MUL supports
-accumulation; ADD/SUB/RSUB ignore the accumulate bit.
+| Address command | `[15:13]` | Updated address bits |
+| --- | --- | --- |
+| SET_SRC_LO | 4 | SRC `[12:0]` |
+| SET_DST_LO | 5 | DST `[12:0]` |
+| SET_SRC_HI | 6 | SRC `[24:13]` from fragment `[11:0]` |
+| SET_DST_HI | 7 | DST `[24:13]` from fragment `[11:0]` |
 
-`FIXED_FRAC_BITS` in `src/rtl/defs/defs.vh` is a compile-time setting from 1 to 6.
-Real value = signed(byte) / 2**FIXED_FRAC_BITS. The default is 4: range
--8 through 7.9375, resolution 0.0625. No runtime format register or new opcode.
-All operands, accumulator and activation results use the same scale. The
-16-bit product is combinational only; it does not widen registers or memory.
-Multiplication rescales with nearest rounding (ties toward positive infinity),
-then adds the old accumulator if enabled, and saturates once to [-128,127].
-ADD/SUB/RSUB saturate too. There is no wraparound, NaN or negative zero.
-Software must re-encode FP8 model data before using this design.
+SRC/DST are 25-bit absolute byte addresses. Each command preserves the other
+half; HIGH fragment bit 12 is ignored. Address changes wait for `mem_rdy`.
+For example, SRC `0x1000020` uses words `0x8020`, `0xC800`: UART bytes
+`20 80`, then `00 C8`, with a separate READY credit for each word.
 
-Activation registers one result per accepting edge: NONE, ReLU, hard sigmoid
-(clamp(x/4 + 0.5, 0, 1), nearest rounding), hard tanh (clamp(x,-1,1)), and STEP
-(x>0). The top holds exe_rdy low until activation completes.
-`bash test/run_fixed8.sh` checks every operand pair for ADD/SUB/RSUB/MUL/MAC
-at all six supported fractional widths, plus all activation byte inputs.
-The FP8 reference/helper remains only for historical numerical comparisons.
+## Arithmetic and activation
 
-Memory addresses are stored only in mem_ctrl and held until transfer completion.
-mem_ctrl states directly identify read/write/copy dispatch and read/other
-completion waits, without a separate saved command. Address-half writes use
-shared reset-masked data. Request and completion timing remain unchanged.
-mem_itf captures direct write data and COPY readback but uses SRC/DST directly.
-QSPI also borrows this held address: req_addr must remain stable from request
-acceptance through read_data_val, including Flash status polling and retries.
-It selects address bits/nibbles using the existing counter instead of a 24-bit
-address shift register. Flash and PSRAM share the address nibble selector;
-Flash selects one bit from that nibble while PSRAM outputs all four bits.
-Commands are selected similarly, without an 8-bit
-command shift register. req_write and req_data are still captured on acceptance.
-Simulation checks enforce the address-hold contract. VPU is unchanged by this
-QSPI optimization.
-QSPI exposes its 8-bit data shift register as the read result, valid from
-read completion until the next transaction is accepted. mem_itf forwards that
-result on read_data_val; consumers must not use it as persistent storage during
-later transfers. Each memory payload now occupies two QSPI clocks (one byte);
-command, address, dummy and Flash status-poll protocols are unchanged.
+`DATA_WIDTH=8`, `COMPUTE_WIDTH=1`. Values are signed integers scaled by
+`2**FIXED_FRAC_BITS`. The compile-time fractional width is 1..6, default 4:
+range -8..7.9375, resolution 0.0625. Operands, accumulation, activation and memory
+use this same format. There is no runtime format register.
 
-The instruction FIFO has one waiting slot. UART RX assembles the two-byte
-words by shifting; UART TX generates the unchanged READY=0x01 frame directly.
+The VPU registers its result on the accepting edge. Operand updates on that same
+edge affect the next execution. MUL retains a combinational 16-bit product,
+rescales with nearest rounding (ties toward positive infinity), optionally adds
+the previous accumulator, then saturates once to [-128,127]. ADD/SUB/RSUB also
+saturate. The wider intermediate does not widen storage or memory transactions.
 
-Sparse weight-fetch skipping and matrix loops must be managed by the host.
-Low-level Flash transfers remain reachable through the internal ISA.
+Activation registers the next stage's result. Codes are 0 NONE, 1 ReLU,
+2 hard sigmoid (clamp(x/4 + 0.5, 0, 1), nearest rounding), 3 hard tanh
+(clamp(x,-1,1)), and 4 STEP (x>0). The top holds execution ready low until this
+stage completes. FP8-encoded data must be converted to fixed8 before use.
 
-Set src/build_mode.txt to `micro` and regenerate Verilog to restore the 64-bit
-job interface described below. `bash syn/run_synth.sh micro` and
-`bash syn/run_synth.sh direct` independently select the DC comparison variant;
-`--check` validates paths without running DC. Reports are written under
-syn/runs/<variant>/<run>/reports, including module_area.csv and area.rpt.
-The DC constraints retain the earlier board-delay assumptions and are not
-external-memory timing signoff. GF180_STD_DB overrides the local library path.
+## Memory and external pins
 
-## How it works
+| Region | Base byte address | Default role |
+| --- | --- | --- |
+| Flash | `0x0000000` | Nonvolatile data, accessed through memory instructions. |
+| PSRAM A | `0x1000000` | Weight operands. |
+| PSRAM B | `0x1800000` | Inputs, other vector operands and stored results. |
 
-Single-lane signed fixed8 accelerator with external QSPI PSRAM and 64-bit UART jobs.
-No on-chip SRAM macros are instantiated. Products, accumulation, activation
-results and stored elements use fixed8. The core clock is 10 MHz and QSPI SCK is
-5 MHz. UART is 8N1, approximately 115200 baud (87 clocks per bit).
+PSRAM selection uses address `[24:23]`; lower 23 bits address a byte within a chip.
+SRAM_TO_VPU normally routes PSRAM A reads to the weight register and PSRAM B reads
+to the input register. Payload bit 2 can force a read into the weight register.
+Each transfer carries one byte. `mem_ctrl` holds addresses until completion;
+QSPI read data is valid at completion and must not be treated as persistent
+storage across later transactions.
 
-UART RX is ui[3], TX is uo[4]. The chip sends READY byte 0x01 once for each
-available instruction slot; the host then sends exactly eight bytes, least
-significant byte first. READY is admission credit, not job completion.
-uo[0] reports sequencer ready, uo[1] pulses on completion, and uo[2] reports
-invalid-job error until another job is accepted. Reset discards queued jobs.
+| Pin | Function |
+| --- | --- |
+| `ui[3]` | UART RX |
+| `uo[4]` | UART TX / READY credit |
+| `uo[0]` | Decoder ready status; use UART credits for host transmission |
+| `uo[1]`, `uo[2]` | Tied low in direct mode; no high-level job done/error interface |
+| `uio[0]` | Flash CS_n |
+| `uio[1]`, `uio[2]` | QSPI DQ0, DQ1 |
+| `uio[3]` | QSPI SCK |
+| `uio[4]`, `uio[5]` | QSPI DQ2, DQ3 |
+| `uio[6]`, `uio[7]` | PSRAM A CS_n, PSRAM B CS_n |
 
-The QSPI Pmod uses uio[0] Flash CS_n, uio[1:2] DQ0/1, uio[3] SCK,
-uio[4:5] DQ2/3, uio[6] PSRAM A CS_n, uio[7] PSRAM B CS_n.
-PSRAM A holds matrix weights; PSRAM B holds inputs, vector operands and outputs.
-The current host jobs assume memories have been populated externally. Automatic
-Flash staging, host data-upload commands and result-download commands are not
-implemented in this checkpoint.
+Use a compatible QSPI Flash + two-PSRAM Pmod. Flash configuration must match
+`qspi_ctrl.v`; memory contents and host instruction scheduling are external
+responsibilities. There is no general UART data-upload/result-download protocol.
 
-## Job formats
+## Build and verification
 
-Matrix jobs compute C[M,N] = activation(A[M,K] * B[K,N]). Bit 63 is zero;
-bit 62 enables B-zero skipping; bits 61:60 select activation; bits 59:52,
-51:44 and 43:36 encode M, K and N (1..255). Bits 35:24, 23:12 and 11:0
-are A, B and C byte offsets from the bases in src/rtl/defs/micro_defs.vh.
-Storage is packed column-major, one byte per element, with no padding.
+The current `info.yaml` selects `wrapper/project.v`. Macro GDS, LEF,
+netlists and SPEF reside in `macro/tiny_sparse_acc_core/`;
+`src/config.json` and `src/tcl/pdn.tcl` configure their integration.
+The core export is `20261112_152302_1794464582869583` (299.60 x 141.12 um), inside
+one Tiny Tapeout GF180 tile. Source hashes are recorded in `provenance.json`.
 
-Vector jobs set bit 63. Bit 62 enables sparse multiplication; bits 61:60
-are zero; bits 59:52 encode length; bits 51:50 select ADD, SUB (A-B), MUL
-or PASS(B). Bits 49:47 select activation and bits 46:36 are zero.
-Offsets occupy the same low 36 bits, all relative to PSRAM B.
-Output storage must not overlap inputs. Odd lengths and odd byte addresses are supported.
+PnR treats the core as a hard macro. Magic DRC examines the complete GDS; full
+LVS extracts and compares core internals as well as the wrapper. `core.lvs.v`
+adds explicit well supply connections and unambiguous net names for LVS only.
+The GDS and simulation netlist are unchanged by those compatibility edits.
+KLayout DRC is enabled in configuration, but the current Actions PDK has no
+`KLAYOUT_DRC_RUNSET`, so that step is skipped; it is not a KLayout DRC pass.
+The packaged SPEF is nominal 25C RC reused across flow corners, not a separate
+RC extraction for each corner.
 
-Activation codes are 0 NONE, 1 ReLU, 2 hard sigmoid, 3 hard tanh and 4 STEP.
-Matrix jobs can apply STEP with a following vector PASS job.
+The Actions summary combines internal core and wrapper cell counts, cell area
+utilisation and signal/clock wire length. Fill/tap categories are excluded from
+the cell-area utilisation; PG wiring is excluded from wire length. Core wire
+length comes from the matching ICC2 DEF and is checked against the packaged GDS
+hash before being added to wrapper routing metrics.
+
+Editable RTL is listed in `src/sources.f`; `src/build_mode.txt` selects `direct`.
+Run `python3 scripts/generate_verilog.py` after RTL edits (sv2v 0.0.13 required).
+CI checks that `src/rtl/generated/design.v` matches those sources. **Regenerating
+Verilog does not update the hard macro**: changes intended for the physical chip
+require a new implementation/export and `scripts/package_icc2_macro.py`.
 
 ## How to test
 
-Run bash test/check_import.sh for unit tests and complete UART/QSPI pin-level
-integration. Run make -C test for the RTL/GL-compatible UART admission smoke test.
-
-bash test/run_egru_layer.sh uses the local MAZE dataset for an actual EGRU first
-timestep, comparing all intermediates against an independent fixed8 oracle.
-python3 test/evaluate_egru_accuracy.py evaluates three full trials in software.
-These dataset-dependent tests are optional and do not run in GitHub CI.
-
-src/sources.f lists editable RTL. scripts/generate_verilog.py uses sv2v 0.0.13
-to produce src/rtl/generated/design.v, which Tiny Tapeout synthesizes. Regenerate it
-after RTL changes; CI checks that it matches the source.
-
-## External hardware
-
-QSPI Flash plus two PSRAM chips on a compatible Pmod. The current Flash controller
-assumes the board has prepared the required Flash configuration; see qspi_ctrl.v.
-This is a development checkpoint, not a complete standalone inference system.
-
-## Historical single-lane FP8 area experiment
-
-At 10 MHz with the same GF180 DC flow, total cell area decreased from
-45,157.46 to 35,142.96 um² (10,014.50 um² / 22.2%). This exceeds the
-1,000 um² retention threshold. QSPI reads/writes and COPY now transfer one
-byte, and host software must issue one operation per element rather than
-per pair. UART instructions remained 16 bits in that experiment.
-This is synthesis area, not a completed placement/routing result.
-
-## Fixed-point area experiment
-
-Same Synopsys/GF180/10 MHz synthesis: FP8 single lane 35,142.96 um² ->
-fixed8 (4 fractional bits) 32,497.74 um², saving 2,645.22 um² (7.5%).
-VPU: 10,528.18 -> 8,725.92; activation: 2,307.16 -> 1,464.20 um².
-These are cell areas, not an Actions placement/routing pass or a 70% density guarantee.
-
-For a fast numerical comparison on the actual maze EGRU export, run:
+Run commands from the repository root:
 
 ```sh
-python3 test/compare_fixed8_egru.py --output /tmp/fixed8-comparison.json
-bash test/run_egru_layer.sh
+bash test/check_import.sh       # Unit and UART/QSPI integration tests
+make -C test                   # RTL UART admission smoke test
+bash test/run_fixed8.sh         # Arithmetic and activation checks for F=1..6
 ```
 
-The comparison sweeps fractional widths 1..6 against floating arithmetic on
-fixed16-exported weights/input, using the same hard activations. It covers the
-first timestep with initial state zero, not recurrent sequence or FC/label accuracy.
-For the default F=4, this sample gives h R²=99.35%, y R²=99.55%, and event
-agreement=99.61%. These figures do not establish full-network task accuracy.
-After changing defs, regenerate `src/rtl/generated/design.v` before synthesis/push.
+The fixed8 test checks all operand pairs for arithmetic/MAC and every activation
+input. Actions additionally runs the gate-level UART smoke test with GF180 cell
+models and the packaged powered core netlist. That smoke test does not establish
+full-network accuracy.
+
+Optional dataset-dependent tests (not GitHub CI):
+
+```sh
+bash test/run_egru_layer.sh
+python3 test/evaluate_egru_accuracy.py
+python3 test/compare_fixed8_egru.py --output /tmp/fixed8-comparison.json
+```
+
+These cover different numerical experiments; see [Development history](archive/history.md)
+for their scope and earlier results. Local Synopsys setup uses
+`bash syn/run_synth.sh --check` for path validation and `bash syn/run_synth.sh direct`
+for synthesis, with reports under `syn/runs/<run>/reports`. See the local
+`pnr/` documentation for manual ICC2 steps. These directories are local-only and excluded from Git; their scripts require
+the corresponding tools, libraries and environment.
