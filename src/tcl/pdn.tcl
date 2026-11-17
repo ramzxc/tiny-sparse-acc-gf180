@@ -7,6 +7,25 @@
 source $::env(SCRIPTS_DIR)/openroad/common/set_global_connections.tcl
 set_global_connections
 
+# Preserve the rows as placement/PDN metadata, but reserve them for wiring.
+# This wrapper contains only the fixed core; its taps/fillers live inside it.
+set block [ord::get_db_block]
+foreach inst [$block getInsts] {
+    if {[$inst getName] eq "core"} {continue}
+    set name [$inst getName]
+    if {![string match TAP_TAPCELL_* $name] && ![string match PHY_EDGE_* $name]} {
+        error "Unexpected wrapper instance $name; review the macro-only floorplan"
+    }
+    odb::dbInst_destroy $inst
+}
+foreach row [$block getRows] {
+    set box [$row getBBox]
+    odb::dbBlockage_create $block [$box xMin] [$box yMin] [$box xMax] [$box yMax]
+}
+if {[llength [$block getRows]] == 0} {
+    error "Wrapper rows are missing; FP_MACRO halos must be zero"
+}
+
 if {$::env(PDN_MULTILAYER) || $::env(PDN_CORE_RING) ||
     $::env(PDN_VERTICAL_LAYER) ne "Metal4" ||
     $::env(PDN_RAIL_LAYER) ne "Metal1"} {

@@ -24,8 +24,6 @@ suppressed specifically for this experiment.
 Two Metal3 buses above the macro (VPWR y=147.40 um, VGND y=150.90 um)
 join all nine macro-aligned Metal4 stripe pairs. PDN generation inserts Metal3--Metal4 vias at same-net
 crossings; opposite supplies cross on separate layers without a via.
-The buses lie between the right-hand M1 rail via stacks, leaving clearance
-to their intermediate Metal3 landing shapes during PDN generation.
 Their ends remain inside the wrapper core bounds (x=3.36..343.28 um),
 covering all nine stripe pairs without touching the tile boundary. This
 prevents Magic LEF export from creating extra Metal3 power ports at the edges.
@@ -79,3 +77,15 @@ Compatibility fixes:
 With the corrections, the existing UART READY / NOP / READY smoke test passes
 against the packaged powered netlist and native GF180 cell models. Its output
 assertions are unchanged. Full GDS integration/signoff is still under test.
+
+## Wrapper row handling
+
+Placement halos are zero so three rows above the macro remain as OpenROAD
+floorplan metadata. Hard placement blockages reserve all remaining rows for
+wiring. The PDN script removes the automatically inserted wrapper tap/endcap
+instances; the hardened core retains its own physical cells unchanged.
+Wrapper followpin rails are disabled because there are no wrapper standard
+cells to power. The Metal3 buses and nine Metal4 feed pairs remain enabled.
+A local replay from the failed Actions macro-placement database passed PDN
+construction and both supply connectivity checks with three rows and only the
+core instance. Full routing, DRC/LVS and precheck remain Actions checks.
