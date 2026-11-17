@@ -49,8 +49,8 @@ if {$::env(PDN_ENABLE_RAILS)} {
 # from completing the M1--M4 stacks and leaves the upper rows disconnected.
 # Unlike the manual macro feeds below, these belong to the PDN grid so
 # pdngen creates Metal3--Metal4 vias at every same-net crossing. This also
-# keeps the upper portions of the eight macro-aligned stripes from trimming
-# away and connects them to the ninth pair serving the right-hand rows.
+# keeps the upper portions of the nine macro-aligned stripes from trimming
+# away across the full macro width.
 # Offset is relative to the wrapper core lower edge (y=3.92 um).
 # Leave extension at its default core bounds (x=3.36..343.28), not the die
 # boundary. Magic otherwise exports the bus ends as forbidden M3 power pins.
@@ -72,7 +72,7 @@ foreach net_name {VPWR VGND} first_center {19.68 22.98} {
     set net [$block findNet $net_name]
     if {$net == "NULL"} {error "Missing power net $net_name"}
     set wire [odb::dbSWire_create $net ROUTED]
-    for {set i 0} {$i < 8} {incr i} {
+    for {set i 0} {$i < 9} {incr i} {
         set center [expr {$first_center + 38.87 * $i}]
         set x1 [expr {round(($center - 0.8) * $dbu)}]
         set x2 [expr {round(($center + 0.8) * $dbu)}]
@@ -84,8 +84,8 @@ foreach net_name {VPWR VGND} first_center {19.68 22.98} {
     }
 }
 
-# The first eight pairs follow continuous Metal4 already present in the core
-# GDS plus the overlapping feeds above. Pair nine is the wrapper PDN stripe.
+# All nine pairs follow continuous Metal4 already present in the core
+# GDS plus the overlapping feeds above.
 # These are pin descriptions of real metal, not additional routing through
 # the macro. Keep all nine supply pairs accessible to the shuttle power grid.
 if {$::env(PDN_ENABLE_PINS)} {

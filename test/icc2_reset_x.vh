@@ -1,5 +1,5 @@
 // Simulation-only X-pessimism correction for the packaged ICC2 netlist.
-// check_icc2_reset.py proves these six D inputs are zero for every binary
+// check_icc2_reset.py proves these D inputs are zero for every binary
 // combination during reset. Never force Q or initialize other registers.
 // Release also on unknown reset, so reset faults still propagate.
 always @(user_project.core.transmitter.rst_n or
@@ -15,9 +15,9 @@ always @(user_project.core.transmitter.rst_n or
 end
 
 always @(user_project.core.receiver.rst_n or
-         user_project.core.receiver.HFSNET_2) begin
+         user_project.core.receiver.HFSNET_3) begin
     if (user_project.core.receiver.rst_n === 1'b1 &&
-        user_project.core.receiver.HFSNET_2 === 1'b0) begin
+        user_project.core.receiver.HFSNET_3 === 1'b0) begin
         force user_project.core.receiver.n98 = 1'b0;  // clk_cnt[0]
         force user_project.core.receiver.n92 = 1'b0;  // clk_cnt[6]
         force user_project.core.receiver.n101 = 1'b0; // bit_idx[1]
@@ -27,5 +27,19 @@ always @(user_project.core.receiver.rst_n or
         release user_project.core.receiver.n92;
         release user_project.core.receiver.n101;
         release user_project.core.receiver.n100;
+    end
+end
+
+// SCK uses reconvergent Q / ~Q feedback after physical optimization.
+// Reset D=0 is proved for SCK (32 combinations) and cycles_left[3] (8192).
+always @(user_project.core.serial_memory.rst_n or
+         user_project.core.serial_memory.HFSNET_0) begin
+    if (user_project.core.serial_memory.rst_n === 1'b1 &&
+        user_project.core.serial_memory.HFSNET_0 === 1'b0) begin
+        force user_project.core.serial_memory.n222 = 1'b0;
+        force user_project.core.serial_memory.n217 = 1'b0;
+    end else begin
+        release user_project.core.serial_memory.n222;
+        release user_project.core.serial_memory.n217;
     end
 end

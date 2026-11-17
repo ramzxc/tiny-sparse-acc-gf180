@@ -1,29 +1,28 @@
 # ICC2 hard macro
 
-The current main build uses the manually routed ICC2 core as a fixed macro inside the
+The current main build uses the ICC2 core as a fixed macro inside the
 Tiny Tapeout 1x1 wrapper. The RTL tests still use the original RTL; the GDS and
 gate-level jobs use the packaged core. No synthesis or PnR was run to package it.
 
-Source export: `20261112_152302_1794464582869583`. Source hashes and the exact
+Source export: `20261117_162854_1794900534014990`. Source hashes and the exact
 packaging transformations are in `provenance.json`; reproduce with
 `python scripts/package_icc2_macro.py /path/to/export` (requires gdstk).
 
-The new core includes 374 filltie cells inserted before placement at 28 um
-pitch on every row. Local KLayout 0.30.7 checks using PDK revision
-54435919abffb937387ec956209f9cf5fd2dfbee passed with zero DRC and antenna
-markers (decks `all,-density,-antenna` and `antenna`, deep mode). These are
-core-only checks; the regenerated wrapper still requires Actions validation.
+This wider-core experiment reruns synthesis and ICC2 implementation using the
+existing RTL and 10 MHz constraints. ICC2 reports zero route DRC/open nets,
+zero PG connectivity/DRC errors, and positive setup slack at the nominal corner.
+The previous export's external DRC/LVS results do not certify this new layout;
+full wrapper integration and signoff are being tested in Actions.
 
-The macro is 299.60 x 141.12 um, at (3.36, 3.92), orientation N. Its existing
+The macro is 339.92 x 141.12 um, at (3.36, 3.92), orientation N. Its existing
 Metal4 VPWR/VGND terminals align with the parent grid. `src/tcl/pdn.tcl` adds
 same-layer feeds overlapping those terminals by 1 um. It defines only the
-wrapper standard-cell grid, with eight VPWR/VGND feed pairs; the default Metal4--Metal5 macro grid is omitted
+wrapper standard-cell grid, with nine VPWR/VGND feed pairs; the default Metal4--Metal5 macro grid is omitted
 because the macro already has its own power network and Metal4 terminals. No signoff checks are
 suppressed specifically for this experiment.
 
 Two Metal3 buses above the macro (VPWR y=147.40 um, VGND y=150.90 um)
-join the macro-aligned Metal4 stripes to the ninth stripe pair in the right
-wrapper cell area. PDN generation inserts Metal3--Metal4 vias at same-net
+join all nine macro-aligned Metal4 stripe pairs. PDN generation inserts Metal3--Metal4 vias at same-net
 crossings; opposite supplies cross on separate layers without a via.
 The buses lie between the right-hand M1 rail via stacks, leaving clearance
 to their intermediate Metal3 landing shapes during PDN generation.
@@ -33,8 +32,7 @@ prevents Magic LEF export from creating extra Metal3 power ports at the edges.
 
 External supply pins describe nine full-height Metal4 stripes per supply
 (1.6 um wide, y=3.62..157.10 um), rather than promoting short upper fragments.
-The first eight pairs are covered by the core GDS stripes and wrapper feeds;
-the ninth pair is generated in the right-hand wrapper area. This preserves
+All nine pairs are covered by the core GDS stripes and wrapper feeds. This preserves
 access for the shuttle grid and the TT precheck requirement that every power
 pin be on Metal4, at least 0.8 um wide, and within 10 um of both tile edges.
 
@@ -44,7 +42,7 @@ The original export's unused VDD/VSS alias ports had no LEF geometry. The
 packaging script removes these aliases and connects the existing VPWR/VGND
 ports directly, without modifying physical geometry.
 Packaging also adds the missing GF180 PR_bndry rectangle on GDS layer 0/0,
-using the LEF size (299.60 x 141.12 um). This boundary marker is required by
+using the LEF size (339.92 x 141.12 um). This boundary marker is required by
 Magic macro streamout; device and routing geometry remain unchanged.
 GDS database precision is normalized from ICC2's 0.1 nm to the streamout
 merger's 1 nm. Packaging checks all polygon/path edges, instance placements,
@@ -63,11 +61,11 @@ current `info.yaml` selects `wrapper/project.v` instead.
 
 Compatibility fixes:
 
-- Remove 827 unreferenced physical filler NAME_MAP entries from SPEF.
+- Remove 1443 unreferenced physical filler NAME_MAP entries from SPEF.
   Packaging aborts if a candidate entry has any references. R/C data and
   connectivity are unchanged; this avoids the OpenSTA parser failure at
   the first `xofiller!` entry.
-- `test/icc2_reset_x.vh` corrects only six proven UART D-input values while
+- `test/icc2_reset_x.vh` corrects eight proven UART/QSPI D-input values while
   both reset polarities are known and active. It releases on reset deassertion
   or unknown reset, applies on subsequent resets too, and never forces Q.
   This code is included only for this hard-macro GL simulation, not RTL or

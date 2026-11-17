@@ -183,7 +183,7 @@ responsibilities. There is no general UART data-upload/result-download protocol.
 The current `info.yaml` selects `wrapper/project.v`. Macro GDS, LEF,
 netlists and SPEF reside in `macro/tiny_sparse_acc_core/`;
 `src/config.json` and `src/tcl/pdn.tcl` configure their integration.
-The core export is `20261112_152302_1794464582869583` (299.60 x 141.12 um), inside
+The core export is `20261117_162854_1794900534014990` (339.92 x 141.12 um), inside
 one Tiny Tapeout GF180 tile. Source hashes are recorded in `provenance.json`.
 
 PnR treats the core as a hard macro. Magic DRC examines the complete GDS; full

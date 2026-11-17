@@ -114,7 +114,7 @@ for name in ('VPWR', 'VGND'):
     rects = [tuple(map(float, m)) for m in re.findall(
         r'RECT ([\d.]+) ([\d.]+) ([\d.]+) ([\d.]+)\s*;', pin)]
     columns = sorted({(x1, x2) for x1, y1, x2, y2 in rects})
-    assert len(columns) == 8 and len(rects) == 16
+    assert len(columns) in (8, 9) and len(rects) == 2 * len(columns)
     lines = []
     for x1, x2 in columns:
         assert (x1, 0, x2, 1) in rects and (x1, height - 1, x2, height) in rects
