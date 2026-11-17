@@ -1,5 +1,5 @@
 """Packed fixed8 matrix jobs with an independent integer reference."""
-from fixed8_reference import *
+from fp8_reference import *
 
 # Standalone packed matrix fixtures; the integer oracle is independent of RTL.
 if __name__ == '__main__':

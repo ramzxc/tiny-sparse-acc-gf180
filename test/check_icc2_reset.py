@@ -15,7 +15,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 NETLIST = Path(os.environ.get('RESET_NETLIST', ROOT / 'macro/tiny_sparse_acc_core/core.pg.v'))
 CASES = [
-    ('qspi_ctrl', 'HFSNET_0', {'n222': 'sck', 'n217': 'cycles_left[3]'}),
+    ('qspi_ctrl', 'HFSNET_2', {'n222': 'sck', 'n217': 'cycles_left[3]'}),
     ('uart_tx', 'HFSNET_0', {'n42': 'clk_cnt[6]', 'n50': 'bit_idx[2]'}),
     ('uart_rx_WORD_WIDTH16', 'HFSNET_3', {
         'n98': 'clk_cnt[0]', 'n92': 'clk_cnt[6]',

@@ -955,25 +955,273 @@ module vpu (
 	wire sparse = exe_inst_in[6];
 	wire multiply = operation == 2'd2;
 	wire reverse_sub = operation == 2'd3;
-	wire subtract = (operation == 2'd1) || reverse_sub;
-	localparam W = 8;
-	localparam F = 4;
-	localparam signed [16:0] MAX_VALUE = 127;
-	localparam signed [16:0] MIN_VALUE = -128;
-	wire signed [7:0] x = inputs;
-	wire signed [7:0] w = weights;
-	wire signed [7:0] sum = vpu_res_out;
-	wire signed [15:0] product = x * w;
-	wire signed [16:0] rounded_product = {product[15], product} + (17'sd1 << 3);
-	wire signed [16:0] scaled_product = rounded_product >>> F;
-	wire signed [7:0] first_operand = (reverse_sub ? w : x);
-	wire signed [7:0] second_operand = (reverse_sub ? x : w);
-	wire signed [16:0] add_a = (multiply ? scaled_product : {{9 {first_operand[7]}}, first_operand});
-	wire signed [16:0] add_b = (multiply ? (accumulate ? {{9 {sum[7]}}, sum} : {17 {1'b0}}) : {{9 {second_operand[7]}}, second_operand});
-	wire do_subtract = !multiply && subtract;
-	wire signed [16:0] arithmetic_result = (add_a + (add_b ^ {17 {do_subtract}})) + {{16 {1'b0}}, do_subtract};
-	wire [7:0] saturated_result = (arithmetic_result > MAX_VALUE ? MAX_VALUE[7:0] : (arithmetic_result < MIN_VALUE ? MIN_VALUE[7:0] : arithmetic_result[7:0]));
-	wire [7:0] mac_result = ((sparse && multiply) && (x == 0) ? (accumulate ? sum : {W {1'b0}}) : saturated_result);
+	wire do_subtract = (operation == 2'd1) || reverse_sub;
+	localparam [7:0] FP8_ZERO = 8'h00;
+	localparam [7:0] FP8_QNAN = 8'h7f;
+	function automatic fp8_is_nan;
+		input reg [6:0] magnitude;
+		fp8_is_nan = magnitude == 7'h7f;
+	endfunction
+	function automatic [7:0] fp8_jam8;
+		input reg [7:0] x;
+		input reg [4:0] n;
+		case (n)
+			0: fp8_jam8 = x;
+			1: fp8_jam8 = {1'b0, x[7:2], x[1] | x[0]};
+			2: fp8_jam8 = {2'b00, x[7:3], |x[2:0]};
+			3: fp8_jam8 = {3'b000, x[7:4], |x[3:0]};
+			4: fp8_jam8 = {4'b0000, x[7:5], |x[4:0]};
+			5: fp8_jam8 = {5'b00000, x[7:6], |x[5:0]};
+			6: fp8_jam8 = {6'b000000, x[7], |x[6:0]};
+			default: fp8_jam8 = {7'b0000000, |x};
+		endcase
+	endfunction
+	function automatic [7:0] sv2v_cast_8;
+		input reg [7:0] inp;
+		sv2v_cast_8 = inp;
+	endfunction
+	function automatic [2:0] sv2v_cast_3;
+		input reg [2:0] inp;
+		sv2v_cast_3 = inp;
+	endfunction
+	function automatic [4:0] sv2v_cast_5;
+		input reg [4:0] inp;
+		sv2v_cast_5 = inp;
+	endfunction
+	function automatic [7:0] fp8_add;
+		input reg [7:0] a;
+		input reg [7:0] b;
+		reg [7:0] hi_operand;
+		reg [7:0] lo_operand;
+		reg [4:0] el;
+		reg [4:0] es;
+		reg [4:0] exponent;
+		reg [4:0] rounded;
+		reg [3:0] ml;
+		reg [3:0] ms;
+		reg [7:0] aligned;
+		reg [7:0] total;
+		reg subtract;
+		reg [2:0] leading_zeros;
+		reg [2:0] normalize_shift;
+		reg [0:1] _sv2v_jump;
+		begin
+			_sv2v_jump = 2'b00;
+			if (fp8_is_nan(a[6:0]) || fp8_is_nan(b[6:0])) begin
+				fp8_add = FP8_QNAN;
+				_sv2v_jump = 2'b11;
+			end
+			if (_sv2v_jump == 2'b00) begin
+				hi_operand = (a[6:0] >= b[6:0] ? a : b);
+				lo_operand = (a[6:0] >= b[6:0] ? b : a);
+				el = (hi_operand[6:3] == 0 ? 5'd1 : {1'b0, hi_operand[6:3]});
+				es = (lo_operand[6:3] == 0 ? 5'd1 : {1'b0, lo_operand[6:3]});
+				ml = {hi_operand[6:3] != 0, hi_operand[2:0]};
+				ms = {lo_operand[6:3] != 0, lo_operand[2:0]};
+				aligned = fp8_jam8({1'b0, ms, 3'b000}, el - es);
+				subtract = hi_operand[7] ^ lo_operand[7];
+				total = ({1'b0, ml, 3'b000} + (aligned ^ {8 {subtract}})) + sv2v_cast_8(subtract);
+				if (total == 0) begin
+					fp8_add = (a[7] && b[7] ? 8'h80 : FP8_ZERO);
+					_sv2v_jump = 2'b11;
+				end
+				if (_sv2v_jump == 2'b00) begin
+					exponent = el;
+					if (total[7]) begin
+						total = fp8_jam8(total, 5'd1);
+						exponent = exponent + 1'b1;
+					end
+					casez (total[6:0])
+						7'b1zzzzzz: leading_zeros = 0;
+						7'b01zzzzz: leading_zeros = 1;
+						7'b001zzzz: leading_zeros = 2;
+						7'b0001zzz: leading_zeros = 3;
+						7'b00001zz: leading_zeros = 4;
+						7'b000001z: leading_zeros = 5;
+						default: leading_zeros = 6;
+					endcase
+					normalize_shift = ({2'b00, leading_zeros} < exponent ? leading_zeros : sv2v_cast_3(exponent - 1'b1));
+					total = total << normalize_shift;
+					exponent = exponent - {2'b00, normalize_shift};
+					rounded = {1'b0, total[6:3]} + sv2v_cast_5(total[2] && ((total[1] || total[0]) || total[3]));
+					if (rounded[4]) begin
+						rounded = rounded >> 1;
+						exponent = exponent + 1'b1;
+					end
+					if ((exponent > 15) || ((exponent == 15) && (rounded > 14))) begin
+						fp8_add = {hi_operand[7], 7'h7e};
+						_sv2v_jump = 2'b11;
+					end
+					if (_sv2v_jump == 2'b00) begin
+						if ((exponent == 1) && (rounded < 8)) begin
+							fp8_add = {hi_operand[7], 4'b0000, rounded[2:0]};
+							_sv2v_jump = 2'b11;
+						end
+						if (_sv2v_jump == 2'b00) begin
+							fp8_add = {hi_operand[7], exponent[3:0], rounded[2:0]};
+							_sv2v_jump = 2'b11;
+						end
+					end
+				end
+			end
+		end
+	endfunction
+	function automatic signed [3:0] sv2v_cast_4_signed;
+		input reg signed [3:0] inp;
+		sv2v_cast_4_signed = inp;
+	endfunction
+	function automatic [7:0] fp8_pack8;
+		input reg sign;
+		input reg [7:0] magnitude;
+		input reg signed [6:0] scale;
+		reg [2:0] msb;
+		reg signed [6:0] exponent;
+		reg signed [6:0] shift;
+		reg [3:0] retained;
+		reg [3:0] encoded;
+		reg guard_bit;
+		reg sticky;
+		reg [4:0] rounded;
+		reg [0:1] _sv2v_jump;
+		begin
+			_sv2v_jump = 2'b00;
+			if (magnitude == 0) begin
+				fp8_pack8 = {sign, 7'b0000000};
+				_sv2v_jump = 2'b11;
+			end
+			if (_sv2v_jump == 2'b00) begin
+				casez (magnitude)
+					8'b1zzzzzzz: msb = 7;
+					8'b01zzzzzz: msb = 6;
+					8'b001zzzzz: msb = 5;
+					8'b0001zzzz: msb = 4;
+					8'b00001zzz: msb = 3;
+					8'b000001zz: msb = 2;
+					8'b0000001z: msb = 1;
+					default: msb = 0;
+				endcase
+				exponent = $signed({4'b0000, msb}) + scale;
+				if (exponent > 8) begin
+					fp8_pack8 = {sign, 7'h7e};
+					_sv2v_jump = 2'b11;
+				end
+				if (_sv2v_jump == 2'b00) begin
+					shift = (exponent >= -6 ? $signed({4'b0000, msb}) - 7'sd3 : -(7'sd9 + scale));
+					retained = 0;
+					guard_bit = 0;
+					sticky = 0;
+					case (shift)
+						-7'sd3: retained = {magnitude[0], 3'b000};
+						-7'sd2: retained = {magnitude[1:0], 2'b00};
+						-7'sd1: retained = {magnitude[2:0], 1'b0};
+						0: retained = magnitude[3:0];
+						1: begin
+							retained = magnitude[4:1];
+							guard_bit = magnitude[0];
+						end
+						2: begin
+							retained = magnitude[5:2];
+							guard_bit = magnitude[1];
+							sticky = magnitude[0];
+						end
+						3: begin
+							retained = magnitude[6:3];
+							guard_bit = magnitude[2];
+							sticky = |magnitude[1:0];
+						end
+						4: begin
+							retained = magnitude[7:4];
+							guard_bit = magnitude[3];
+							sticky = |magnitude[2:0];
+						end
+						5: begin
+							retained = {1'b0, magnitude[7:5]};
+							guard_bit = magnitude[4];
+							sticky = |magnitude[3:0];
+						end
+						6: begin
+							retained = {2'b00, magnitude[7:6]};
+							guard_bit = magnitude[5];
+							sticky = |magnitude[4:0];
+						end
+						7: begin
+							retained = {3'b000, magnitude[7]};
+							guard_bit = magnitude[6];
+							sticky = |magnitude[5:0];
+						end
+						8: begin
+							guard_bit = magnitude[7];
+							sticky = |magnitude[6:0];
+						end
+						default:
+							;
+					endcase
+					rounded = {1'b0, retained} + sv2v_cast_5(guard_bit && (sticky || retained[0]));
+					if (exponent < -6) begin
+						if (rounded >= 8) begin
+							fp8_pack8 = {sign, 7'h08};
+							_sv2v_jump = 2'b11;
+						end
+						if (_sv2v_jump == 2'b00) begin
+							fp8_pack8 = {sign, 4'b0000, rounded[2:0]};
+							_sv2v_jump = 2'b11;
+						end
+					end
+					if (_sv2v_jump == 2'b00) begin
+						if (rounded[4]) begin
+							rounded = rounded >> 1;
+							exponent = exponent + 1'b1;
+						end
+						if ((exponent > 8) || ((exponent == 8) && (rounded > 14))) begin
+							fp8_pack8 = {sign, 7'h7e};
+							_sv2v_jump = 2'b11;
+						end
+						if (_sv2v_jump == 2'b00) begin
+							encoded = sv2v_cast_4_signed(exponent + 7'sd7);
+							fp8_pack8 = {sign, encoded, rounded[2:0]};
+							_sv2v_jump = 2'b11;
+						end
+					end
+				end
+			end
+		end
+	endfunction
+	function automatic [7:0] fp8_mul;
+		input reg [7:0] a;
+		input reg [7:0] b;
+		reg [3:0] ma;
+		reg [3:0] mb;
+		reg [7:0] product;
+		reg signed [6:0] ea;
+		reg signed [6:0] eb;
+		reg [0:1] _sv2v_jump;
+		begin
+			_sv2v_jump = 2'b00;
+			if (fp8_is_nan(a[6:0]) || fp8_is_nan(b[6:0])) begin
+				fp8_mul = FP8_QNAN;
+				_sv2v_jump = 2'b11;
+			end
+			if (_sv2v_jump == 2'b00) begin
+				ma = {a[6:3] != 0, a[2:0]};
+				mb = {b[6:3] != 0, b[2:0]};
+				ea = (a[6:3] == 0 ? -7'sd9 : $signed({3'b000, a[6:3]}) - 7'sd10);
+				eb = (b[6:3] == 0 ? -7'sd9 : $signed({3'b000, b[6:3]}) - 7'sd10);
+				product = ma * mb;
+				fp8_mul = fp8_pack8(a[7] ^ b[7], product, ea + eb);
+				_sv2v_jump = 2'b11;
+			end
+		end
+	endfunction
+	wire [7:0] x = inputs;
+	wire [7:0] w = weights;
+	wire [7:0] sum = vpu_res_out;
+	wire [7:0] product = fp8_mul(x, w);
+	wire [7:0] first_operand = (reverse_sub ? w : x);
+	wire [7:0] second_operand = (reverse_sub ? x : w);
+	wire [7:0] add_a = (multiply ? product : first_operand);
+	wire [7:0] add_b = (multiply ? (accumulate ? sum : 8'h00) : {second_operand[7] ^ do_subtract, second_operand[6:0]});
+	wire [7:0] arithmetic_result = fp8_add(add_a, add_b);
+	wire [7:0] mac_result = ((sparse && multiply) && (x[6:0] == 0) ? (accumulate ? sum : 8'h00) : arithmetic_result);
 	always @(posedge clk)
 		if (!rst_n) begin
 			weights <= 0;
@@ -1017,28 +1265,280 @@ module act (
 	input vpu_res_in_val;
 	output reg [7:0] act_res_out;
 	output reg act_res_out_val;
-	localparam W = 8;
-	localparam F = 4;
-	localparam signed [W:0] ONE = 9'sd1 << F;
-	localparam signed [W:0] HALF = 9'sd1 << 3;
-	wire signed [7:0] x = vpu_res_in;
-	wire signed [W:0] extended_x = {x[7], x};
-	wire signed [W:0] sigmoid_value = ((extended_x + 9'sd2) >>> 2) + HALF;
-	reg [7:0] result;
-	function automatic signed [7:0] sv2v_cast_8_signed;
-		input reg signed [7:0] inp;
-		sv2v_cast_8_signed = inp;
+	localparam [7:0] FP8_ZERO = 8'h00;
+	localparam [7:0] FP8_QNAN = 8'h7f;
+	function automatic fp8_is_nan;
+		input reg [6:0] magnitude;
+		fp8_is_nan = magnitude == 7'h7f;
 	endfunction
+	function automatic [7:0] fp8_jam8;
+		input reg [7:0] x;
+		input reg [4:0] n;
+		case (n)
+			0: fp8_jam8 = x;
+			1: fp8_jam8 = {1'b0, x[7:2], x[1] | x[0]};
+			2: fp8_jam8 = {2'b00, x[7:3], |x[2:0]};
+			3: fp8_jam8 = {3'b000, x[7:4], |x[3:0]};
+			4: fp8_jam8 = {4'b0000, x[7:5], |x[4:0]};
+			5: fp8_jam8 = {5'b00000, x[7:6], |x[5:0]};
+			6: fp8_jam8 = {6'b000000, x[7], |x[6:0]};
+			default: fp8_jam8 = {7'b0000000, |x};
+		endcase
+	endfunction
+	function automatic [7:0] sv2v_cast_8;
+		input reg [7:0] inp;
+		sv2v_cast_8 = inp;
+	endfunction
+	function automatic [2:0] sv2v_cast_3;
+		input reg [2:0] inp;
+		sv2v_cast_3 = inp;
+	endfunction
+	function automatic [4:0] sv2v_cast_5;
+		input reg [4:0] inp;
+		sv2v_cast_5 = inp;
+	endfunction
+	function automatic [7:0] fp8_add;
+		input reg [7:0] a;
+		input reg [7:0] b;
+		reg [7:0] hi_operand;
+		reg [7:0] lo_operand;
+		reg [4:0] el;
+		reg [4:0] es;
+		reg [4:0] exponent;
+		reg [4:0] rounded;
+		reg [3:0] ml;
+		reg [3:0] ms;
+		reg [7:0] aligned;
+		reg [7:0] total;
+		reg subtract;
+		reg [2:0] leading_zeros;
+		reg [2:0] normalize_shift;
+		reg [0:1] _sv2v_jump;
+		begin
+			_sv2v_jump = 2'b00;
+			if (fp8_is_nan(a[6:0]) || fp8_is_nan(b[6:0])) begin
+				fp8_add = FP8_QNAN;
+				_sv2v_jump = 2'b11;
+			end
+			if (_sv2v_jump == 2'b00) begin
+				hi_operand = (a[6:0] >= b[6:0] ? a : b);
+				lo_operand = (a[6:0] >= b[6:0] ? b : a);
+				el = (hi_operand[6:3] == 0 ? 5'd1 : {1'b0, hi_operand[6:3]});
+				es = (lo_operand[6:3] == 0 ? 5'd1 : {1'b0, lo_operand[6:3]});
+				ml = {hi_operand[6:3] != 0, hi_operand[2:0]};
+				ms = {lo_operand[6:3] != 0, lo_operand[2:0]};
+				aligned = fp8_jam8({1'b0, ms, 3'b000}, el - es);
+				subtract = hi_operand[7] ^ lo_operand[7];
+				total = ({1'b0, ml, 3'b000} + (aligned ^ {8 {subtract}})) + sv2v_cast_8(subtract);
+				if (total == 0) begin
+					fp8_add = (a[7] && b[7] ? 8'h80 : FP8_ZERO);
+					_sv2v_jump = 2'b11;
+				end
+				if (_sv2v_jump == 2'b00) begin
+					exponent = el;
+					if (total[7]) begin
+						total = fp8_jam8(total, 5'd1);
+						exponent = exponent + 1'b1;
+					end
+					casez (total[6:0])
+						7'b1zzzzzz: leading_zeros = 0;
+						7'b01zzzzz: leading_zeros = 1;
+						7'b001zzzz: leading_zeros = 2;
+						7'b0001zzz: leading_zeros = 3;
+						7'b00001zz: leading_zeros = 4;
+						7'b000001z: leading_zeros = 5;
+						default: leading_zeros = 6;
+					endcase
+					normalize_shift = ({2'b00, leading_zeros} < exponent ? leading_zeros : sv2v_cast_3(exponent - 1'b1));
+					total = total << normalize_shift;
+					exponent = exponent - {2'b00, normalize_shift};
+					rounded = {1'b0, total[6:3]} + sv2v_cast_5(total[2] && ((total[1] || total[0]) || total[3]));
+					if (rounded[4]) begin
+						rounded = rounded >> 1;
+						exponent = exponent + 1'b1;
+					end
+					if ((exponent > 15) || ((exponent == 15) && (rounded > 14))) begin
+						fp8_add = {hi_operand[7], 7'h7e};
+						_sv2v_jump = 2'b11;
+					end
+					if (_sv2v_jump == 2'b00) begin
+						if ((exponent == 1) && (rounded < 8)) begin
+							fp8_add = {hi_operand[7], 4'b0000, rounded[2:0]};
+							_sv2v_jump = 2'b11;
+						end
+						if (_sv2v_jump == 2'b00) begin
+							fp8_add = {hi_operand[7], exponent[3:0], rounded[2:0]};
+							_sv2v_jump = 2'b11;
+						end
+					end
+				end
+			end
+		end
+	endfunction
+	function automatic signed [3:0] sv2v_cast_4_signed;
+		input reg signed [3:0] inp;
+		sv2v_cast_4_signed = inp;
+	endfunction
+	function automatic [7:0] fp8_pack8;
+		input reg sign;
+		input reg [7:0] magnitude;
+		input reg signed [6:0] scale;
+		reg [2:0] msb;
+		reg signed [6:0] exponent;
+		reg signed [6:0] shift;
+		reg [3:0] retained;
+		reg [3:0] encoded;
+		reg guard_bit;
+		reg sticky;
+		reg [4:0] rounded;
+		reg [0:1] _sv2v_jump;
+		begin
+			_sv2v_jump = 2'b00;
+			if (magnitude == 0) begin
+				fp8_pack8 = {sign, 7'b0000000};
+				_sv2v_jump = 2'b11;
+			end
+			if (_sv2v_jump == 2'b00) begin
+				casez (magnitude)
+					8'b1zzzzzzz: msb = 7;
+					8'b01zzzzzz: msb = 6;
+					8'b001zzzzz: msb = 5;
+					8'b0001zzzz: msb = 4;
+					8'b00001zzz: msb = 3;
+					8'b000001zz: msb = 2;
+					8'b0000001z: msb = 1;
+					default: msb = 0;
+				endcase
+				exponent = $signed({4'b0000, msb}) + scale;
+				if (exponent > 8) begin
+					fp8_pack8 = {sign, 7'h7e};
+					_sv2v_jump = 2'b11;
+				end
+				if (_sv2v_jump == 2'b00) begin
+					shift = (exponent >= -6 ? $signed({4'b0000, msb}) - 7'sd3 : -(7'sd9 + scale));
+					retained = 0;
+					guard_bit = 0;
+					sticky = 0;
+					case (shift)
+						-7'sd3: retained = {magnitude[0], 3'b000};
+						-7'sd2: retained = {magnitude[1:0], 2'b00};
+						-7'sd1: retained = {magnitude[2:0], 1'b0};
+						0: retained = magnitude[3:0];
+						1: begin
+							retained = magnitude[4:1];
+							guard_bit = magnitude[0];
+						end
+						2: begin
+							retained = magnitude[5:2];
+							guard_bit = magnitude[1];
+							sticky = magnitude[0];
+						end
+						3: begin
+							retained = magnitude[6:3];
+							guard_bit = magnitude[2];
+							sticky = |magnitude[1:0];
+						end
+						4: begin
+							retained = magnitude[7:4];
+							guard_bit = magnitude[3];
+							sticky = |magnitude[2:0];
+						end
+						5: begin
+							retained = {1'b0, magnitude[7:5]};
+							guard_bit = magnitude[4];
+							sticky = |magnitude[3:0];
+						end
+						6: begin
+							retained = {2'b00, magnitude[7:6]};
+							guard_bit = magnitude[5];
+							sticky = |magnitude[4:0];
+						end
+						7: begin
+							retained = {3'b000, magnitude[7]};
+							guard_bit = magnitude[6];
+							sticky = |magnitude[5:0];
+						end
+						8: begin
+							guard_bit = magnitude[7];
+							sticky = |magnitude[6:0];
+						end
+						default:
+							;
+					endcase
+					rounded = {1'b0, retained} + sv2v_cast_5(guard_bit && (sticky || retained[0]));
+					if (exponent < -6) begin
+						if (rounded >= 8) begin
+							fp8_pack8 = {sign, 7'h08};
+							_sv2v_jump = 2'b11;
+						end
+						if (_sv2v_jump == 2'b00) begin
+							fp8_pack8 = {sign, 4'b0000, rounded[2:0]};
+							_sv2v_jump = 2'b11;
+						end
+					end
+					if (_sv2v_jump == 2'b00) begin
+						if (rounded[4]) begin
+							rounded = rounded >> 1;
+							exponent = exponent + 1'b1;
+						end
+						if ((exponent > 8) || ((exponent == 8) && (rounded > 14))) begin
+							fp8_pack8 = {sign, 7'h7e};
+							_sv2v_jump = 2'b11;
+						end
+						if (_sv2v_jump == 2'b00) begin
+							encoded = sv2v_cast_4_signed(exponent + 7'sd7);
+							fp8_pack8 = {sign, encoded, rounded[2:0]};
+							_sv2v_jump = 2'b11;
+						end
+					end
+				end
+			end
+		end
+	endfunction
+	function automatic [7:0] fp8_mul;
+		input reg [7:0] a;
+		input reg [7:0] b;
+		reg [3:0] ma;
+		reg [3:0] mb;
+		reg [7:0] product;
+		reg signed [6:0] ea;
+		reg signed [6:0] eb;
+		reg [0:1] _sv2v_jump;
+		begin
+			_sv2v_jump = 2'b00;
+			if (fp8_is_nan(a[6:0]) || fp8_is_nan(b[6:0])) begin
+				fp8_mul = FP8_QNAN;
+				_sv2v_jump = 2'b11;
+			end
+			if (_sv2v_jump == 2'b00) begin
+				ma = {a[6:3] != 0, a[2:0]};
+				mb = {b[6:3] != 0, b[2:0]};
+				ea = (a[6:3] == 0 ? -7'sd9 : $signed({3'b000, a[6:3]}) - 7'sd10);
+				eb = (b[6:3] == 0 ? -7'sd9 : $signed({3'b000, b[6:3]}) - 7'sd10);
+				product = ma * mb;
+				fp8_mul = fp8_pack8(a[7] ^ b[7], product, ea + eb);
+				_sv2v_jump = 2'b11;
+			end
+		end
+	endfunction
+	wire [7:0] x = vpu_res_in;
+	wire nan = fp8_is_nan(x[6:0]);
+	wire signed [6:0] quarter_scale = (x[6:3] == 0 ? -7'sd11 : $signed({3'b000, x[6:3]}) - 7'sd12);
+	wire [7:0] quarter = fp8_pack8(x[7], {4'b0000, x[6:3] != 0, x[2:0]}, quarter_scale);
+	wire [7:0] sigmoid = fp8_add(quarter, 8'h30);
+	reg [7:0] result;
 	always @(*) begin
 		if (_sv2v_0)
 			;
 		case (act_op_in)
-			3'd1: result = (x < 0 ? {W {1'b0}} : x);
-			3'd2: result = (sigmoid_value < 0 ? {W {1'b0}} : (sigmoid_value > ONE ? ONE[7:0] : sigmoid_value[7:0]));
-			3'd3: result = (extended_x > ONE ? ONE[7:0] : (extended_x < -ONE ? sv2v_cast_8_signed(-ONE) : x));
-			3'd4: result = (x > 0 ? ONE[7:0] : {W {1'b0}});
+			3'd1: result = (x[7] ? 8'h00 : x);
+			3'd2: result = (sigmoid[7] ? 8'h00 : (sigmoid[6:0] > 7'h38 ? 8'h38 : sigmoid));
+			3'd3: result = (x[6:0] > 7'h38 ? {x[7], 7'h38} : x);
+			3'd4: result = (!x[7] && (x[6:0] != 0) ? 8'h38 : 8'h00);
 			default: result = x;
 		endcase
+		if (nan)
+			result = FP8_QNAN;
 	end
 	always @(posedge clk)
 		if (!rst_n) begin

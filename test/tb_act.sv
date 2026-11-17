@@ -9,30 +9,15 @@ module tb_act;
     wire [7:0] act_res_out;
     wire act_res_out_val;
     act dut (.*);
-    // Integer oracle: divide with floor after the half-LSB rounding offset.
+    reg [7:0] expected_values [0:1279];
+    reg [1023:0] vectors;
     function automatic [7:0] expected(input integer op, input integer x);
-        integer v, n, value;
-        begin
-            v = x >= 128 ? x-256 : x;
-            n = 1 << `FIXED_FRAC_BITS;
-            case(op)
-                0: value=v;
-                1: value=v < 0 ? 0 : v;
-                2: begin
-                    value = v+2;
-                    value = (value < 0 ? -((-value+3)/4) : value/4) + n/2;
-                    if(value<0) value=0;
-                    if(value>n) value=n;
-                end
-                3: value=v < -n ? -n : v > n ? n : v;
-                4: value=v > 0 ? n : 0;
-                default: value=v;
-            endcase
-            expected=8'(value);
-        end
+        expected=expected_values[op*256+x];
     endfunction
     reg [7:0] held;
     initial begin
+        if (!$value$plusargs("vectors=%s",vectors)) $fatal(1,"Missing vectors");
+        $readmemh(vectors,expected_values);
         repeat (2) @(negedge clk);
         if (act_res_out !== 0 || act_res_out_val !== 0) $fatal(1,"Reset");
         rst_n=1;
@@ -67,7 +52,7 @@ module tb_act;
             @(negedge clk);
             if(act_res_out_val) $fatal(1,"Stale result after reset");
         end
-        $display("PASS act: all 256 fixed8 inputs x 5 modes, one-cycle results, hold, reset");
+        $display("PASS act: all 256 FP8 inputs x 5 modes, one-cycle results, hold, reset");
         $finish;
     end
 endmodule

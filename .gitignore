@@ -25,3 +25,6 @@ test/output/
 # Editor swap files
 *.swp
 *.swo
+
+# Local RTL rewrite workspace
+/rebuild/

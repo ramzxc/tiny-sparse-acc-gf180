@@ -1,7 +1,7 @@
 {
-  "wire_length_um": 45229.99,
-  "routed_nets": 1420,
+  "wire_length_um": 48078.88,
+  "routed_nets": 1627,
   "definition": "NETS signal/clock route centerline length; excludes PG, via height and cell-internal metal",
-  "source_def_sha256": "ea241d1de305c1313f66a1349200daa46d82bbe451bae39d56856f0c95b9c9b4",
-  "packaged_gds_sha256": "6eac273720cfb511bec514b4cb5a57cc083e0da43a2138e1cb4afc809d81f95d"
+  "source_def_sha256": "ebe01ab8bbedcaedfc77a030693d9d33caeb248150b7b4c2b9e2d65c4ef57ce2",
+  "packaged_gds_sha256": "56e2745ae5573d333b332f4f709bd0dcb7cd220b89e736f62bb3f0810a8b7015"
 }

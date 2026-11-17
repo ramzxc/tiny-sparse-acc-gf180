@@ -54,3 +54,18 @@ def tanh(x):
     return x
 
 
+
+def sub8(a, b):
+    return add8(a, b ^ 128)
+
+def mac8(a, b, old=0, accumulate=False):
+    return add8(mul8(a, b), old if accumulate else 0)
+
+def activate(x, op):
+    v = decode8(x)
+    if v is None: return 127
+    if op == 0: return x
+    if op == 1: return 0 if x & 128 else x
+    if op == 2: return sigmoid(x)
+    if op == 3: return tanh(x)
+    return 0x38 if v > 0 else 0

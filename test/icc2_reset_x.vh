@@ -33,9 +33,9 @@ end
 // SCK uses reconvergent Q / ~Q feedback after physical optimization.
 // Reset D=0 is proved for SCK (32 combinations) and cycles_left[3] (8192).
 always @(user_project.core.serial_memory.rst_n or
-         user_project.core.serial_memory.HFSNET_0) begin
+         user_project.core.serial_memory.HFSNET_2) begin
     if (user_project.core.serial_memory.rst_n === 1'b1 &&
-        user_project.core.serial_memory.HFSNET_0 === 1'b0) begin
+        user_project.core.serial_memory.HFSNET_2 === 1'b0) begin
         force user_project.core.serial_memory.n222 = 1'b0;
         force user_project.core.serial_memory.n217 = 1'b0;
     end else begin

@@ -1,6 +1,6 @@
 ## Overview
 
-A single-lane signed fixed8 accelerator with UART instruction input and external
+A single-lane FP8 E4M3FN accelerator with UART instruction input and external
 QSPI Flash / PSRAM. The core clock is 10 MHz; QSPI SCK is 5 MHz. No on-chip SRAM
 macros are used. Operands and results are stored in registers or external PSRAM.
 
@@ -70,20 +70,20 @@ Paths below are relative to `src/rtl/`.
 | `core/inst_fifo.v` | Holds one waiting instruction and advances when the decoder accepts it. |
 | `core/decoder.v` | Decodes instructions, dispatches memory/execution requests and handles synchronization. |
 | `core/mem_ctrl.v` | Holds SRC/DST addresses, schedules transfers and routes read data to input or weight registers. |
-| `core/vpu.v` | One fixed8 lane with operand registers, a multiplier, a shared adder and an accumulator/result register. |
+| `core/vpu.v` | One FP8 lane with operand registers, a multiplier, a shared adder and an accumulator/result register. |
 | `core/act.v` | Applies the selected activation and registers its result. |
 | `mem_itf.v` | Converts read/write/copy requests into QSPI transactions; copies read then write one byte. |
 | `qspi_ctrl.v` | Controls serial memory commands, addresses, data, Flash polling and chip selects. |
 | `../wrapper/project.v` | Current Actions top: connects Tiny Tapeout ports to the packaged `tiny_sparse_acc_core`. |
 
-Shared definitions are `defs/defs.vh` (widths and fixed-point scale),
+Shared definitions are `defs/defs.vh` (widths and numeric format),
 `defs/inst_defs.vh` (instructions and execution options), and `defs/mem_defs.vh`
 (memory map). `generated/design.v` is the sv2v-generated Verilog representation of
 the editable RTL, not another hardware block.
 
 `src/sources.f` also lists `core/micro_ctrl.v`, but `TT_DIRECT_UCODE` excludes its
 instance. `defs/micro_defs.vh` and `defs/fp8_math.vh` are not part of the active
-direct fixed8 datapath.
+direct FP8 datapath.
 
 ## Host interface and instructions
 
@@ -131,21 +131,22 @@ For example, SRC `0x1000020` uses words `0x8020`, `0xC800`: UART bytes
 
 ## Arithmetic and activation
 
-`DATA_WIDTH=8`, `COMPUTE_WIDTH=1`. Values are signed integers scaled by
-`2**FIXED_FRAC_BITS`. The compile-time fractional width is 1..6, default 4:
-range -8..7.9375, resolution 0.0625. Operands, accumulation, activation and memory
-use this same format. There is no runtime format register.
+`DATA_WIDTH=8`, `COMPUTE_WIDTH=1`. Operands, accumulation, activation and
+memory use FP8 E4M3FN (1 sign, 4 exponent, 3 fraction bits). Finite range is
+-448..448; subnormals and signed zeros are supported. Arithmetic rounds to
+nearest, ties to even, saturates overflow to the largest finite value and
+propagates canonical NaN (0x7f). Examples: 1 = 0x38, 2 = 0x40, 0.5 = 0x30.
 
 The VPU registers its result on the accepting edge. Operand updates on that same
-edge affect the next execution. MUL retains a combinational 16-bit product,
-rescales with nearest rounding (ties toward positive infinity), optionally adds
-the previous accumulator, then saturates once to [-128,127]. ADD/SUB/RSUB also
-saturate. The wider intermediate does not widen storage or memory transactions.
+edge affect the next execution. MUL rounds its product to FP8, then optionally
+adds the previous accumulator using FP8 addition; this is not a fused MAC.
+ADD/SUB/RSUB replace the accumulator and ignore the accumulation flag.
 
 Activation registers the next stage's result. Codes are 0 NONE, 1 ReLU,
-2 hard sigmoid (clamp(x/4 + 0.5, 0, 1), nearest rounding), 3 hard tanh
-(clamp(x,-1,1)), and 4 STEP (x>0). The top holds execution ready low until this
-stage completes. FP8-encoded data must be converted to fixed8 before use.
+2 hard sigmoid (clamp(x/4 + 0.5, 0, 1), with FP8 rounding at each operation),
+3 hard tanh (clamp(x,-1,1)), and 4 STEP (x>0). The top holds execution ready
+low until this stage completes. Fixed-point data must be converted to FP8
+before use; byte width and memory addressing remain unchanged.
 
 ## Memory and external pins
 
@@ -183,7 +184,7 @@ responsibilities. There is no general UART data-upload/result-download protocol.
 The current `info.yaml` selects `wrapper/project.v`. Macro GDS, LEF,
 netlists and SPEF reside in `macro/tiny_sparse_acc_core/`;
 `src/config.json` and `src/tcl/pdn.tcl` configure their integration.
-The core export is `20261117_162854_1794900534014990` (339.92 x 141.12 um), inside
+The core export is `20261117_175536_1794905736922050` (339.92 x 141.12 um), inside
 one Tiny Tapeout GF180 tile. Source hashes are recorded in `provenance.json`.
 
 PnR treats the core as a hard macro. Magic DRC examines the complete GDS; full
@@ -214,15 +215,16 @@ Run commands from the repository root:
 ```sh
 bash test/check_import.sh       # Unit and UART/QSPI integration tests
 make -C test                   # RTL UART admission smoke test
-bash test/run_fixed8.sh         # Arithmetic and activation checks for F=1..6
+bash test/run_fp8_math.sh       # Exhaustive FP8 arithmetic checks
 ```
 
-The fixed8 test checks all operand pairs for arithmetic/MAC and every activation
-input. Actions additionally runs the gate-level UART smoke test with GF180 cell
+The FP8 math test checks all operand pairs; integration tests also cover
+MAC accumulation, every activation input and memory transfers. Actions additionally runs the gate-level UART smoke test with GF180 cell
 models and the packaged powered core netlist. That smoke test does not establish
 full-network accuracy.
 
-Optional dataset-dependent tests (not GitHub CI):
+Historical fixed8 dataset experiments (not validated for the current FP8 RTL;
+the fixed8 reference and fixtures must be adapted before reuse):
 
 ```sh
 bash test/run_egru_layer.sh

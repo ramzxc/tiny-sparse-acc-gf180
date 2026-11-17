@@ -4,12 +4,12 @@ The current main build uses the ICC2 core as a fixed macro inside the
 Tiny Tapeout 1x1 wrapper. The RTL tests still use the original RTL; the GDS and
 gate-level jobs use the packaged core. No synthesis or PnR was run to package it.
 
-Source export: `20261117_162854_1794900534014990`. Source hashes and the exact
+Source export: `20261117_175536_1794905736922050`. Source hashes and the exact
 packaging transformations are in `provenance.json`; reproduce with
 `python scripts/package_icc2_macro.py /path/to/export` (requires gdstk).
 
-This wider-core experiment reruns synthesis and ICC2 implementation using the
-existing RTL and 10 MHz constraints. ICC2 reports zero route DRC/open nets,
+This FP8 E4M3FN core uses one lane and the existing 10 MHz constraints
+in the widened 339.92 x 141.12 um floorplan. ICC2 reports zero route DRC/open nets,
 zero PG connectivity/DRC errors, and positive setup slack at the nominal corner.
 The previous export's external DRC/LVS results do not certify this new layout;
 full wrapper integration and signoff are being tested in Actions.
@@ -59,7 +59,7 @@ current `info.yaml` selects `wrapper/project.v` instead.
 
 Compatibility fixes:
 
-- Remove 1443 unreferenced physical filler NAME_MAP entries from SPEF.
+- Remove 1230 unreferenced physical filler NAME_MAP entries from SPEF.
   Packaging aborts if a candidate entry has any references. R/C data and
   connectivity are unchanged; this avoids the OpenSTA parser failure at
   the first `xofiller!` entry.
