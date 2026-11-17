@@ -47,6 +47,7 @@ endif
 COMPILE_ARGS 		+= -I$(SRC_DIR)/rtl -I$(SRC_DIR)/rtl/core
 
 # Include the testbench sources:
+VERILOG_SOURCES += $(CURDIR)/qspi_psram_model.sv $(CURDIR)/qspi_nor_model.sv
 VERILOG_SOURCES += $(CURDIR)/tb.v
 TOPLEVEL = tb
 

@@ -219,9 +219,21 @@ bash test/run_fp8_math.sh       # Exhaustive FP8 arithmetic checks
 ```
 
 The FP8 math test checks all operand pairs; integration tests also cover
-MAC accumulation, every activation input and memory transfers. Actions additionally runs the gate-level UART smoke test with GF180 cell
-models and the packaged powered core netlist. That smoke test does not establish
-full-network accuracy.
+MAC accumulation, every activation input and memory transfers. Actions runs the same pin-level cocotb scenarios on RTL and the gate-level
+wrapper plus packaged powered core and GF180 cell models:
+
+- UART READY/NOP admission.
+- Flash-to-PSRAM copy, FP8 MUL/accumulation/ADD/SUB/RSUB and all five activation
+  selections, result stores, NOR programming and readback. Transaction counts
+  also check for duplicate writes.
+- NOR held busy while UART fills the instruction queue, then ordered recovery.
+- Reset after a partial UART word and during a QSPI read, followed by a fresh MAC.
+
+External PSRAM/NOR models check protocol and bus direction. Only external memory
+contents are initialized by these tests. Existing proven reset X corrections
+remain enabled in GL; no new DUT state forcing was added. These are functional
+GL tests with unit cell delays, not SDF timing simulation, vendor-device timing
+signoff, or a full-network accuracy test.
 
 Historical fixed8 dataset experiments (not validated for the current FP8 RTL;
 the fixed8 reference and fixtures must be adapted before reuse):
