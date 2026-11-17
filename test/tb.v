@@ -19,6 +19,10 @@ module tb ();
   reg ena;
   reg [7:0] ui_in;
   wire [7:0] uio_in;
+  wire [7:0] uo_out;
+  wire [7:0] uio_out;
+  wire [7:0] uio_oe;
+
   reg flash_stuck_busy = 0;
   wire [3:0] flash_in, ram_a_in, ram_b_in;
   wire flash_cs = uio_out[0];
@@ -44,9 +48,6 @@ module tb ();
       .dq_oe(dq_oe), .dq_in(flash_in), .stuck_busy(flash_stuck_busy),
       .reject_wren(1'b0), .ignore_qe(1'b0)
   );
-  wire [7:0] uo_out;
-  wire [7:0] uio_out;
-  wire [7:0] uio_oe;
 `ifdef GL_TEST
   wire VPWR = 1'b1;
   wire VGND = 1'b0;
