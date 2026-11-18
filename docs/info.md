@@ -1,7 +1,7 @@
 ## Overview
 
-A single-lane FP8 E4M3FN accelerator. The current build synthesizes the RTL in
-`src/rtl` directly, with no micro controller or on-chip SRAM macro.
+A single-lane FP8 E4M3FN accelerator. The current build integrates a hardened core generated from the rebuild RTL in
+`src/rtl`, with no micro controller or on-chip SRAM macro.
 Clock: 10 MHz. QSPI SCK: 5 MHz. External devices follow the TinyQV Pmod pinout.
 
 ## How to test
@@ -41,5 +41,5 @@ Actions runs pin-level RTL/GL tests, GDS generation and Tiny Tapeout precheck.
 QSPI Flash and PSRAM Pmod. Flash writes require erased storage and the supported
 quad-mode setup; this interface does not provide a general erase command.
 
-Previous physical macro assets remain in `macro/` for reference and are not
-inputs to this RTL build. Earlier experiments are in [Development history](archive/history.md).
+The current rebuild core GDS, LEF and netlists are packaged in
+`macro/tiny_sparse_acc_core/`. Actions implements the surrounding wrapper. Earlier experiments are in [Development history](archive/history.md).

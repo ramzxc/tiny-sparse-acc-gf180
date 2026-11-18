@@ -52,6 +52,12 @@ jobs:
         shell: bash
         run: pip install -r test/requirements.txt
 
+      - name: Prove gate simulation reset corrections
+        run: python3 test/check_icc2_reset.py
+
+      - name: Check hard macro RTL provenance
+        run: python3 scripts/check_macro_sources.py
+
       - name: Run tests
         run: |
           cd test
