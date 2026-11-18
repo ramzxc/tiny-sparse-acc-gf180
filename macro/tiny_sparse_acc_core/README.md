@@ -46,21 +46,37 @@ every layer/datatype. Standard cells remain hierarchical. LibreLane's documented
 links in the extracted SPICE. These are extraction annotations, not new physical
 resistors. No LVS exclusions or port-matching waivers are added.
 
-Local validation re-extracts the packaged core GDS and compares it together with
-the CI-extracted wrapper against the original powered reference netlists.
-The final packaged GDS passed: `Circuits match uniquely`. Logical and powered
-reference netlists are unchanged.
+## Wrapper aliases and native extraction
 
-## Wrapper via-flattening experiment
+The core's OE pins 1, 4 and 5 are electrically identical. A black-box port
+declaration does not expose that relationship to wrapper synthesis. In the
+failing hierarchical LVS, the wrapper connected two output names to one macro
+terminal while another aliased macro terminal appeared as an internal node.
+Netgen matched the core but failed the wrapper's port comparison.
 
-`src/tcl/magicrc.tcl` sources the PDK startup and sets Magic's native
-`gds flatglob VIA_*` option. This expands OpenROAD via cells during GDS import;
-standard cells and the core remain hierarchical. No extracted-SPICE Python
-postprocessor is used. The stored GDS and fabrication geometry are unchanged.
+The wrapper now explicitly derives outputs 4 and 5 from core output 1. This is
+the existing circuit's alias relationship, not a new enable function. The
+hardened core netlist proves it through QSPI's `dq_oe[0] = dq_oe[3]` and
+`dq_oe[2] = dq_oe[3]` assignments. Other outputs retain their original mapping.
 
-Local re-extraction of the successful run 44317152587's final GDS restores all
-top-level port names, but Netgen still reports one top-level pin mismatch:
-`uio_oe[4]` is represented through a shorted alias instead of a direct macro
-terminal. Thus via flattening alone is not yet a complete replacement for
-commit d883463's SPICE alias restoration. This revision is an explicit CI
-experiment, not a claim that LVS is fixed.
+`src/tcl/magicrc.tcl` sources the PDK startup and uses native
+`gds flatglob VIA_*` and `gds flatglob tiny_sparse_acc_core` on GDS input.
+This expands the via and macro boundaries for extraction, retaining standard-cell
+hierarchy and transistor checks. Stored GDS geometry is unchanged; no extracted
+SPICE is edited, and no device/pin checks are excluded.
+
+Local validation used the actual final GDS from run 44317152587, freshly
+extracted with this configuration, and the modified wrapper synthesized with
+Yosys 0.62 plus the unchanged core LVS reference:
+
+| Extraction / reference | Result |
+| --- | --- |
+| Via flattening only / original wrapper | Pin mismatch |
+| Via and macro flattening / original wrapper | Pin mismatch |
+| Via and macro flattening / explicit wrapper aliases | Circuits match uniquely |
+| Same extraction / intentionally wrong OE output | LVS fails |
+
+The passing comparison includes 1,521 core devices and 1,545 nets. All four GL
+tests also pass using the synthesized modified wrapper and routed core netlist.
+This validates the existing physical circuit against the equivalent wrapper;
+the next Actions run still needs to verify its newly routed wrapper.

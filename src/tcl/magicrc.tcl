@@ -1,6 +1,8 @@
-# Preserve the PDK setup; expand only OpenROAD's via cells while reading GDS.
+# Preserve the PDK setup and use native Magic GDS import/extraction.
 source $::env(PDK_ROOT)/$::env(PDK)/libs.tech/magic/$::env(PDK).magicrc
 
-# Standard cells and the core remain hierarchical. Geometry is unchanged.
-# Use Magic's native reader, without modifying extracted SPICE.
+# Expand routing vias and the macro boundary, retaining standard-cell hierarchy.
+# This avoids comparing electrically aliased macro pins as independent terminals.
+# No SPICE postprocessing or LVS exclusions are used.
 gds flatglob VIA_*
+gds flatglob tiny_sparse_acc_core
