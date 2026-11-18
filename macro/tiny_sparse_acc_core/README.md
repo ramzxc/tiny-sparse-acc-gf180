@@ -3,16 +3,17 @@
 This macro was newly synthesized and routed from the rebuild RTL now tracked in
 `src/rtl`. It is **not** the earlier FP8 implementation. Direct 16-bit instructions,
 FP8 E4M3FN, one lane, 24-bit device-local addresses, no micro controller.
+DATA scalar mode broadcasts input[cur]; sparse reads use that element’s zero mask.
 
-Export: `20261118_221815_1795007895490261`.
+Export: `20261118_234130_1795012890866151`.
 `provenance.json` records exported file hashes and the RTL hashes checked against
 the synthesis input manifest. Run `python3 scripts/check_macro_sources.py` to
 reject a stale macro after RTL edits.
 
-- Synopsys DC cell area: 34,032.19 um².
-- ICC2 routed netlist cell area: 34,091.46 um² (excludes physical-only cells).
+- Synopsys DC cell area: 34,273.66 um².
+- ICC2 routed netlist cell area: 34,201.22 um² (excludes physical-only cells).
 - Macro boundary: 339.92 x 141.12 um; wrapper placement: (3.36, 3.92), N.
-- Clock: 10 MHz. Worst reported nominal setup slack: +16.84 ns.
+- Clock: 10 MHz. Worst reported nominal setup slack: +19.15 ns.
 - ICC2 final route checks: zero opens, routing DRC and antenna violations.
 - PG connectivity and PG DRC checks: zero errors.
 
@@ -64,3 +65,8 @@ Netgen still checks the complete core and wrapper.
 Validated with the actual failed run 44315380242 extraction and wrapper netlist:
 `Circuits match uniquely`. Tests also reject disconnected pins, missing macro
 alias evidence, and nonzero resistors. No GDS, RTL, or reference netlist changed.
+
+Local checks for this export: the previously built wrapper with this new core passes
+full Magic DRC and hierarchical Netgen LVS. The RTL passes the FP8 oracle,
+UART/QSPI integration and cur-selected sparse tests. Tiny Tapeout Actions
+regenerates and checks the wrapper independently after upload.

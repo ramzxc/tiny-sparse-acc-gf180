@@ -15,9 +15,9 @@ always @(user_project.core.transmitter.rst_n or
 end
 
 always @(user_project.core.receiver.rst_n or
-         user_project.core.receiver.HFSNET_4) begin
+         user_project.core.receiver.HFSNET_2) begin
     if (user_project.core.receiver.rst_n === 1'b1 &&
-        user_project.core.receiver.HFSNET_4 === 1'b0) begin
+        user_project.core.receiver.HFSNET_2 === 1'b0) begin
         force user_project.core.receiver.n98 = 1'b0;  // clk_cnt[0]
         force user_project.core.receiver.n92 = 1'b0;  // clk_cnt[6]
         force user_project.core.receiver.n101 = 1'b0; // bit_idx[1]
@@ -33,9 +33,9 @@ end
 // SCK uses reconvergent Q / ~Q feedback after physical optimization.
 // Reset D=0 is proved for SCK (32 combinations) and cycles_left[3] (8192).
 always @(user_project.core.serial_memory.rst_n or
-         user_project.core.serial_memory.HFSNET_2) begin
+         user_project.core.serial_memory.HFSNET_0) begin
     if (user_project.core.serial_memory.rst_n === 1'b1 &&
-        user_project.core.serial_memory.HFSNET_2 === 1'b0) begin
+        user_project.core.serial_memory.HFSNET_0 === 1'b0) begin
         force user_project.core.serial_memory.n222 = 1'b0;
         force user_project.core.serial_memory.n217 = 1'b0;
     end else begin
@@ -45,10 +45,10 @@ always @(user_project.core.serial_memory.rst_n or
 end
 
 // Rebuild data-controller state reset has the same reconvergent X pessimism.
-always @(user_project.core.data.rst_n or user_project.core.data.HFSNET_1) begin
+always @(user_project.core.data.rst_n or user_project.core.data.HFSNET_0) begin
     if (user_project.core.data.rst_n === 1'b1 &&
-        user_project.core.data.HFSNET_1 === 1'b0)
-        force user_project.core.data.n138 = 1'b0;
+        user_project.core.data.HFSNET_0 === 1'b0)
+        force user_project.core.data.n140 = 1'b0;
     else
-        release user_project.core.data.n138;
+        release user_project.core.data.n140;
 end

@@ -1,14 +1,14 @@
 {
-  "export": "20261118_221815_1795007895490261",
+  "export": "20261118_234130_1795012890866151",
   "source_sha256": {
-    "core.gds": "3e7ca6b8544951cec16299924e0296d8c671f4abb1248973ad1620fdfc129bed",
-    "core.lef": "55f330b9e37da1e448c68f9ff9050a4ff28572bdf74d460a583e8f815ef19596",
-    "core.v": "caf6fcd7cab377b03c1dfc03bde4119e06551c59b1fc3ac2fbae668fc1f1b36a",
-    "core.pg.v": "99b7d35d826623c9f0b8bb7750f361d75c42f00ced9c11c11111e63e2063120f",
-    "core.gf180_nominal_25.spef": "9ec550b08a934af1bf797bdf13b6f4067db90d57938691f6c4abfe4ae8969520"
+    "core.gds": "5cb1973b7065d0c7df113ad83f1f41dd8634b6121d5f17d9a73f07e4e6229289",
+    "core.lef": "86ca1afdfa032864d58f70cd5b668bf08c8b310da5c46b5577afc8870e4cc510",
+    "core.v": "647e115281ed1ce3c9db0ac9e986dd5b009e0fa7f1cbc5281cfcbd9620f5209a",
+    "core.pg.v": "003e8b92a3ac06a180c395c340393e46410af184fdd9d287486a60820e42d5a5",
+    "core.gf180_nominal_25.spef": "a52995cddd584d21b1c216145aa3e3727d7780de0fcb112c39a541e2348192d0"
   },
-  "removed_unused_spef_fillers": 1398,
-  "flattened_via_instances": 12219,
+  "removed_unused_spef_fillers": 1441,
+  "flattened_via_instances": 12270,
   "via_flatten_geometry_check": "exact polygon multiset equality on every layer/datatype",
   "pr_boundary_um": [
     0,
@@ -20,24 +20,24 @@
   "lef_power_pins": "Expose GDS-verified continuous Metal4 stripes; subtract only these stripes from Metal4 OBS.",
   "changes": "Remove unused SPEF filler names; rename top; remove geometry-free VDD/VSS aliases, use existing VPWR/VGND terminals; add missing PR_bndry (0/0) from LEF SIZE; normalize GDS precision to 1 nm after grid checks; convert LEF polygons to equivalent rectangles and remove redundant OVERLAP outline. Circuit geometry unchanged.",
   "rtl_sha256": {
-    "src/rtl/project.v": "6671a2cbb7a905f30265edd7f0c49f00674a4ec9f27b33cc58aeac67da9bfacb",
+    "src/rtl/project.v": "793edf1159805b784ffc2de70e61a09f5b6430805e3c28130f1411acaf8addc3",
     "src/rtl/uart/uart_rx.v": "a9983b388ed4757651a1cedf75e9e4c3e082d995260ac2ab1be84b69ad49552a",
     "src/rtl/uart/uart_tx.v": "a4327d4e3b8e7b804ec4810b0f897e522f92a36b06b64428001d22dcccec6913",
     "src/rtl/core/inst_fifo.v": "a11f592aeffbeef80e5a7406cbfbb4256171605c893cfa1e44a8af1c48a00c94",
     "src/rtl/core/inst_decoder.v": "efa9dc712840511644ccfb3a597c5a61b2fab3e2ee27dc8bcb0b95164f03436f",
-    "src/rtl/core/data_ctrl.v": "316385ac8c6929a3f973ade2209da8dfe29178f01ebf233622e42a873bae2991",
-    "src/rtl/core/exec_unit.v": "05a196ed4e96822fc3bd6da7a35817ab27d28cab725765a1f551a80c5d5df011",
+    "src/rtl/core/data_ctrl.v": "86e09dea93eab00b87bf73b668653322f3ab945de765d5cb306beb3ffc878d1d",
+    "src/rtl/core/exec_unit.v": "fe8419039902175eef4d92c3edb9b624e29756b017b22db42f0f23f7c19e1d0c",
     "src/rtl/mem_itf.v": "1294e24c6b7919ec02d97a0682d4d17a2e69f18fc85e22468cf2177acb45b3ab",
     "src/rtl/qspi_ctrl.v": "e465b9741c209281e4314780630b3a70619fd76596dd816d20815b51f8e3cc7b",
     "src/rtl/defs/mem_defs.vh": "bb5ba40ba47697191f281f8606506897629ba2a0ca2805430c6ca7d9cacf085c",
-    "src/rtl/defs/inst_defs.vh": "a8b2c17b67a6749a759acdc8e7e5a3121b3019eecde79d9b9d01d9fc26445185",
+    "src/rtl/defs/inst_defs.vh": "33c318b829952450bcb2b8a6fe450aeb1d767eb8cbb771b4f449c8078e330599",
     "src/rtl/defs/fp8_math.vh": "cc68fd54988a82c83db00a26697c775b98dcc08162e2c8abc5924460bafbecc4",
-    "src/rtl/defs/defs.vh": "de1d0bfbade5b7057395711b667d586c8285a7acaa1e208c88e8255523d886ba",
+    "src/rtl/defs/defs.vh": "f86bbf3df7a190e7e3507ec0201ff2d30e56c78fd80277762ccf5a003850084d",
     "src/sources.f": "ade0ae80ce722b487b7ca01b3c4e226181cb15cb49ac1d5381971950c6d723c3"
   },
-  "rtl_commit": "ec62f985",
-  "architecture": "rebuild, direct 16-bit ISA, FP8 E4M3FN, 1 lane, no micro_ctrl",
-  "synthesis_run": "20261118_221406_356118",
-  "pnr_run": "20261118_221600_356350",
+  "rtl_commit": "0ae6a3e4f6c0f5d01ac07b29718fb09eedeeefa9",
+  "architecture": "rebuild, direct 16-bit ISA, FP8 E4M3FN, 1 lane, cur-selected scalar sparse broadcast, no micro_ctrl",
+  "synthesis_run": "20261118_233754_372413",
+  "pnr_run": "20261118_233933_373441",
   "clock_period_ns": 100
 }
