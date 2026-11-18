@@ -56,7 +56,6 @@
       }
     }
   },
-  "PDN_CFG": "dir::tcl/pdn.tcl",
   "PDN_MACRO_CONNECTIONS": [
     "core VPWR VGND VPWR VGND"
   ],
@@ -74,7 +73,7 @@
   "PDN_VPITCH": 38.87,
   "PDN_MULTILAYER": false,
   "PDN_CORE_RING": false,
-  "PDN_ENABLE_RAILS": false,
+  "PDN_ENABLE_RAILS": true,
   "PDN_ENABLE_PINS": true,
   "PDN_HORIZONTAL_LAYER": "Metal3",
   "PDN_HWIDTH": 1.6,
@@ -82,7 +81,11 @@
   "PDN_HSPACING": 1.9,
   "PDN_HOFFSET": 143.48,
   "FP_MACRO_HORIZONTAL_HALO": 0,
-  "FP_MACRO_VERTICAL_HALO": 0,
+  "FP_MACRO_VERTICAL_HALO": 1,
   "MAGIC_EXT_SHORT_RESISTOR": true,
-  "MAGICRC": "dir::tcl/magicrc.tcl"
+  "MAGICRC": "dir::tcl/magicrc.tcl",
+  "PDN_SKIPTRIM": false,
+  "PDN_VWIDTH": 1.6,
+  "PDN_VSPACING": 1.7,
+  "PDN_VOFFSET": 16.32
 }

@@ -8,6 +8,9 @@ def prepare_lvs(text):
     # Native GF180 SPICE has explicit well terminals; ICC2's digital models do not.
     def wells(match):
         cell = match[0]
+        # Native filltie SPICE declares only VDD/VSS, unlike logic cells.
+        if re.match(r'gf180mcu_fd_sc_mcu7t5v0__filltie\s', cell):
+            return cell
         for well, supply in [('VNW', 'VDD'), ('VPW', 'VSS')]:
             pin = re.search(r'\.' + supply + r'\s*\(\s*([^()]+?)\s*\)', cell)
             if not pin:

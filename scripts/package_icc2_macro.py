@@ -107,15 +107,30 @@ def polygon_rectangles(coordinates):
     for a, b in zip(points, points[1:] + points[:1]):
         assert a[0] == b[0] or a[1] == b[1], 'Non-Manhattan LEF polygon'
     polygon = gdstk.Polygon(points)
-    ys = sorted({y for x, y in points})
+    from collections import defaultdict, Counter
+    events = defaultdict(Counter)
+    for a, b in zip(points, points[1:] + points[:1]):
+        if a[0] == b[0] and a[1] != b[1]:
+            low, high = sorted((a[1], b[1]))
+            events[low][a[0]] += 1
+            events[high][a[0]] -= 1
+    ys = sorted(events)
+    active = Counter()
+    opened = {}
     rectangles = []
     for bottom, top_y in zip(ys, ys[1:]):
-        middle = (bottom + top_y) / 2
-        xs = sorted(a[0] for a, b in zip(points, points[1:] + points[:1])
-                    if a[0] == b[0] and min(a[1], b[1]) < middle < max(a[1], b[1]))
+        active.update(events[bottom])
+        xs = sorted(x for x, n in active.items() if n % 2)
         assert len(xs) % 2 == 0
-        for left, right in zip(xs[::2], xs[1::2]):
-            rectangles.append(gdstk.rectangle((left, bottom), (right, top_y)))
+        spans = set(zip(xs[::2], xs[1::2]))
+        for span in list(opened):
+            if span not in spans:
+                left, right = span
+                rectangles.append(gdstk.rectangle((left, opened.pop(span)), (right, bottom)))
+        for span in spans:
+            opened.setdefault(span, bottom)
+    for (left, right), bottom in opened.items():
+        rectangles.append(gdstk.rectangle((left, bottom), (right, ys[-1])))
     assert not gdstk.boolean([polygon], rectangles, 'xor', precision=0.0005)
     return '\n'.join('      RECT ' + ' '.join(f'{v:.6f}'.rstrip('0').rstrip('.')
                      for point in r.bounding_box() for v in point) + ' ;'
@@ -123,46 +138,20 @@ def polygon_rectangles(coordinates):
 
 lef = re.sub(r'\s*POLYGON\s+([^;]+);', lambda m: '\n' + polygon_rectangles(m[1]), lef)
 
-# The GDS supply stripes run continuously between the original end pins.
-# Expose that real metal in the abstract as well: full-height wrapper power
-# pins must not land on an OBS-only representation of the same supply.
-supplies = []
-metal4 = top.get_polygons(layer=46, datatype=0)
+# Keep ICC2's actual Metal3 end terminals unchanged. Parent connects M4 to M3.
+assert 'LAYER Metal4' not in lef and 'LAYER Metal5' not in lef
+assert not top.get_polygons(layer=46, datatype=0), 'Reserve core Metal4 for wrapper PG'
+assert not top.get_polygons(layer=81, datatype=0), 'Metal5 is forbidden by TT'
+metal3 = top.get_polygons(layer=42, datatype=0)
 for name in ('VPWR', 'VGND'):
-    pattern = rf'  PIN {name}\n.*?  END {name}'
-    match = re.search(pattern, lef, re.S)
-    assert match
-    pin = match[0]
-    assert re.findall(r'LAYER (\w+)\s*;', pin) == ['Metal4']
-    rects = [tuple(map(float, m)) for m in re.findall(
-        r'RECT ([\d.]+) ([\d.]+) ([\d.]+) ([\d.]+)\s*;', pin)]
-    columns = sorted({(x1, x2) for x1, y1, x2, y2 in rects})
-    assert len(columns) in (8, 9) and len(rects) == 2 * len(columns)
-    lines = []
-    for x1, x2 in columns:
-        assert (x1, 0, x2, 1) in rects and (x1, height - 1, x2, height) in rects
-        stripe = gdstk.rectangle((x1, 0), (x2, height))
-        assert not gdstk.boolean([stripe], metal4, 'not', precision=0.0005), \
-            f'Missing GDS supply metal for {name} at {x1}'
-        supplies.append(stripe)
-        lines.append(f'        RECT {x1:g} 0 {x2:g} {height:g} ;')
-    pin = re.sub(r'        RECT[^;]+;\n', '', pin)
-    pin = pin.replace('      LAYER Metal4 ;', '      LAYER Metal4 ;\n' + '\n'.join(lines))
-    lef = lef[:match.start()] + pin + lef[match.end():]
-
-def clear_supply_obstructions(match):
-    header, body = match.groups()
-    rectangles = [gdstk.rectangle(v[:2], v[2:]) for v in
-                  (list(map(float, raw.split())) for raw in re.findall(r'RECT\s+([^;]+);', body))]
-    remainder = gdstk.boolean(rectangles, supplies, 'not', precision=0.0005)
-    lines = []
-    for poly in remainder:
-        raw = ' '.join(str(v) for point in poly.points for v in point)
-        lines.append(polygon_rectangles(raw))
-    return header + '\n' + '\n'.join(lines) + '\n'
-
-lef = re.sub(r'^(    LAYER Metal4(?: SPACING 0)? ;)(.*?)(?=^    LAYER|^  END)',
-             clear_supply_obstructions, lef, flags=re.S | re.M)
+    pin = re.search(rf'  PIN {name}\n.*?  END {name}', lef, re.S)
+    assert pin and re.findall(r'LAYER (\w+)\s*;', pin[0]) == ['Metal3']
+    rectangles = re.findall(r'RECT\s+([^;]+);', pin[0])
+    assert rectangles, f'Missing physical supply pin: {name}'
+    for raw in rectangles:
+        x0, y0, x1, y1 = map(float, raw.split())
+        assert not gdstk.boolean([gdstk.rectangle((x0, y0), (x1, y1))],
+                                 metal3, 'not', precision=0.0005), name
 (out / 'core.lef').write_text(lef)
 for filename in ('core.v', 'core.pg.v'):
     text = (a.export / filename).read_text()
@@ -213,7 +202,7 @@ print(f'Removed {removed} unreferenced filler NAME_MAP entries')
     'via_flatten_geometry_check': 'exact polygon multiset equality on every layer/datatype',
     'pr_boundary_um': [0, 0, width, height],
     'gds_precision_m': lib.precision,
-    'lef_power_pins': 'Expose GDS-verified continuous Metal4 stripes; subtract only these stripes from Metal4 OBS.',
+    'lef_power_pins': 'Preserve native Metal3 PG terminals and obstructions; no upper metal.',
     'changes': 'Remove unused SPEF filler names; rename top; remove geometry-free VDD/VSS aliases, use existing VPWR/VGND terminals; add missing PR_bndry (0/0) from LEF SIZE; normalize GDS precision to 1 nm after grid checks; convert LEF polygons to equivalent rectangles and remove redundant OVERLAP outline. Circuit geometry unchanged.'
 }, indent=2) + '\n')
 print(out)

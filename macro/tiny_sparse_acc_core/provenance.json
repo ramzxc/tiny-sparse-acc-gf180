@@ -1,14 +1,14 @@
 {
-  "export": "20261118_234130_1795012890866151",
+  "export": "20261119_014221_1795020141302947",
   "source_sha256": {
-    "core.gds": "5cb1973b7065d0c7df113ad83f1f41dd8634b6121d5f17d9a73f07e4e6229289",
-    "core.lef": "86ca1afdfa032864d58f70cd5b668bf08c8b310da5c46b5577afc8870e4cc510",
-    "core.v": "647e115281ed1ce3c9db0ac9e986dd5b009e0fa7f1cbc5281cfcbd9620f5209a",
-    "core.pg.v": "003e8b92a3ac06a180c395c340393e46410af184fdd9d287486a60820e42d5a5",
-    "core.gf180_nominal_25.spef": "a52995cddd584d21b1c216145aa3e3727d7780de0fcb112c39a541e2348192d0"
+    "core.gds": "900983667deba411bccf7001f07e0daadcf86dc7b9e4099248a6db4f7059ad56",
+    "core.lef": "309425ae9bfe480467d2364be3a4d880ee06a3baa73d622e53ef7ffaf0489e22",
+    "core.v": "e31956692609fea78f4ecd693901381e202289975631173554e75b23023eda6c",
+    "core.pg.v": "516bfa750a3ae60b06d8f1d0d62008b95bf4ccab4173861ad3b3d50bc0251bf2",
+    "core.gf180_nominal_25.spef": "c522518c1938eed72d734b8e1e4fcc8d10c976ef12d379d4b753b0d5a5712596"
   },
-  "removed_unused_spef_fillers": 1441,
-  "flattened_via_instances": 12270,
+  "removed_unused_spef_fillers": 1348,
+  "flattened_via_instances": 14904,
   "via_flatten_geometry_check": "exact polygon multiset equality on every layer/datatype",
   "pr_boundary_um": [
     0,
@@ -17,7 +17,7 @@
     141.12
   ],
   "gds_precision_m": 1e-09,
-  "lef_power_pins": "Expose GDS-verified continuous Metal4 stripes; subtract only these stripes from Metal4 OBS.",
+  "lef_power_pins": "Preserve native Metal3 PG terminals and obstructions; no upper metal.",
   "changes": "Remove unused SPEF filler names; rename top; remove geometry-free VDD/VSS aliases, use existing VPWR/VGND terminals; add missing PR_bndry (0/0) from LEF SIZE; normalize GDS precision to 1 nm after grid checks; convert LEF polygons to equivalent rectangles and remove redundant OVERLAP outline. Circuit geometry unchanged.",
   "rtl_sha256": {
     "src/rtl/project.v": "793edf1159805b784ffc2de70e61a09f5b6430805e3c28130f1411acaf8addc3",
@@ -38,6 +38,22 @@
   "rtl_commit": "0ae6a3e4f6c0f5d01ac07b29718fb09eedeeefa9",
   "architecture": "rebuild, direct 16-bit ISA, FP8 E4M3FN, 1 lane, cur-selected scalar sparse broadcast, no micro_ctrl",
   "synthesis_run": "20261118_233754_372413",
-  "pnr_run": "20261118_233933_373441",
-  "clock_period_ns": 100
+  "clock_period_ns": 100,
+  "pnr_run": "20261119_013620_412369",
+  "pnr_block": "metal3_repair2",
+  "lef_extraction": "create_frame -block_all false -rc_metal_type none -include_routing_pg_ports {VPWR VGND}",
+  "core_routing_layers": [
+    "Metal1",
+    "Metal2",
+    "Metal3"
+  ],
+  "wrapper_power_layer": "Metal4",
+  "local_integration": {
+    "route_drc": 0,
+    "magic_drc": 0,
+    "klayout_drc": 0,
+    "antenna": 0,
+    "lvs": "Circuits match uniquely",
+    "custom_pdn_tcl": false
+  }
 }
