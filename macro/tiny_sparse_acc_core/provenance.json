@@ -1,20 +1,20 @@
 {
-  "export": "20261119_014221_1795020141302947",
+  "export": "20261119_022832_1795022912216272",
   "source_sha256": {
-    "core.gds": "900983667deba411bccf7001f07e0daadcf86dc7b9e4099248a6db4f7059ad56",
-    "core.lef": "309425ae9bfe480467d2364be3a4d880ee06a3baa73d622e53ef7ffaf0489e22",
-    "core.v": "e31956692609fea78f4ecd693901381e202289975631173554e75b23023eda6c",
-    "core.pg.v": "516bfa750a3ae60b06d8f1d0d62008b95bf4ccab4173861ad3b3d50bc0251bf2",
-    "core.gf180_nominal_25.spef": "c522518c1938eed72d734b8e1e4fcc8d10c976ef12d379d4b753b0d5a5712596"
+    "core.gds": "8847df55bb199c8e015a1ec05252682f405d2e2e6c9a2412921d92d3db2b0ddf",
+    "core.lef": "af9056d1a4c955af3ba1cfe59936687ed1a5cd55382125d44162d6c2f0b87740",
+    "core.v": "4cce57c9e571f0c3c509e67a6a7c38162a8d712e25c0dc3c297592e8b7dcb520",
+    "core.pg.v": "edb43a36c583fe3e9a0d32743b502df618c04ff80fbd39052ba8dd5f5fc090f4",
+    "core.gf180_nominal_25.spef": "237ffe4252aea6d81285d86cea6f4ca0486b8c043dd67b75981f912e73690935"
   },
-  "removed_unused_spef_fillers": 1348,
-  "flattened_via_instances": 14904,
+  "removed_unused_spef_fillers": 802,
+  "flattened_via_instances": 14004,
   "via_flatten_geometry_check": "exact polygon multiset equality on every layer/datatype",
   "pr_boundary_um": [
     0,
     0,
-    339.92,
-    141.12
+    325.36,
+    133.28
   ],
   "gds_precision_m": 1e-09,
   "lef_power_pins": "Preserve native Metal3 PG terminals and obstructions; no upper metal.",
@@ -39,8 +39,8 @@
   "architecture": "rebuild, direct 16-bit ISA, FP8 E4M3FN, 1 lane, cur-selected scalar sparse broadcast, no micro_ctrl",
   "synthesis_run": "20261118_233754_372413",
   "clock_period_ns": 100,
-  "pnr_run": "20261119_013620_412369",
-  "pnr_block": "metal3_repair2",
+  "pnr_run": "20261119_022054_440458",
+  "pnr_block": "narrow_repair2",
   "lef_extraction": "create_frame -block_all false -rc_metal_type none -include_routing_pg_ports {VPWR VGND}",
   "core_routing_layers": [
     "Metal1",
@@ -48,12 +48,30 @@
     "Metal3"
   ],
   "wrapper_power_layer": "Metal4",
+  "wrapper_origin_um": [
+    3.36,
+    11.76
+  ],
+  "wrapper_clearance_um": {
+    "left": 0,
+    "right": 14.56,
+    "bottom": 7.84,
+    "top": 11.76
+  },
   "local_integration": {
-    "route_drc": 0,
+    "placement_check": "passed with cut rows, taps and endcaps",
+    "wrapper_routing_drc": 0,
     "magic_drc": 0,
     "klayout_drc": 0,
-    "antenna": 0,
-    "lvs": "Circuits match uniquely",
-    "custom_pdn_tcl": false
+    "klayout_antenna": 0,
+    "lvs": "Circuits match uniquely (core hierarchy included)",
+    "gl_tests": {
+      "pass": 5,
+      "fail": 0
+    },
+    "custom_pdn_tcl": false,
+    "icc2_route_drc": 0,
+    "icc2_open_nets": 0,
+    "nominal_setup_slack_ns": 10.25
   }
 }
