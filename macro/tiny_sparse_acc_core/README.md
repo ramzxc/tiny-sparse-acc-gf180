@@ -32,3 +32,21 @@ data-controller state bit. `test/check_icc2_reset.py` exhaustively proves each
 corrected D input is zero under reset for all binary inputs, without assuming
 flop initialization. It is a prerequisite of the GL build. No Q initialization,
 normal-operation correction or GDS modification is used.
+
+## Shared output-port extraction
+
+`uio_oe[5]`, `[4]`, and `[1]` intentionally share a driver. Magic's default
+hierarchical extraction dropped two of these port aliases when their connection
+passed through ICC2's hierarchical via cells. This caused port errors even though
+all 1,521 devices and 1,545 core nets matched.
+
+Packaging now inlines only `$$Via*` instances, checking exact polygon multiset equality on
+every layer/datatype. Standard cells remain hierarchical. LibreLane's documented
+`MAGIC_EXT_SHORT_RESISTOR` option preserves the aliased pin names using zero-ohm
+links in the extracted SPICE. These are extraction annotations, not new physical
+resistors. No LVS exclusions or port-matching waivers are added.
+
+Local validation re-extracts the packaged core GDS and compares it together with
+the CI-extracted wrapper against the original powered reference netlists.
+The final packaged GDS passed: `Circuits match uniquely`. Logical and powered
+reference netlists are unchanged.

@@ -8,6 +8,8 @@
     "core.gf180_nominal_25.spef": "9ec550b08a934af1bf797bdf13b6f4067db90d57938691f6c4abfe4ae8969520"
   },
   "removed_unused_spef_fillers": 1398,
+  "flattened_via_instances": 12219,
+  "via_flatten_geometry_check": "exact polygon multiset equality on every layer/datatype",
   "pr_boundary_um": [
     0,
     0,

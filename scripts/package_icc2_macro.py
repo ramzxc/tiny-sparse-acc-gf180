@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Package an existing ICC2 export; does not run implementation tools."""
 import argparse
+from collections import Counter
 import hashlib
 import json
 import re
@@ -55,6 +56,28 @@ for cell in lib.cells:
             check_nm_grid(reference.repetition.get_offsets(), cell.name)
     for label in cell.labels:
         check_nm_grid([label.origin], cell.name)
+# Magic cannot preserve aliased ports connected through hierarchical via cells.
+# Inline only ICC2-generated vias; preserve the exact fabrication geometry.
+# Standard-cell hierarchy, devices, labels and signal routing remain unchanged.
+original_geometry = top.get_polygons()
+flattened_vias = 0
+for reference in list(top.references):
+    if reference.cell_name.startswith('$$Via'):
+        if reference.cell.labels or reference.cell.references:
+            raise ValueError('Unexpected hierarchy/labels in via: ' + reference.cell_name)
+        top.add(*reference.get_polygons())
+        top.remove(reference)
+        flattened_vias += 1
+updated_geometry = top.get_polygons()
+def polygon_multiset(polygons):
+    return Counter(
+        (p.layer, p.datatype, tuple(map(tuple, p.points)))
+        for p in polygons
+    )
+
+if polygon_multiset(original_geometry) != polygon_multiset(updated_geometry):
+    raise ValueError('Via inlining changed the polygon multiset')
+print(f'Inlined {flattened_vias} via instances; polygon multisets are identical')
 lib.precision = 1e-9
 lib.write_gds(out / 'core.gds')
 for name in ('VDD', 'VSS'):
@@ -186,6 +209,8 @@ print(f'Removed {removed} unreferenced filler NAME_MAP entries')
     'source_sha256': {f: hashlib.sha256((a.export / f).read_bytes()).hexdigest()
                       for f in ('core.gds', 'core.lef', 'core.v', 'core.pg.v', 'core.gf180_nominal_25.spef')},
     'removed_unused_spef_fillers': removed,
+    'flattened_via_instances': flattened_vias,
+    'via_flatten_geometry_check': 'exact polygon multiset equality on every layer/datatype',
     'pr_boundary_um': [0, 0, width, height],
     'gds_precision_m': lib.precision,
     'lef_power_pins': 'Expose GDS-verified continuous Metal4 stripes; subtract only these stripes from Metal4 OBS.',
