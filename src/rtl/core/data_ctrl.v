@@ -19,6 +19,9 @@ module data_ctrl (
     output reg exec_data_out_val,
     output reg exec_data_is_weight,
 
+    output reg input_scalar_mode,
+    output reg [`CUR_WIDTH-1:0] input_select,
+
     // Direct connection to mem_itf. rdy means the whole transaction is idle.
     input  wire mem_itf_rdy,
     output wire read_en,
@@ -33,16 +36,17 @@ module data_ctrl (
     reg [1:0] state;
     reg [`MEM_ADDR_WIDTH-1:0] base_addr;
     reg [`DATA_WIDTH*`COMPUTE_WIDTH-1:0] write_buffer;
-    wire input_all_zero;
     wire [`COMPUTE_WIDTH-1:0] lane_zero;
     genvar lane;
     generate for (lane = 0; lane < `COMPUTE_WIDTH; lane = lane + 1) begin : zero_detect
         assign lane_zero[lane] = read_data[lane*`DATA_WIDTH +: 7] == 0;
     end endgenerate
-    assign input_all_zero = &lane_zero;
     reg load_weight;
     reg sparse_en;
-    reg input_zero;
+    reg [`COMPUTE_WIDTH-1:0] input_zero_mask;
+    wire input_zero = input_scalar_mode ?
+        (input_select < `COMPUTE_WIDTH && input_zero_mask[input_select]) :
+        &input_zero_mask;
     reg write_reg;
     reg result_valid;
 
@@ -66,7 +70,9 @@ module data_ctrl (
             state               <= IDLE;
             load_weight         <= 0;
             sparse_en           <= 0;
-            input_zero          <= 0;
+            input_zero_mask     <= 0;
+            input_scalar_mode  <= 0;
+            input_select       <= 0;
             write_reg           <= 0;
             result_valid        <= 0;
             base_addr           <= 0;
@@ -93,6 +99,8 @@ module data_ctrl (
                             if (data_inst_in[12] == `DATA_LOAD) begin
                                 load_weight <= data_inst_in[10];
                                 sparse_en   <= data_inst_in[11];
+                                input_select <= data_inst_in[9 -: `CUR_WIDTH];
+                                input_scalar_mode <= data_inst_in[9-`CUR_WIDTH];
                             end else begin
                                 write_buffer <= exec_data_in;
                             end
@@ -125,7 +133,7 @@ module data_ctrl (
                         exec_data_out       <= read_data;
                         exec_data_out_val   <= 1;
                         exec_data_is_weight <= load_weight;
-                        if (!load_weight) input_zero <= input_all_zero;
+                        if (!load_weight) input_zero_mask <= lane_zero;
                         state <= DELIVER;
                     end else if (write_reg && mem_itf_rdy) begin
                         state <= IDLE;
@@ -142,10 +150,13 @@ module data_ctrl (
 
 `ifndef SYNTHESIS
     initial begin
-        if (`DATA_WIDTH != 8 || `COMPUTE_WIDTH < 1)
+        if (`DATA_WIDTH != 8 || `COMPUTE_WIDTH < 1 || `CUR_WIDTH > 9)
             $fatal(1, "data_ctrl requires FP8 elements and a valid positive lane count");
     end
     always @(posedge clk) begin
+        if (rst_n && accept && opcode == `OPCODE_DATA && !data_inst_in[12] &&
+            data_inst_in[9-`CUR_WIDTH] && data_inst_in[9 -: `CUR_WIDTH] >= `COMPUTE_WIDTH)
+            $fatal(1, "DATA cur is outside COMPUTE_WIDTH");
         if (rst_n && accept && opcode == `OPCODE_MEM && data_inst_in[11:10] == 2'b01)
             $fatal(1, "Reserved memory device selector");
     end

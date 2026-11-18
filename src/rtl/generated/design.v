@@ -40,6 +40,8 @@ module tt_um_tiny_sparse_acc_ramzxc (
 	wire data_rdy;
 	wire [7:0] operand;
 	wire [7:0] result;
+	wire input_scalar_mode;
+	wire [0:0] input_select;
 	wire operand_val;
 	wire operand_is_weight;
 	wire result_val;
@@ -111,6 +113,8 @@ module tt_um_tiny_sparse_acc_ramzxc (
 		.exec_data_out(operand),
 		.exec_data_out_val(operand_val),
 		.exec_data_is_weight(operand_is_weight),
+		.input_scalar_mode(input_scalar_mode),
+		.input_select(input_select),
 		.mem_itf_rdy(mem_rdy),
 		.read_en(read_en),
 		.write_en(write_en),
@@ -129,6 +133,8 @@ module tt_um_tiny_sparse_acc_ramzxc (
 		.data_in(operand),
 		.data_in_val(operand_val),
 		.is_weight(operand_is_weight),
+		.input_scalar_mode(input_scalar_mode),
+		.input_select(input_select),
 		.data_out(result),
 		.data_out_val(result_val)
 	);
@@ -461,6 +467,8 @@ module data_ctrl (
 	exec_data_out,
 	exec_data_out_val,
 	exec_data_is_weight,
+	input_scalar_mode,
+	input_select,
 	mem_itf_rdy,
 	read_en,
 	write_en,
@@ -480,6 +488,8 @@ module data_ctrl (
 	output reg [7:0] exec_data_out;
 	output reg exec_data_out_val;
 	output reg exec_data_is_weight;
+	output reg input_scalar_mode;
+	output reg [0:0] input_select;
 	input wire mem_itf_rdy;
 	output wire read_en;
 	output wire write_en;
@@ -495,7 +505,6 @@ module data_ctrl (
 	reg [1:0] state;
 	reg [23:0] base_addr;
 	reg [7:0] write_buffer;
-	wire input_all_zero;
 	wire [0:0] lane_zero;
 	genvar _gv_lane_1;
 	generate
@@ -504,10 +513,10 @@ module data_ctrl (
 			assign lane_zero[lane] = read_data[lane * 8+:7] == 0;
 		end
 	endgenerate
-	assign input_all_zero = &lane_zero;
 	reg load_weight;
 	reg sparse_en;
-	reg input_zero;
+	reg [0:0] input_zero_mask;
+	wire input_zero = (input_scalar_mode ? (input_select < 1) && input_zero_mask[input_select] : &input_zero_mask);
 	reg write_reg;
 	reg result_valid;
 	wire [2:0] opcode = data_inst_in[15:13];
@@ -523,7 +532,9 @@ module data_ctrl (
 			state <= IDLE;
 			load_weight <= 0;
 			sparse_en <= 0;
-			input_zero <= 0;
+			input_zero_mask <= 0;
+			input_scalar_mode <= 0;
+			input_select <= 0;
 			write_reg <= 0;
 			result_valid <= 0;
 			base_addr <= 0;
@@ -550,6 +561,8 @@ module data_ctrl (
 								if (data_inst_in[12] == 1'b0) begin
 									load_weight <= data_inst_in[10];
 									sparse_en <= data_inst_in[11];
+									input_select <= data_inst_in[9-:1];
+									input_scalar_mode <= data_inst_in[8];
 								end
 								else
 									write_buffer <= exec_data_in;
@@ -577,7 +590,7 @@ module data_ctrl (
 						exec_data_out_val <= 1;
 						exec_data_is_weight <= load_weight;
 						if (!load_weight)
-							input_zero <= input_all_zero;
+							input_zero_mask <= lane_zero;
 						state <= DELIVER;
 					end
 					else if (write_reg && mem_itf_rdy)
@@ -596,6 +609,8 @@ module exec_unit (
 	data_in,
 	data_in_val,
 	is_weight,
+	input_scalar_mode,
+	input_select,
 	data_out,
 	data_out_val
 );
@@ -607,6 +622,8 @@ module exec_unit (
 	input wire [7:0] data_in;
 	input wire data_in_val;
 	input wire is_weight;
+	input wire input_scalar_mode;
+	input wire [0:0] input_select;
 	output reg [7:0] data_out;
 	output reg data_out_val;
 	localparam [7:0] FP8_ZERO = 8'h00;
@@ -890,11 +907,17 @@ module exec_unit (
 				activate = FP8_QNAN;
 		end
 	endfunction
+	reg [7:0] inputs;
+	always @(posedge clk)
+		if (!rst_n)
+			inputs <= 0;
+		else if (data_in_val && !is_weight)
+			inputs <= data_in;
 	genvar _gv_lane_2;
 	generate
 		for (_gv_lane_2 = 0; _gv_lane_2 < 1; _gv_lane_2 = _gv_lane_2 + 1) begin : lanes
 			localparam lane = _gv_lane_2;
-			reg [7:0] input_reg;
+			wire [7:0] input_reg = (input_scalar_mode ? inputs[input_select * 8+:8] : inputs[lane * 8+:8]);
 			reg [7:0] weight_reg;
 			reg [7:0] acc_reg;
 			wire multiply = operation == 2'b10;
@@ -905,7 +928,6 @@ module exec_unit (
 			wire [7:0] result = (multiply && !accumulate ? product : sum);
 			always @(posedge clk)
 				if (!rst_n) begin
-					input_reg <= 0;
 					weight_reg <= 0;
 					acc_reg <= 0;
 					data_out[lane * 8+:8] <= 0;
@@ -914,8 +936,6 @@ module exec_unit (
 					if (data_in_val) begin
 						if (is_weight)
 							weight_reg <= data_in[lane * 8+:8];
-						else
-							input_reg <= data_in[lane * 8+:8];
 					end
 					if (exec_inst_in_val) begin
 						acc_reg <= result;

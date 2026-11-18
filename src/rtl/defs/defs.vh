@@ -19,4 +19,7 @@
 `define EXEC_INST_WIDTH 6
 `define DATA_INST_WIDTH 16
 
+// DATA scalar selector: at least one bit, including a single-lane build.
+`define CUR_WIDTH ((`COMPUTE_WIDTH > 1) ? $clog2(`COMPUTE_WIDTH) : 1)
+
 `endif

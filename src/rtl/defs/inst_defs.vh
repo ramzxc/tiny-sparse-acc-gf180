@@ -105,12 +105,19 @@
 `define INST_EXEC_MUL_ACC_STEP         `INST_EXEC(`VPU_ACCUMULATE, `VPU_MUL, `ACT_STEP)
 
 // DATA: [15:13] opcode, [12] load/store, [11] dense/sparse,
-//       [10] input/weight (LOAD only), [9:0] reserved.
+//       [10] input/weight (LOAD only). Legacy presets use vector mode.
+// Scalar mode: cur starts at bit 9; the next bit enables broadcast.
+// For 1/2 lanes: [9] cur, [8] scalar, [7:0] reserved.
 `define INST_DATA(mode, sparse, target) {`OPCODE_DATA, (mode), (sparse), (target), 10'b0}
 `define INST_DATA_LOAD_INPUT_DENSE  `INST_DATA(`DATA_LOAD, `DATA_DENSE,  `DATA_INPUT)
 `define INST_DATA_LOAD_INPUT_SPARSE `INST_DATA(`DATA_LOAD, `DATA_SPARSE, `DATA_INPUT)
 `define INST_DATA_LOAD_WEIGHT_DENSE `INST_DATA(`DATA_LOAD, `DATA_DENSE,  `DATA_WEIGHT)
 `define INST_DATA_LOAD_WEIGHT_SPARSE `INST_DATA(`DATA_LOAD, `DATA_SPARSE, `DATA_WEIGHT)
 `define INST_DATA_STORE             `INST_DATA(`DATA_STORE, `DATA_DENSE, `DATA_INPUT)
+
+// Cast cur so unsized arguments cannot change the instruction width.
+`define INST_DATA_SCALAR(sparse, target, cur) {`OPCODE_DATA, `DATA_LOAD, (sparse), (target), `CUR_WIDTH'(cur), 1'b1, {(9-`CUR_WIDTH){1'b0}}}
+`define INST_DATA_WEIGHT_SCALAR(cur) `INST_DATA_SCALAR(`DATA_DENSE, `DATA_WEIGHT, cur)
+`define INST_DATA_WEIGHT_SCALAR_SPARSE(cur) `INST_DATA_SCALAR(`DATA_SPARSE, `DATA_WEIGHT, cur)
 
 `endif

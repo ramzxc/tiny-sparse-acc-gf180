@@ -26,6 +26,8 @@ module tt_um_tiny_sparse_acc_ramzxc (
     wire [`DATA_INST_WIDTH-1:0] data_inst;
     wire exec_inst_val, data_inst_val, exec_rdy, data_rdy;
     wire [`DATA_WIDTH*`COMPUTE_WIDTH-1:0] operand, result;
+    wire input_scalar_mode;
+    wire [`CUR_WIDTH-1:0] input_select;
     wire operand_val, operand_is_weight, result_val;
     wire mem_rdy, read_en, write_en, read_data_val;
     wire [`MEM_ADDR_WIDTH-1:0] addr;
@@ -62,6 +64,7 @@ module tt_um_tiny_sparse_acc_ramzxc (
         .exec_data_in(result), .exec_data_in_val(result_val),
         .exec_data_out(operand), .exec_data_out_val(operand_val),
         .exec_data_is_weight(operand_is_weight),
+        .input_scalar_mode(input_scalar_mode), .input_select(input_select),
         .mem_itf_rdy(mem_rdy), .read_en(read_en), .write_en(write_en),
         .addr(addr), .device(device), .write_data(write_data),
         .read_data(read_data), .read_data_val(read_data_val)
@@ -70,6 +73,7 @@ module tt_um_tiny_sparse_acc_ramzxc (
         .clk(clk), .rst_n(core_rst_n),
         .exec_inst_in(exec_inst), .exec_inst_in_val(exec_inst_val), .exec_rdy(exec_rdy),
         .data_in(operand), .data_in_val(operand_val), .is_weight(operand_is_weight),
+        .input_scalar_mode(input_scalar_mode), .input_select(input_select),
         .data_out(result), .data_out_val(result_val)
     );
     mem_itf itf (

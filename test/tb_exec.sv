@@ -9,7 +9,7 @@ module tb_exec;
     reg data_val = 0, weight = 0;
     wire rdy, out_val;
     wire [7:0] out;
-    exec_unit dut(clk, rst_n, cmd, cmd_val, rdy, data, data_val, weight, out, out_val);
+    exec_unit dut(clk, rst_n, cmd, cmd_val, rdy, data, data_val, weight, 1'b0, 1'b0, out, out_val);
     reg [29:0] vectors [0:7279];
     string path;
     integer count;

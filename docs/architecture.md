@@ -17,7 +17,7 @@ UART RX → inst_fifo → inst_decoder → exec_unit
   sparse 읽기 생략. 별도 `mem_ctrl`은 없습니다.
 - `mem_itf`: 명령어 해석 없이 QSPI 요청과 완료를 연결합니다.
 - `inst_decoder`: FIFO 맨 앞 명령을 수락 가능한 유닛으로 보냅니다. pending 저장은 없습니다.
-- `sources.f`: 실제 컴파일 소스 목록. 예전 generated/design.v는 제거했습니다.
+- `sources.f`: 실제 컴파일 소스 목록. generated/design.v는 이 목록에서 자동 생성한 Yosys용 파일입니다.
 
 ## 폭과 수치 형식
 
@@ -76,10 +76,21 @@ DATA STORE는 스냅샷 명령이며, 실제 쓰기는 MEM WRITE가 수행합니
 STORE 이후 새 EXEC가 결과를 바꿔도 이전 스냅샷은 유지됩니다.
 MEM WRITE 전에 DATA STORE를 보내세요. 초기 저장용 레지스터 값은 0입니다.
 
-새 input을 읽으면 전체 input이 0인지 한 비트에 기록합니다(+0/-0 모두 포함).
-이 값은 다음 input 읽기까지 유지됩니다. sparse weight READ일 때만 이 값을 보고
-벡터 전체의 메모리 읽기를 생략하고 exec에 0 weight를 전달합니다.
-여러 lane 중 일부만 0이면 일반 읽기를 수행합니다. 개별 lane skip/압축은 없습니다.
+새 input을 읽으면 lane별 0 여부를 마스크에 기록합니다(+0/-0 모두 포함).
+다음 input 읽기까지 유지되며 weight 읽기로는 바뀌지 않습니다.
+
+- `INST_DATA_WEIGHT_SCALAR_SPARSE(cur)`: 저장된 input의 `cur` 원소를 모든
+  연산 lane에 broadcast합니다. 그 원소가 0이면 weight 벡터 읽기를 생략하고
+  zero weight를 전달합니다. 다른 input 원소가 비0이어도 생략합니다.
+- `INST_DATA_WEIGHT_SCALAR(cur)`: 같은 broadcast 연산을 읽기 생략 없이 수행합니다.
+- 기존 vector DATA preset은 lane별 원소 연산을 유지합니다. vector sparse는
+  안전하게 모든 input이 0일 때만 읽기를 생략합니다.
+
+`cur` 폭은 `max(1, clog2(COMPUTE_WIDTH))`이며 DATA의 bit 9부터 내려갑니다.
+바로 다음 비트는 scalar 선택, 나머지 하위 비트는 reserved입니다.
+1/2 lane에서는 not-so-tiny와 동일하게 bit 9=cur, bit 8=scalar입니다.
+유효 범위는 `0 <= cur < COMPUTE_WIDTH`이며 잘못된 cur는 시뮬레이션 오류입니다.
+압축된 sparse 저장 형식은 사용하지 않습니다.
 
 EXEC와 DATA 유닛은 독립적입니다. 새로운 피연산자가 필요한 EXEC 앞에는 SYNC를
 넣어야 합니다. 같은 클럭의 operand 갱신과 EXEC는 이전 operand로 연산합니다.
@@ -101,3 +112,7 @@ bash test/check_import.sh
 Flash QE=1, PSRAM QPI 설정은 기존처럼 외부 초기화가 되어 있다고 가정합니다.
 이 테스트는 기능 검증이며, 합성/PnR·타이밍 signoff 결과는 아닙니다.
 
+
+## EGRU 및 FC 회귀 검사
+
+`python3 test/test_sparse_egru.py`는 로컬 `/docker/projects/egru/sim/data/maze/fixed16`의 실제 maze 데이터를 이용해 첫 EGRU step과 FC를 실행합니다. 입력 182개, hidden 256개, FC 출력 2개를 FP8 기준 모델과 비교합니다. `--small --widths 1 2 3 4 8`로 축소 검사를 실행할 수 있습니다. 데이터 파일은 저장소에 포함하지 않습니다. UART/QSPI 대신 지연이 있는 vector 메모리를 연결한 기능 검사이며 정확도 또는 물리 타이밍 검사는 아닙니다.

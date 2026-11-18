@@ -122,7 +122,28 @@ module tb_vector;
         if (ram_b.reads != before_reads + N) $fatal(1, "dense must read every weight byte");
         if (vector_reads != 4 || vector_responses != 4 || vector_writes != 2)
             $fatal(1, "one request/response per vector: reads=%0d responses=%0d writes=%0d", vector_reads, vector_responses, vector_writes);
-        $display("PASS COMPUTE_WIDTH=%0d: lane assembly, MAC, byte order, vector STORE, Flash, all-zero sparse bypass", N);
+        // Scalar cur: mixed-zero input must skip only the selected column.
+        read_operand(`INST_DATA_LOAD_INPUT_DENSE, 0, `MEM_PSRAM_A);
+        before_reads = ram_b.reads;
+        read_operand(`INST_DATA_WEIGHT_SCALAR_SPARSE(0), 0, `MEM_PSRAM_B);
+        if (ram_b.reads != before_reads) $fatal(1, "cur=0 must skip despite nonzero last input");
+        send(`INST_EXEC_MUL_NOP);
+        expect_result({N{8'h00}});
+        read_operand(`INST_DATA_WEIGHT_SCALAR_SPARSE(N-1), 0, `MEM_PSRAM_B);
+        if (ram_b.reads != before_reads + N) $fatal(1, "nonzero cur must fetch weight vector");
+        send(`INST_EXEC_MUL_NOP);
+        expect_result({N{8'h4c}}); // selected 2 times every weight 3
+        read_operand(`INST_DATA_WEIGHT_SCALAR_SPARSE(0), 0, `MEM_PSRAM_B);
+        if (ram_b.reads != before_reads + N) $fatal(1, "weight load must preserve input mask");
+        read_operand(`INST_DATA_WEIGHT_SCALAR(0), 0, `MEM_PSRAM_B);
+        if (ram_b.reads != before_reads + 2*N) $fatal(1, "dense scalar must fetch even for zero");
+        read_operand(`INST_DATA_LOAD_INPUT_DENSE, 16, `MEM_PSRAM_A);
+        before_reads = ram_b.reads;
+        read_operand(`INST_DATA_WEIGHT_SCALAR_SPARSE(N-1), 0, `MEM_PSRAM_B);
+        if (ram_b.reads != before_reads) $fatal(1, "new input must refresh selected zero mask");
+        send(`INST_EXEC_MUL_NOP);
+        expect_result({N{8'h80}}); // selected -0 times zero
+        $display("PASS COMPUTE_WIDTH=%0d: lane assembly, MAC, byte order, vector STORE, Flash, vector/scalar cur sparse bypass", N);
         $finish;
     end
     initial begin #100000000; $fatal(1, "timeout"); end

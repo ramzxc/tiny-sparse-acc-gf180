@@ -14,6 +14,8 @@ module exec_unit (
     input  wire [`DATA_WIDTH*`COMPUTE_WIDTH-1:0] data_in,
     input  wire data_in_val,
     input  wire is_weight,
+    input  wire input_scalar_mode,
+    input  wire [`CUR_WIDTH-1:0] input_select,
 
     output reg [`DATA_WIDTH*`COMPUTE_WIDTH-1:0] data_out,
     output reg data_out_val
@@ -49,11 +51,19 @@ module exec_unit (
         end
     endfunction
 
+    reg [`DATA_WIDTH*`COMPUTE_WIDTH-1:0] inputs;
+    always @(posedge clk) begin
+        if (!rst_n) inputs <= 0;
+        else if (data_in_val && !is_weight) inputs <= data_in;
+    end
+
     // One multiplier and one arithmetic adder per lane. Default is one lane.
     // MUL rounds to FP8 before accumulation (not a fused multiply-add).
     genvar lane;
     generate for (lane = 0; lane < `COMPUTE_WIDTH; lane = lane + 1) begin : lanes
-        reg [`DATA_WIDTH-1:0] input_reg;
+        wire [`DATA_WIDTH-1:0] input_reg = input_scalar_mode ?
+            inputs[input_select*`DATA_WIDTH +: `DATA_WIDTH] :
+            inputs[lane*`DATA_WIDTH +: `DATA_WIDTH];
         reg [`DATA_WIDTH-1:0] weight_reg;
         reg [`DATA_WIDTH-1:0] acc_reg;
 
@@ -67,7 +77,6 @@ module exec_unit (
 
         always @(posedge clk) begin
             if (!rst_n) begin
-                input_reg  <= 0;
                 weight_reg <= 0;
                 acc_reg    <= 0;
                 data_out[lane*`DATA_WIDTH +: `DATA_WIDTH] <= 0;
@@ -75,8 +84,6 @@ module exec_unit (
                 if (data_in_val) begin
                     if (is_weight)
                         weight_reg <= data_in[lane*`DATA_WIDTH +: `DATA_WIDTH];
-                    else
-                        input_reg <= data_in[lane*`DATA_WIDTH +: `DATA_WIDTH];
                 end
 
                 // Nonblocking assignments deliberately use OLD operands when

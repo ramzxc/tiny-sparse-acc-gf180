@@ -81,8 +81,9 @@ class Host:
         await self.word(0x2000 | (addr & 0xfff))
         await self.word(0x3000 | ((addr >> 12) & 0xfff))
 
-    async def load(self, addr, device=2, weight=False, sparse=False):
-        await self.word(0x8000 | (int(sparse)<<11) | (int(weight)<<10))
+    async def load(self, addr, device=2, weight=False, sparse=False, scalar=False):
+        # Submitted 1-lane core: scalar=1 selects cur=0.
+        await self.word(0x8000 | (int(sparse)<<11) | (int(weight)<<10) | (int(scalar)<<8))
         await self.address(addr)
         await self.word(0x4000 | (device<<10))
         await self.word_sync()
@@ -205,4 +206,26 @@ async def stalled_memory_and_queued_commands(dut):
     await host.word_sync()
     await Timer(20,unit="us")
     assert int(dut.flash.mem[64].value)==0x40
+    host.receiver.cancel()
+
+
+@cocotb.test()
+async def scalar_sparse_cur_zero(dut):
+    host = await start_host(dut)
+    dut.ram_a.mem[0].value = 0
+    dut.ram_a.mem[1].value = 0x40
+    dut.ram_b.mem[0].value = 0x44
+    await host.load(0)
+    before = int(dut.ram_b.reads.value)
+    await host.load(0, device=3, weight=True, sparse=True, scalar=True)
+    await host.execute()
+    await host.store(120)
+    assert int(dut.ram_b.reads.value) == before
+    assert int(dut.ram_b.mem[120].value) == 0
+    await host.load(1)
+    await host.load(0, device=3, weight=True, sparse=True, scalar=True)
+    await host.execute()
+    await host.store(121)
+    assert int(dut.ram_b.reads.value) == before + 1
+    assert int(dut.ram_b.mem[121].value) == 0x4c
     host.receiver.cancel()

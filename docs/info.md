@@ -16,8 +16,10 @@ operand. EXEC performs ADD/SUB/MUL plus activation. Accumulation is supported
 for MUL only. DATA STORE snapshots the result, then MEM WRITE stores it.
 Use SYNC before consuming a pending read/result. The host schedules loops.
 
-Sparse mode records whether the input vector is zero and skips subsequent
-sparse weight reads until the input changes. There is no compressed storage.
+Scalar DATA selects an input element with `cur` and broadcasts it to the weight lanes.
+Sparse scalar mode skips the weight read when that selected input is zero.
+The per-element zero mask persists until a new input is read. Legacy vector mode
+keeps elementwise arithmetic and only skips all-zero vectors. There is no compressed storage.
 
 See [Architecture and ISA](architecture.md) for bit fields and instruction presets.
 Run `bash test/check_import.sh` for arithmetic, QSPI, UART and vector tests.
