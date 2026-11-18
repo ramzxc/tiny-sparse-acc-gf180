@@ -1,78 +1,116 @@
 `ifndef INST_DEFS_VH
 `define INST_DEFS_VH
 
-// 16-bit ISA: normal opcode[15:9], payload[8:0].
-// Address commands: command[15:13], fragment[12:0].
-// LOW writes address[12:0]; HIGH writes [24:13], ignoring fragment[12].
-// Weight and unified memory are selected by address, not by separate opcodes.
-`define FLASH_TO_SRAM 7'd0
-`define SRAM_TO_VPU   7'd1
-`define ACT_TO_SRAM   7'd2
-`define SRAM_TO_FLASH 7'd3
-`define SET_SRC_LO    3'd4
-`define SET_SRC_HI    3'd6
-`define SET_DST_LO    3'd5
-`define SET_DST_HI    3'd7
-`define EXECUTE       7'd32
-`define ACC_CLEAR     7'd33
-`define ACTIVATE      7'd34
-`define VECTOR_PASS   7'd35
-`define EXE_SYNC      7'd60
-`define MEM_SYNC      7'd61
-`define INST_NOP      7'd62
+// opcode
+`define OPCODE_NOP    3'b000
+`define OPCODE_ADDR   3'b001
+`define OPCODE_MEM    3'b010
+`define OPCODE_EXEC   3'b011
+`define OPCODE_DATA   3'b100
+`define OPCODE_SYNC   3'b111
 
-// Compact mem_ctrl command: [15:13] action, [12:0] address fragment.
-// Address is used only by SET_SRC/SET_DST. Transfers use saved SRC/DST.
-`define MEM_INST_WIDTH 16
-`define MEM_CMD_FLASH_TO_SRAM 3'd0
-`define MEM_CMD_SRAM_TO_VPU   3'd1
-`define MEM_CMD_ACT_TO_SRAM   3'd2
-`define MEM_CMD_SRAM_TO_FLASH 3'd3
-`define MEM_CMD_SET_SRC_LO    3'd4
-`define MEM_CMD_SET_SRC_HI    3'd6
-`define MEM_CMD_SET_DST_LO    3'd5
-`define MEM_CMD_SET_DST_HI    3'd7
-`define MEM_INST_OP_MSB 15
-`define MEM_INST_OP_LSB 13
+// opcode: nop
+`define NOP 16'b0000000000000000
 
-// EXECUTE payload: [6] sparse MUL, [5:3] activation, [2] accumulate,
-// [1:0] arithmetic operation. Instruction payload[8:7] is reserved.
-// MUL: accumulate=0 replaces result_data; accumulate=1 adds the old result.
-// ADD/SUB/RSUB ignore accumulate and always replace result_data.
-// Activation is part of Execute. Datapath/operand details belong to exe_ctrl.
-`define EXE_INST_WIDTH 9
-// Decoder-only mode bits; low seven bits carry the execution payload.
-`define EXE_MODE_MSB 8
-`define EXE_MODE_LSB 7
-`define EXE_MODE_COMPUTE 2'd0
-`define EXE_MODE_CLEAR 2'd1
-`define EXE_MODE_ACTIVATE 2'd2
-`define EXE_MODE_INPUT 2'd3
-`define EXE_SPARSE_BIT 6
-`define EXE_OP_MSB 1
-`define EXE_OP_LSB 0
-`define EXE_ACC_BIT 2
-`define EXE_ACT_MSB 5
-`define EXE_ACT_LSB 3
-`define EXE_OP_ADD 2'd0
-`define EXE_OP_SUB 2'd1
-`define EXE_OP_MUL 2'd2
-// Internal reverse subtraction: weight - input (external vector A - B).
-`define EXE_OP_RSUB 2'd3
-`define ACT_NONE    3'd0
-`define ACT_RELU    3'd1
-`define ACT_SIGMOID 3'd2
-`define ACT_TANH    3'd3
-`define ACT_STEP    3'd4
+// opcode: addr
+`define ADDR_LOW  1'b0
+`define ADDR_HIGH 1'b1
 
-// SRAM_TO_VPU: payload[1:0] are reserved/ignored in the single-byte design.
-// Historical bit definitions are retained for source compatibility.
-`define MEM_SCALAR_BIT 0
-`define MEM_HIGH_BYTE_BIT 1
-// Route a Unified read into the weight register for vector operand A.
-`define MEM_FORCE_WEIGHT_BIT 2
+// opcode: mem
+`define MEM_READ  1'b0
+`define MEM_WRITE 1'b1
 
-// Software must synchronize accesses to shared input/result registers.
-// Example: SRAM_TO_VPU, MEM_SYNC, EXECUTE, EXE_SYNC, ACT_TO_SRAM,
-//          MEM_SYNC before another Execute may overwrite the saved result.
+// opcode: execute -> VPU
+`define VPU_ADD 2'b00
+`define VPU_SUB 2'b01
+`define VPU_MUL 2'b10
+
+`define VPU_OVERWRITE  1'b0
+`define VPU_ACCUMULATE 1'b1
+
+// opcode: execute -> ACT
+`define ACT_NOP     3'b000
+`define ACT_RELU    3'b001
+`define ACT_TANH    3'b010
+`define ACT_SIGMOID 3'b011
+`define ACT_STEP    3'b100
+
+// opcode: DATA
+`define DATA_LOAD  1'b0 // load data for exec_unit
+`define DATA_STORE 1'b1 // store to SRAM
+
+`define DATA_DENSE 1'b0
+`define DATA_SPARSE 1'b1
+
+`define DATA_INPUT  1'b0
+`define DATA_WEIGHT 1'b1
+
+// opcode: SYNC
+`define SYNC 16'b1111111111111111
+
+// INST PRESET: complete 16-bit instructions.
+// ADDR arguments must be 12 bits (for example, 12'h123).
+// These layouts define the new ISA; the decoder must use the same fields.
+
+// NOP / SYNC
+`define INST_NOP  `NOP
+`define INST_SYNC `SYNC
+
+// ADDR: [15:13] opcode, [12] low/high, [11:0] address fragment
+`define INST_ADDR_LOW(addr)  {`OPCODE_ADDR, `ADDR_LOW,  (addr)}
+`define INST_ADDR_HIGH(addr) {`OPCODE_ADDR, `ADDR_HIGH, (addr)}
+
+// MEM: [15:13] opcode, [12] read/write, [11:10] device, [9:0] reserved.
+// Device: 00=Flash, 10=PSRAM A, 11=PSRAM B (see mem_defs.vh).
+`define INST_MEM_READ_DEVICE(dev)  {`OPCODE_MEM, `MEM_READ,  (dev), 10'b0}
+`define INST_MEM_WRITE_DEVICE(dev) {`OPCODE_MEM, `MEM_WRITE, (dev), 10'b0}
+`define INST_MEM_READ  `INST_MEM_READ_DEVICE(2'b00)
+`define INST_MEM_WRITE `INST_MEM_WRITE_DEVICE(2'b00)
+
+// EXEC: VPU and ACT travel together in one instruction.
+// [15:13] opcode, [12] accumulate, [11:10] VPU operation,
+// [9:7] activation, [6:0] reserved.
+// ACT_NOP passes the VPU result through without activation.
+// Arguments must be 1-bit accumulate, 2-bit VPU op and 3-bit ACT op.
+`define INST_EXEC(acc, vpu, act) {`OPCODE_EXEC, (acc), (vpu), (act), 7'b0}
+
+// Accumulation is supported for MUL only.
+
+// ADD with overwrite
+`define INST_EXEC_ADD_NOP              `INST_EXEC(`VPU_OVERWRITE, `VPU_ADD, `ACT_NOP)
+`define INST_EXEC_ADD_RELU             `INST_EXEC(`VPU_OVERWRITE, `VPU_ADD, `ACT_RELU)
+`define INST_EXEC_ADD_TANH             `INST_EXEC(`VPU_OVERWRITE, `VPU_ADD, `ACT_TANH)
+`define INST_EXEC_ADD_SIGMOID          `INST_EXEC(`VPU_OVERWRITE, `VPU_ADD, `ACT_SIGMOID)
+`define INST_EXEC_ADD_STEP             `INST_EXEC(`VPU_OVERWRITE, `VPU_ADD, `ACT_STEP)
+
+// SUB with overwrite
+`define INST_EXEC_SUB_NOP              `INST_EXEC(`VPU_OVERWRITE, `VPU_SUB, `ACT_NOP)
+`define INST_EXEC_SUB_RELU             `INST_EXEC(`VPU_OVERWRITE, `VPU_SUB, `ACT_RELU)
+`define INST_EXEC_SUB_TANH             `INST_EXEC(`VPU_OVERWRITE, `VPU_SUB, `ACT_TANH)
+`define INST_EXEC_SUB_SIGMOID          `INST_EXEC(`VPU_OVERWRITE, `VPU_SUB, `ACT_SIGMOID)
+`define INST_EXEC_SUB_STEP             `INST_EXEC(`VPU_OVERWRITE, `VPU_SUB, `ACT_STEP)
+
+// MUL with overwrite
+`define INST_EXEC_MUL_NOP              `INST_EXEC(`VPU_OVERWRITE, `VPU_MUL, `ACT_NOP)
+`define INST_EXEC_MUL_RELU             `INST_EXEC(`VPU_OVERWRITE, `VPU_MUL, `ACT_RELU)
+`define INST_EXEC_MUL_TANH             `INST_EXEC(`VPU_OVERWRITE, `VPU_MUL, `ACT_TANH)
+`define INST_EXEC_MUL_SIGMOID          `INST_EXEC(`VPU_OVERWRITE, `VPU_MUL, `ACT_SIGMOID)
+`define INST_EXEC_MUL_STEP             `INST_EXEC(`VPU_OVERWRITE, `VPU_MUL, `ACT_STEP)
+
+// MUL with accumulation
+`define INST_EXEC_MUL_ACC_NOP          `INST_EXEC(`VPU_ACCUMULATE, `VPU_MUL, `ACT_NOP)
+`define INST_EXEC_MUL_ACC_RELU         `INST_EXEC(`VPU_ACCUMULATE, `VPU_MUL, `ACT_RELU)
+`define INST_EXEC_MUL_ACC_TANH         `INST_EXEC(`VPU_ACCUMULATE, `VPU_MUL, `ACT_TANH)
+`define INST_EXEC_MUL_ACC_SIGMOID      `INST_EXEC(`VPU_ACCUMULATE, `VPU_MUL, `ACT_SIGMOID)
+`define INST_EXEC_MUL_ACC_STEP         `INST_EXEC(`VPU_ACCUMULATE, `VPU_MUL, `ACT_STEP)
+
+// DATA: [15:13] opcode, [12] load/store, [11] dense/sparse,
+//       [10] input/weight (LOAD only), [9:0] reserved.
+`define INST_DATA(mode, sparse, target) {`OPCODE_DATA, (mode), (sparse), (target), 10'b0}
+`define INST_DATA_LOAD_INPUT_DENSE  `INST_DATA(`DATA_LOAD, `DATA_DENSE,  `DATA_INPUT)
+`define INST_DATA_LOAD_INPUT_SPARSE `INST_DATA(`DATA_LOAD, `DATA_SPARSE, `DATA_INPUT)
+`define INST_DATA_LOAD_WEIGHT_DENSE `INST_DATA(`DATA_LOAD, `DATA_DENSE,  `DATA_WEIGHT)
+`define INST_DATA_LOAD_WEIGHT_SPARSE `INST_DATA(`DATA_LOAD, `DATA_SPARSE, `DATA_WEIGHT)
+`define INST_DATA_STORE             `INST_DATA(`DATA_STORE, `DATA_DENSE, `DATA_INPUT)
+
 `endif

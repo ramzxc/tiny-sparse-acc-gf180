@@ -19,182 +19,148 @@ module tt_um_tiny_sparse_acc_ramzxc (
 	input wire clk;
 	input wire rst_n;
 	(* ASYNC_REG = "TRUE" *) reg [1:0] reset_sync;
-	wire internal_rst_n = reset_sync[1];
+	wire core_rst_n = reset_sync[1];
 	always @(posedge clk or negedge rst_n)
 		if (!rst_n)
-			reset_sync <= 2'b00;
+			reset_sync <= 0;
 		else
 			reset_sync <= {reset_sync[0], 1'b1};
-	wire rx = ui_in[3];
 	wire tx;
-	wire done;
-	wire error;
-	wire mem_itf_rdy;
+	wire fifo_rdy;
+	wire rx_inst_val;
+	wire inst_val;
+	wire decoder_rdy;
+	wire [15:0] rx_inst;
+	wire [15:0] inst;
+	wire [5:0] exec_inst;
+	wire [15:0] data_inst;
+	wire exec_inst_val;
+	wire data_inst_val;
+	wire exec_rdy;
+	wire data_rdy;
+	wire [7:0] operand;
+	wire [7:0] result;
+	wire operand_val;
+	wire operand_is_weight;
+	wire result_val;
+	wire mem_rdy;
 	wire read_en;
 	wire write_en;
-	wire copy_en;
 	wire read_data_val;
-	wire [24:0] src_addr;
-	wire [24:0] dst_addr;
-	wire [7:0] read_data;
+	wire [23:0] addr;
+	wire [1:0] device;
 	wire [7:0] write_data;
-	localparam HOST_WIDTH = 16;
-	wire [15:0] rx_inst;
-	wire [15:0] host_inst;
-	wire rx_inst_val;
-	wire host_inst_val;
-	wire fifo_rdy;
-	wire host_rdy;
-	uart_rx #(.WORD_WIDTH(HOST_WIDTH)) receiver(
-		.clk(clk),
-		.rst_n(internal_rst_n),
-		.rx(rx),
-		.inst(rx_inst),
-		.inst_val(rx_inst_val)
-	);
-	uart_tx transmitter(
-		.clk(clk),
-		.rst_n(internal_rst_n),
-		.inst_fifo_rdy(fifo_rdy),
-		.tx(tx)
-	);
-	inst_fifo #(.WORD_WIDTH(HOST_WIDTH)) fifo(
-		.clk(clk),
-		.rst_n(internal_rst_n),
-		.inst(rx_inst),
-		.inst_val(rx_inst_val),
-		.fifo_rdy(fifo_rdy),
-		.core_rdy(host_rdy),
-		.inst_out(host_inst),
-		.inst_out_val(host_inst_val)
-	);
-	wire [15:0] inst;
-	wire inst_val;
-	wire core_rdy;
-	wire mem_rdy;
-	wire [15:0] mem_inst;
-	wire mem_inst_val;
-	wire [8:0] exe_inst;
-	wire exe_inst_val;
-	wire [7:0] weight_data;
-	wire [7:0] input_data;
-	wire [7:0] vpu_result;
-	wire [7:0] act_result;
-	wire weight_data_val;
-	wire input_data_val;
-	wire vpu_result_val;
-	wire act_result_val;
-	wire [2:0] act_op;
-	reg exe_active;
-	wire exe_rdy = !exe_active;
-	always @(posedge clk)
-		if (!internal_rst_n)
-			exe_active <= 0;
-		else if (exe_inst_val)
-			exe_active <= 1;
-		else if (act_result_val)
-			exe_active <= 0;
-	assign inst = host_inst;
-	assign inst_val = host_inst_val;
-	assign host_rdy = core_rdy;
-	assign done = 1'b0;
-	assign error = 1'b0;
-	decoder decode(
-		.rst_n(internal_rst_n),
-		.inst_in(inst),
-		.inst_in_val(inst_val),
-		.core_rdy(core_rdy),
-		.mem_rdy(mem_rdy),
-		.exe_rdy(exe_rdy),
-		.mem_inst_out(mem_inst),
-		.mem_inst_out_val(mem_inst_val),
-		.exe_inst_out(exe_inst),
-		.exe_inst_out_val(exe_inst_val)
-	);
-	mem_ctrl memory(
-		.clk(clk),
-		.rst_n(internal_rst_n),
-		.mem_inst_in(mem_inst),
-		.mem_inst_in_val(mem_inst_val),
-		.mem_rdy(mem_rdy),
-		.mem_itf_rdy(mem_itf_rdy),
-		.read_en(read_en),
-		.write_en(write_en),
-		.copy_en(copy_en),
-		.src_addr(src_addr),
-		.dst_addr(dst_addr),
-		.write_data(write_data),
-		.read_data(read_data),
-		.read_data_val(read_data_val),
-		.weight_data(weight_data),
-		.weight_data_val(weight_data_val),
-		.input_data(input_data),
-		.input_data_val(input_data_val),
-		.act_res_in(act_result)
-	);
-	vpu compute(
-		.clk(clk),
-		.rst_n(internal_rst_n),
-		.exe_inst_in(exe_inst),
-		.exe_inst_in_val(exe_inst_val),
-		.weight_data(weight_data),
-		.weight_data_val(weight_data_val),
-		.input_data(input_data),
-		.input_data_val(input_data_val),
-		.vpu_res_out(vpu_result),
-		.act_op_out(act_op),
-		.vpu_res_out_val(vpu_result_val)
-	);
-	act activation(
-		.clk(clk),
-		.rst_n(internal_rst_n),
-		.vpu_res_in(vpu_result),
-		.act_op_in(act_op),
-		.vpu_res_in_val(vpu_result_val),
-		.act_res_out(act_result),
-		.act_res_out_val(act_result_val)
-	);
+	wire [7:0] read_data;
 	wire qspi_req_val;
 	wire qspi_req_rdy;
 	wire qspi_req_write;
 	wire qspi_read_data_val;
-	wire [24:0] qspi_req_addr;
-	wire [7:0] qspi_req_data;
+	wire [23:0] qspi_addr;
+	wire [1:0] qspi_device;
+	wire [7:0] qspi_write_data;
 	wire [7:0] qspi_read_data;
-	mem_itf itf(
-		.clk(clk),
-		.rst_n(internal_rst_n),
-		.rdy(mem_itf_rdy),
-		.read_en(read_en),
-		.write_en(write_en),
-		.copy_en(copy_en),
-		.src_addr(src_addr),
-		.dst_addr(dst_addr),
-		.write_data(write_data),
-		.read_data(read_data),
-		.read_data_val(read_data_val),
-		.qspi_req_val(qspi_req_val),
-		.qspi_req_rdy(qspi_req_rdy),
-		.qspi_req_write(qspi_req_write),
-		.qspi_req_addr(qspi_req_addr),
-		.qspi_req_data(qspi_req_data),
-		.qspi_read_data(qspi_read_data),
-		.qspi_read_data_val(qspi_read_data_val)
-	);
 	wire sck;
 	wire flash_cs;
 	wire ram_a_cs;
 	wire ram_b_cs;
 	wire [3:0] dq_out;
 	wire [3:0] dq_oe;
+	uart_rx receiver(
+		.clk(clk),
+		.rst_n(core_rst_n),
+		.rx(ui_in[3]),
+		.inst(rx_inst),
+		.inst_val(rx_inst_val)
+	);
+	uart_tx transmitter(
+		.clk(clk),
+		.rst_n(core_rst_n),
+		.inst_fifo_rdy(fifo_rdy),
+		.tx(tx)
+	);
+	inst_fifo fifo(
+		.clk(clk),
+		.rst_n(core_rst_n),
+		.inst_in(rx_inst),
+		.inst_in_val(rx_inst_val),
+		.fifo_rdy(fifo_rdy),
+		.decoder_rdy(decoder_rdy),
+		.inst_out(inst),
+		.inst_out_val(inst_val)
+	);
+	inst_decoder decode(
+		.rst_n(core_rst_n),
+		.inst_in(inst),
+		.inst_in_val(inst_val),
+		.decoder_rdy(decoder_rdy),
+		.exec_rdy(exec_rdy),
+		.data_rdy(data_rdy),
+		.exec_inst_out(exec_inst),
+		.exec_inst_out_val(exec_inst_val),
+		.data_inst_out(data_inst),
+		.data_inst_out_val(data_inst_val)
+	);
+	data_ctrl data(
+		.clk(clk),
+		.rst_n(core_rst_n),
+		.data_inst_in(data_inst),
+		.data_inst_in_val(data_inst_val),
+		.data_rdy(data_rdy),
+		.exec_data_in(result),
+		.exec_data_in_val(result_val),
+		.exec_data_out(operand),
+		.exec_data_out_val(operand_val),
+		.exec_data_is_weight(operand_is_weight),
+		.mem_itf_rdy(mem_rdy),
+		.read_en(read_en),
+		.write_en(write_en),
+		.addr(addr),
+		.device(device),
+		.write_data(write_data),
+		.read_data(read_data),
+		.read_data_val(read_data_val)
+	);
+	exec_unit exec(
+		.clk(clk),
+		.rst_n(core_rst_n),
+		.exec_inst_in(exec_inst),
+		.exec_inst_in_val(exec_inst_val),
+		.exec_rdy(exec_rdy),
+		.data_in(operand),
+		.data_in_val(operand_val),
+		.is_weight(operand_is_weight),
+		.data_out(result),
+		.data_out_val(result_val)
+	);
+	mem_itf itf(
+		.clk(clk),
+		.rst_n(core_rst_n),
+		.rdy(mem_rdy),
+		.read_en(read_en),
+		.write_en(write_en),
+		.addr(addr),
+		.device(device),
+		.write_data(write_data),
+		.read_data(read_data),
+		.read_data_val(read_data_val),
+		.qspi_req_val(qspi_req_val),
+		.qspi_req_rdy(qspi_req_rdy),
+		.qspi_req_write(qspi_req_write),
+		.qspi_req_addr(qspi_addr),
+		.qspi_req_device(qspi_device),
+		.qspi_req_data(qspi_write_data),
+		.qspi_read_data(qspi_read_data),
+		.qspi_read_data_val(qspi_read_data_val)
+	);
 	qspi_ctrl serial_memory(
 		.clk(clk),
-		.rst_n(internal_rst_n),
+		.rst_n(core_rst_n),
 		.req_val(qspi_req_val),
 		.req_rdy(qspi_req_rdy),
 		.req_write(qspi_req_write),
-		.req_addr(qspi_req_addr),
-		.req_data(qspi_req_data),
+		.req_addr(qspi_addr),
+		.req_device(qspi_device),
+		.req_data(qspi_write_data),
 		.read_data(qspi_read_data),
 		.read_data_val(qspi_read_data_val),
 		.sck(sck),
@@ -207,7 +173,7 @@ module tt_um_tiny_sparse_acc_ramzxc (
 	);
 	assign uio_out = {ram_b_cs, ram_a_cs, dq_out[3:2], sck, dq_out[1:0], flash_cs};
 	assign uio_oe = {2'b11, dq_oe[3:2], 1'b1, dq_oe[1:0], 1'b1};
-	assign uo_out = {3'b000, tx, 1'b0, error, done, host_rdy};
+	assign uo_out = {3'b000, tx, 3'b000, decoder_rdy};
 	wire _unused = &{ui_in[7:4], ui_in[2:0], uio_in[7:6], uio_in[3], uio_in[0], ena, 1'b0};
 endmodule
 `default_nettype wire
@@ -219,16 +185,15 @@ module uart_rx (
 	rx
 );
 	parameter integer CLKS_PER_BIT = 87;
-	parameter integer WORD_WIDTH = 64;
-	input clk;
-	input rst_n;
-	output reg [WORD_WIDTH - 1:0] inst;
+	input wire clk;
+	input wire rst_n;
+	output reg [15:0] inst;
 	output reg inst_val;
-	input rx;
+	input wire rx;
 	localparam integer TIMER_BITS = (CLKS_PER_BIT > 1 ? $clog2(CLKS_PER_BIT) : 1);
 	localparam integer HALF_BIT_CLKS = CLKS_PER_BIT / 2;
-	localparam integer BYTE_COUNT = WORD_WIDTH / 8;
-	localparam integer BYTE_IDX_BITS = (BYTE_COUNT > 1 ? $clog2(BYTE_COUNT) : 1);
+	localparam integer BYTE_COUNT = 2;
+	localparam integer BYTE_IDX_BITS = (BYTE_COUNT > 1 ? 1 : 1);
 	function automatic signed [TIMER_BITS - 1:0] sv2v_cast_EECBB_signed;
 		input reg signed [TIMER_BITS - 1:0] inp;
 		sv2v_cast_EECBB_signed = inp;
@@ -295,7 +260,7 @@ module uart_rx (
 					else if (clk_cnt == BIT_LAST) begin
 						clk_cnt <= 0;
 						if (bit_idx <= 8) begin
-							inst <= {rx_sync, inst[WORD_WIDTH - 1:1]};
+							inst <= {rx_sync, inst[15:1]};
 							bit_idx <= bit_idx + 1;
 						end
 						else if (rx_sync) begin
@@ -323,9 +288,9 @@ module uart_tx (
 	tx
 );
 	parameter integer CLKS_PER_BIT = 87;
-	input clk;
-	input rst_n;
-	input inst_fifo_rdy;
+	input wire clk;
+	input wire rst_n;
+	input wire inst_fifo_rdy;
 	output wire tx;
 	localparam integer TIMER_BITS = (CLKS_PER_BIT > 1 ? $clog2(CLKS_PER_BIT) : 1);
 	function automatic signed [TIMER_BITS - 1:0] sv2v_cast_EECBB_signed;
@@ -375,36 +340,35 @@ endmodule
 module inst_fifo (
 	clk,
 	rst_n,
-	inst,
-	inst_val,
+	inst_in,
+	inst_in_val,
 	fifo_rdy,
-	core_rdy,
+	decoder_rdy,
 	inst_out,
 	inst_out_val
 );
 	parameter integer FIFO_DEPTH = 1;
-	parameter integer WORD_WIDTH = 64;
-	input clk;
-	input rst_n;
-	input [WORD_WIDTH - 1:0] inst;
-	input inst_val;
+	input wire clk;
+	input wire rst_n;
+	input wire [15:0] inst_in;
+	input wire inst_in_val;
 	output reg fifo_rdy;
-	input core_rdy;
-	output reg [WORD_WIDTH - 1:0] inst_out;
+	input wire decoder_rdy;
+	output reg [15:0] inst_out;
 	output reg inst_out_val;
 	localparam integer PTR_BITS = (FIFO_DEPTH > 1 ? $clog2(FIFO_DEPTH) : 1);
 	localparam integer COUNT_BITS = $clog2(FIFO_DEPTH + 1);
-	reg [WORD_WIDTH - 1:0] words [0:FIFO_DEPTH - 1];
+	reg [15:0] words [0:FIFO_DEPTH - 1];
 	reg [PTR_BITS - 1:0] read_ptr;
 	reg [PTR_BITS - 1:0] write_ptr;
 	reg [COUNT_BITS - 1:0] count;
-	wire pop = (rst_n && (count != 0)) && core_rdy;
+	wire pop = (rst_n && (count != 0)) && decoder_rdy;
 	function automatic signed [COUNT_BITS - 1:0] sv2v_cast_23CCF_signed;
 		input reg signed [COUNT_BITS - 1:0] inp;
 		sv2v_cast_23CCF_signed = inp;
 	endfunction
 	wire space_available = count < sv2v_cast_23CCF_signed(FIFO_DEPTH);
-	wire push = (rst_n && inst_val) && space_available;
+	wire push = (rst_n && inst_in_val) && space_available;
 	function automatic signed [PTR_BITS - 1:0] sv2v_cast_A8768_signed;
 		input reg signed [PTR_BITS - 1:0] inp;
 		sv2v_cast_A8768_signed = inp;
@@ -419,7 +383,7 @@ module inst_fifo (
 	always @(*) begin
 		inst_out = words[read_ptr];
 		inst_out_val = rst_n && (count != 0);
-		fifo_rdy = (rst_n && space_available) && !inst_val;
+		fifo_rdy = (rst_n && space_available) && !inst_in_val;
 	end
 	always @(posedge clk)
 		if (!rst_n) begin
@@ -429,7 +393,7 @@ module inst_fifo (
 		end
 		else begin
 			if (push) begin
-				words[write_ptr] <= inst;
+				words[write_ptr] <= inst_in;
 				write_ptr <= next_ptr(write_ptr);
 			end
 			if (pop)
@@ -442,520 +406,209 @@ module inst_fifo (
 			endcase
 		end
 endmodule
-module micro_ctrl (
-	clk,
+module inst_decoder (
 	rst_n,
 	inst_in,
 	inst_in_val,
-	inst_in_rdy,
-	done,
-	error,
-	inst_out,
-	inst_out_val,
-	inst_out_rdy,
-	input_is_zero,
-	input_data_val
+	decoder_rdy,
+	exec_rdy,
+	data_rdy,
+	exec_inst_out,
+	exec_inst_out_val,
+	data_inst_out,
+	data_inst_out_val
 );
-	input clk;
-	input rst_n;
-	input [63:0] inst_in;
-	input inst_in_val;
-	output wire inst_in_rdy;
-	output reg done;
-	output reg error;
-	output reg [15:0] inst_out;
-	output reg inst_out_val;
-	input inst_out_rdy;
-	input input_is_zero;
-	input input_data_val;
-	localparam [4:0] IDLE = 0;
-	localparam [4:0] CLEAR = 1;
-	localparam [4:0] CLEAR_SYNC = 2;
-	localparam [4:0] SET_INPUT = 3;
-	localparam [4:0] LOAD_INPUT = 4;
-	localparam [4:0] INPUT_SYNC = 5;
-	localparam [4:0] CHECK_INPUT = 6;
-	localparam [4:0] SET_WEIGHT = 7;
-	localparam [4:0] LOAD_WEIGHT = 8;
-	localparam [4:0] WEIGHT_SYNC = 9;
-	localparam [4:0] MAC = 10;
-	localparam [4:0] MAC_SYNC = 11;
-	localparam [4:0] NEXT_COLUMN = 12;
-	localparam [4:0] APPLY_ACT = 13;
-	localparam [4:0] ACT_SYNC = 14;
-	localparam [4:0] SET_OUTPUT = 15;
-	localparam [4:0] STORE = 16;
-	localparam [4:0] STORE_SYNC = 17;
-	localparam [4:0] NEXT_TILE = 18;
-	localparam [4:0] VALIDATE = 19;
-	reg [4:0] state;
-	reg address_high;
-	reg [7:0] rows;
-	reg [7:0] cols;
-	reg [7:0] column;
-	reg [7:0] vectors;
-	reg [7:0] vector_index;
-	reg [7:0] validate_left;
-	reg [8:0] row;
-	reg [8:0] column_stride;
-	reg [8:0] input_stride;
-	reg [24:0] input_base;
-	reg [24:0] input_addr;
-	reg [24:0] output_addr;
-	reg [24:0] weight_tile;
-	reg [24:0] weight_base;
-	reg [25:0] weight_addr;
-	reg sparse_en;
-	reg [2:0] act_op;
-	reg elementwise;
-	reg [1:0] vector_op;
-	reg input_seen;
-	reg input_zero;
-	wire req_elementwise = inst_in[63];
-	wire [1:0] req_vector_op = inst_in[51:50];
-	wire [2:0] req_activation = (req_elementwise ? inst_in[49:47] : {1'b0, inst_in[61:60]});
-	wire [7:0] req_rows = inst_in[59:52];
-	wire [7:0] req_cols = (req_elementwise ? 8'd1 : inst_in[51:44]);
-	wire [7:0] req_vectors = (req_elementwise ? 8'd1 : inst_in[43:36]);
-	function automatic [25:0] sv2v_cast_26;
-		input reg [25:0] inp;
-		sv2v_cast_26 = inp;
-	endfunction
-	wire [25:0] weight_start = {1'b0, (req_elementwise ? 25'h1800000 : 25'h1000000)} + sv2v_cast_26(inst_in[35:24]);
-	wire [25:0] input_start = 26'h1800000 + sv2v_cast_26(inst_in[23:12]);
-	wire [25:0] output_start = 26'h1800000 + sv2v_cast_26(inst_in[11:0]);
-	wire [24:0] req_weight_addr = weight_start[24:0];
-	wire [24:0] req_input_addr = input_start[24:0];
-	wire [24:0] req_output_addr = output_start[24:0];
-	wire [8:0] row_stride = {1'b0, req_rows};
-	wire [8:0] col_stride = {1'b0, req_cols};
-	wire valid_vector_fields = !req_elementwise || (((inst_in[61:60] == 0) && (inst_in[46:36] == 0)) && (req_activation <= 3'd4));
-	wire valid_request = ((((((((valid_vector_fields && (req_rows != 0)) && (req_cols != 0)) && (req_vectors != 0)) && !weight_start[25]) && !input_start[25]) && !output_start[25]) && ((req_weight_addr & 25'h1800000) == (req_elementwise ? 25'h1800000 : 25'h1000000))) && ((req_input_addr & 25'h1800000) == 25'h1800000)) && ((req_output_addr & 25'h1800000) == 25'h1800000);
-	reg [25:0] input_end;
-	reg [25:0] output_end;
-	wire [25:0] next_input_end = input_end + sv2v_cast_26(input_stride);
-	wire [25:0] next_output_end = output_end + sv2v_cast_26(column_stride);
-	wire [25:0] vector_a_end = {1'b0, weight_base} + sv2v_cast_26(column_stride);
-	wire valid_vector_a = (!elementwise || (vector_op == 2'd3)) || ((vector_a_end <= 26'h2000000) && ((vector_a_end <= {1'b0, output_addr}) || (next_output_end <= {1'b0, weight_base})));
-	wire valid_extents = ((valid_vector_a && (next_input_end <= 26'h2000000)) && (next_output_end <= 26'h2000000)) && ((next_input_end <= {1'b0, output_addr}) || (next_output_end <= {1'b0, input_base}));
-	wire valid_weight_addr = !weight_addr[25] && ((weight_addr[24:0] & 25'h1800000) == (elementwise ? 25'h1800000 : 25'h1000000));
-	wire accepted = inst_out_val && inst_out_rdy;
-	assign inst_in_rdy = rst_n && (state == IDLE);
+	input wire rst_n;
+	input wire [15:0] inst_in;
+	input wire inst_in_val;
+	output reg decoder_rdy;
+	input wire exec_rdy;
+	input wire data_rdy;
+	output wire [5:0] exec_inst_out;
+	output reg exec_inst_out_val;
+	output wire [15:0] data_inst_out;
+	output reg data_inst_out_val;
+	wire [2:0] opcode = inst_in[15:13];
+	assign exec_inst_out = inst_in[12:7];
+	assign data_inst_out = inst_in;
 	always @(*) begin
-		inst_out = 16'h7c00;
-		inst_out_val = rst_n;
-		case (state)
-			CLEAR: inst_out = 16'h4200;
-			CLEAR_SYNC: inst_out = 16'h7800;
-			SET_INPUT: inst_out = (address_high ? {4'hc, input_addr[24:13]} : {3'd4, input_addr[12:0]});
-			LOAD_INPUT: inst_out = 16'h0200;
-			INPUT_SYNC: inst_out = 16'h7a00;
-			SET_WEIGHT: begin
-				inst_out = (address_high ? {4'hc, weight_addr[24:13]} : {3'd4, weight_addr[12:0]});
-				inst_out_val = rst_n && valid_weight_addr;
-			end
-			LOAD_WEIGHT: inst_out = {13'h0040, elementwise, 2'b00};
-			WEIGHT_SYNC: inst_out = 16'h7a00;
-			MAC:
-				if (elementwise && (vector_op == 2'd3))
-					inst_out = 16'h4600;
-				else
-					inst_out = {9'h080, (elementwise && sparse_en) && (vector_op == 2'd2), 3'd0, !elementwise, (elementwise ? (vector_op == 2'd1 ? 2'd3 : vector_op) : 2'd2)};
-			MAC_SYNC: inst_out = 16'h7800;
-			APPLY_ACT: inst_out = {10'h110, act_op, 3'b000};
-			ACT_SYNC: inst_out = 16'h7800;
-			SET_OUTPUT: inst_out = (address_high ? {4'he, output_addr[24:13]} : {3'd5, output_addr[12:0]});
-			STORE: inst_out = 16'h0400;
-			STORE_SYNC: inst_out = 16'h7a00;
-			default: inst_out_val = 0;
-		endcase
-	end
-	function automatic [24:0] sv2v_cast_25;
-		input reg [24:0] inp;
-		sv2v_cast_25 = inp;
-	endfunction
-	always @(posedge clk)
-		if (!rst_n) begin
-			state <= IDLE;
-			address_high <= 0;
-			rows <= 0;
-			cols <= 0;
-			column <= 0;
-			vectors <= 0;
-			vector_index <= 0;
-			validate_left <= 0;
-			input_stride <= 0;
-			input_end <= 0;
-			output_end <= 0;
-			weight_base <= 0;
-			row <= 0;
-			column_stride <= 0;
-			input_base <= 0;
-			input_addr <= 0;
-			output_addr <= 0;
-			weight_tile <= 0;
-			weight_addr <= 0;
-			sparse_en <= 0;
-			act_op <= 0;
-			elementwise <= 0;
-			vector_op <= 0;
-			input_seen <= 0;
-			input_zero <= 0;
-			done <= 0;
-			error <= 0;
-		end
-		else begin
-			done <= 0;
-			if (accepted && (((state == SET_INPUT) || (state == SET_WEIGHT)) || (state == SET_OUTPUT)))
-				address_high <= !address_high;
-			if ((state == INPUT_SYNC) && input_data_val) begin
-				input_seen <= 1;
-				input_zero <= input_is_zero;
-			end
-			case (state)
-				IDLE:
-					if (inst_in_val) begin
-						error <= !valid_request;
-						if (!valid_request)
-							done <= 1;
-						else begin
-							rows <= req_rows;
-							cols <= req_cols;
-							vectors <= req_vectors;
-							column <= 0;
-							row <= 0;
-							vector_index <= 0;
-							column_stride <= row_stride;
-							input_stride <= (req_elementwise ? row_stride : col_stride);
-							input_base <= req_input_addr;
-							input_addr <= req_input_addr;
-							output_addr <= req_output_addr;
-							weight_base <= req_weight_addr;
-							weight_tile <= req_weight_addr;
-							weight_addr <= weight_start;
-							sparse_en <= inst_in[62];
-							act_op <= req_activation;
-							elementwise <= req_elementwise;
-							vector_op <= req_vector_op;
-							input_seen <= 0;
-							input_end <= input_start;
-							output_end <= output_start;
-							validate_left <= req_vectors;
-							state <= VALIDATE;
-						end
-					end
-				VALIDATE: begin
-					input_end <= next_input_end;
-					output_end <= next_output_end;
-					validate_left <= validate_left - 1'b1;
-					if (validate_left == 1) begin
-						if (valid_extents)
-							state <= CLEAR;
-						else begin
-							error <= 1;
-							done <= 1;
-							state <= IDLE;
-						end
-					end
-				end
-				CLEAR:
-					if (accepted)
-						state <= CLEAR_SYNC;
-				CLEAR_SYNC:
-					if (accepted)
-						state <= SET_INPUT;
-				SET_INPUT:
-					if (accepted && address_high)
-						state <= LOAD_INPUT;
-				LOAD_INPUT:
-					if (accepted) begin
-						input_seen <= 0;
-						state <= INPUT_SYNC;
-					end
-				INPUT_SYNC:
-					if (accepted)
-						state <= CHECK_INPUT;
-				CHECK_INPUT:
-					if (input_seen) begin
-						if (elementwise && (vector_op == 2'd3))
-							state <= MAC;
-						else if ((sparse_en && input_zero) && (!elementwise || (vector_op == 2'd2)))
-							state <= (elementwise ? APPLY_ACT : NEXT_COLUMN);
-						else
-							state <= SET_WEIGHT;
-					end
-				SET_WEIGHT:
-					if (!valid_weight_addr) begin
-						error <= 1;
-						done <= 1;
-						state <= IDLE;
-					end
-					else if (accepted && address_high)
-						state <= LOAD_WEIGHT;
-				LOAD_WEIGHT:
-					if (accepted)
-						state <= WEIGHT_SYNC;
-				WEIGHT_SYNC:
-					if (accepted)
-						state <= MAC;
-				MAC:
-					if (accepted) begin
-						if (elementwise || (column == (cols - 1'b1)))
-							state <= MAC_SYNC;
-						else begin
-							column <= column + 1'b1;
-							input_addr <= input_addr + 1'b1;
-							weight_addr <= weight_addr + sv2v_cast_26(column_stride);
-							state <= SET_INPUT;
-						end
-					end
-				MAC_SYNC:
-					if (accepted)
-						state <= NEXT_COLUMN;
-				NEXT_COLUMN:
-					if (elementwise || (column == (cols - 1'b1)))
-						state <= APPLY_ACT;
-					else begin
-						column <= column + 1'b1;
-						input_addr <= input_addr + 1'b1;
-						weight_addr <= weight_addr + sv2v_cast_26(column_stride);
-						state <= SET_INPUT;
-					end
-				APPLY_ACT:
-					if (accepted)
-						state <= ACT_SYNC;
-				ACT_SYNC:
-					if (accepted)
-						state <= SET_OUTPUT;
-				SET_OUTPUT:
-					if (accepted && address_high)
-						state <= STORE;
-				STORE:
-					if (accepted)
-						state <= STORE_SYNC;
-				STORE_SYNC:
-					if (accepted)
-						state <= NEXT_TILE;
-				NEXT_TILE:
-					if ((row + 9'd1) >= {1'b0, rows}) begin
-						if (vector_index == (vectors - 1'b1)) begin
-							done <= 1;
-							state <= IDLE;
-						end
-						else begin
-							vector_index <= vector_index + 1'b1;
-							row <= 0;
-							column <= 0;
-							input_base <= input_base + sv2v_cast_25(input_stride);
-							input_addr <= input_base + sv2v_cast_25(input_stride);
-							output_addr <= output_addr + 1;
-							weight_tile <= weight_base;
-							weight_addr <= {1'b0, weight_base};
-							state <= CLEAR;
-						end
-					end
-					else begin
-						row <= row + 1;
-						column <= 0;
-						input_addr <= (elementwise ? input_addr + 1 : input_base);
-						output_addr <= output_addr + 1;
-						weight_tile <= weight_tile + 1;
-						weight_addr <= {1'b0, weight_tile} + 1;
-						state <= CLEAR;
-					end
-				default: state <= IDLE;
-			endcase
-		end
-endmodule
-module decoder (
-	rst_n,
-	inst_in,
-	inst_in_val,
-	core_rdy,
-	mem_rdy,
-	exe_rdy,
-	mem_inst_out,
-	mem_inst_out_val,
-	exe_inst_out,
-	exe_inst_out_val
-);
-	input rst_n;
-	input [15:0] inst_in;
-	input inst_in_val;
-	output reg core_rdy;
-	input mem_rdy;
-	input exe_rdy;
-	output wire [15:0] mem_inst_out;
-	output reg mem_inst_out_val;
-	output wire [8:0] exe_inst_out;
-	output reg exe_inst_out_val;
-	wire [6:0] opcode = inst_in[15:9];
-	assign mem_inst_out = (inst_in[15] ? inst_in : {opcode[2:0], 4'b0000, inst_in[8:0]});
-	assign exe_inst_out = (opcode == 7'd33 ? 9'h080 : (opcode == 7'd34 ? {3'h4, inst_in[5:3], 3'b000} : (opcode == 7'd35 ? {3'h6, inst_in[5:3], 3'b000} : {2'd0, inst_in[6:0]})));
-	always @(*) begin
-		core_rdy = 0;
-		mem_inst_out_val = 0;
-		exe_inst_out_val = 0;
-		if (rst_n && inst_in[15]) begin
-			core_rdy = mem_rdy;
-			mem_inst_out_val = inst_in_val && mem_rdy;
-		end
-		else if (rst_n)
+		decoder_rdy = 0;
+		exec_inst_out_val = 0;
+		data_inst_out_val = 0;
+		if (rst_n)
 			case (opcode)
-				7'd0, 7'd1, 7'd2, 7'd3: begin
-					core_rdy = mem_rdy;
-					mem_inst_out_val = inst_in_val && mem_rdy;
+				3'b001, 3'b010, 3'b100: begin
+					decoder_rdy = data_rdy;
+					data_inst_out_val = inst_in_val && data_rdy;
 				end
-				7'd32, 7'd33, 7'd34, 7'd35: begin
-					core_rdy = exe_rdy;
-					exe_inst_out_val = inst_in_val && exe_rdy;
+				3'b011: begin
+					decoder_rdy = exec_rdy;
+					exec_inst_out_val = inst_in_val && exec_rdy;
 				end
-				7'd60: core_rdy = exe_rdy;
-				7'd61: core_rdy = mem_rdy;
-				7'd62: core_rdy = 1;
-				default: core_rdy = 1;
+				3'b111: decoder_rdy = exec_rdy && data_rdy;
+				default: decoder_rdy = 1;
 			endcase
 	end
 endmodule
-module mem_ctrl (
+module data_ctrl (
 	clk,
 	rst_n,
-	mem_inst_in,
-	mem_inst_in_val,
-	mem_rdy,
+	data_inst_in,
+	data_inst_in_val,
+	data_rdy,
+	exec_data_in,
+	exec_data_in_val,
+	exec_data_out,
+	exec_data_out_val,
+	exec_data_is_weight,
 	mem_itf_rdy,
 	read_en,
 	write_en,
-	copy_en,
-	src_addr,
-	dst_addr,
+	addr,
+	device,
 	write_data,
 	read_data,
-	read_data_val,
-	weight_data,
-	weight_data_val,
-	input_data,
-	input_data_val,
-	act_res_in
+	read_data_val
 );
-	input clk;
-	input rst_n;
-	input [15:0] mem_inst_in;
-	input mem_inst_in_val;
-	output wire mem_rdy;
-	input mem_itf_rdy;
-	output reg read_en;
-	output reg write_en;
-	output reg copy_en;
-	output reg [24:0] src_addr;
-	output reg [24:0] dst_addr;
+	input wire clk;
+	input wire rst_n;
+	input wire [15:0] data_inst_in;
+	input wire data_inst_in_val;
+	output wire data_rdy;
+	input wire [7:0] exec_data_in;
+	input wire exec_data_in_val;
+	output reg [7:0] exec_data_out;
+	output reg exec_data_out_val;
+	output reg exec_data_is_weight;
+	input wire mem_itf_rdy;
+	output wire read_en;
+	output wire write_en;
+	output wire [23:0] addr;
+	output reg [1:0] device;
 	output wire [7:0] write_data;
-	input [7:0] read_data;
-	input read_data_val;
-	output wire [7:0] weight_data;
-	output wire weight_data_val;
-	output wire [7:0] input_data;
-	output wire input_data_val;
-	input [7:0] act_res_in;
-	localparam [2:0] IDLE = 0;
-	localparam [2:0] SEND_READ = 1;
-	localparam [2:0] SEND_WRITE = 2;
-	localparam [2:0] SEND_COPY = 3;
-	localparam [2:0] WAIT_READ = 4;
-	localparam [2:0] WAIT_OTHER = 5;
-	reg [2:0] state;
-	reg force_weight;
-	wire [2:0] incoming_command = mem_inst_in[15:13];
-	wire accept = (state == IDLE) && mem_inst_in_val;
-	wire address_write = accept && incoming_command[2];
-	wire transfer = accept && !incoming_command[2];
-	wire [12:0] address_value = mem_inst_in[12:0] & {13 {rst_n}};
-	wire load_vpu = (rst_n && (state == WAIT_READ)) && read_data_val;
-	assign mem_rdy = state == IDLE;
-	assign write_data = act_res_in;
-	assign weight_data = read_data;
-	assign input_data = read_data;
-	assign weight_data_val = load_vpu && (force_weight || ((src_addr & 25'h1800000) == 25'h1000000));
-	assign input_data_val = (load_vpu && !force_weight) && ((src_addr & 25'h1800000) == 25'h1800000);
-	always @(*) begin
-		read_en = rst_n && (state == SEND_READ);
-		write_en = rst_n && (state == SEND_WRITE);
-		copy_en = rst_n && (state == SEND_COPY);
-	end
-	always @(posedge clk) begin
-		if (!rst_n || ((address_write && !incoming_command[0]) && !incoming_command[1]))
-			src_addr[12:0] <= address_value;
-		if (!rst_n || ((address_write && !incoming_command[0]) && incoming_command[1]))
-			src_addr[24:13] <= address_value[11:0];
-		if (!rst_n || ((address_write && incoming_command[0]) && !incoming_command[1]))
-			dst_addr[12:0] <= address_value;
-		if (!rst_n || ((address_write && incoming_command[0]) && incoming_command[1]))
-			dst_addr[24:13] <= address_value[11:0];
+	input wire [7:0] read_data;
+	input wire read_data_val;
+	localparam [1:0] IDLE = 0;
+	localparam [1:0] SEND = 1;
+	localparam [1:0] WAIT = 2;
+	localparam [1:0] DELIVER = 3;
+	reg [1:0] state;
+	reg [23:0] base_addr;
+	reg [7:0] write_buffer;
+	wire input_all_zero;
+	wire [0:0] lane_zero;
+	genvar _gv_lane_1;
+	generate
+		for (_gv_lane_1 = 0; _gv_lane_1 < 1; _gv_lane_1 = _gv_lane_1 + 1) begin : zero_detect
+			localparam lane = _gv_lane_1;
+			assign lane_zero[lane] = read_data[lane * 8+:7] == 0;
+		end
+	endgenerate
+	assign input_all_zero = &lane_zero;
+	reg load_weight;
+	reg sparse_en;
+	reg input_zero;
+	reg write_reg;
+	reg result_valid;
+	wire [2:0] opcode = data_inst_in[15:13];
+	wire store_result = (opcode == 3'b100) && (data_inst_in[12] == 1'b1);
+	wire accept = data_inst_in_val && data_rdy;
+	assign data_rdy = ((rst_n && (state == IDLE)) && mem_itf_rdy) && (!store_result || result_valid);
+	assign addr = base_addr;
+	assign write_data = write_buffer;
+	assign read_en = (rst_n && (state == SEND)) && !write_reg;
+	assign write_en = (rst_n && (state == SEND)) && write_reg;
+	always @(posedge clk)
 		if (!rst_n) begin
 			state <= IDLE;
-			force_weight <= 0;
+			load_weight <= 0;
+			sparse_en <= 0;
+			input_zero <= 0;
+			write_reg <= 0;
+			result_valid <= 0;
+			base_addr <= 0;
+			device <= 2'b00;
+			write_buffer <= 0;
+			exec_data_out <= 0;
+			exec_data_out_val <= 0;
+			exec_data_is_weight <= 0;
 		end
 		else begin
-			if (transfer)
-				force_weight <= mem_inst_in[2];
+			exec_data_out_val <= 0;
+			if (exec_data_in_val)
+				result_valid <= 1;
 			case (state)
 				IDLE:
-					if (transfer)
-						case (incoming_command)
-							3'd1: state <= SEND_READ;
-							3'd2: state <= SEND_WRITE;
-							default: state <= SEND_COPY;
+					if (accept)
+						case (opcode)
+							3'b001:
+								if (data_inst_in[12] == 1'b1)
+									base_addr[23:12] <= data_inst_in[11:0];
+								else
+									base_addr[11:0] <= data_inst_in[11:0];
+							3'b100:
+								if (data_inst_in[12] == 1'b0) begin
+									load_weight <= data_inst_in[10];
+									sparse_en <= data_inst_in[11];
+								end
+								else
+									write_buffer <= exec_data_in;
+							3'b010: begin
+								device <= data_inst_in[11:10];
+								write_reg <= data_inst_in[12];
+								if ((((data_inst_in[12] == 1'b0) && load_weight) && sparse_en) && input_zero) begin
+									exec_data_out <= 0;
+									exec_data_out_val <= 1;
+									exec_data_is_weight <= 1;
+									state <= DELIVER;
+								end
+								else
+									state <= SEND;
+							end
+							default:
+								;
 						endcase
-				SEND_READ:
+				SEND:
 					if (mem_itf_rdy)
-						state <= WAIT_READ;
-				SEND_WRITE, SEND_COPY:
-					if (mem_itf_rdy)
-						state <= WAIT_OTHER;
-				WAIT_READ:
-					if (read_data_val)
+						state <= WAIT;
+				WAIT:
+					if (!write_reg && read_data_val) begin
+						exec_data_out <= read_data;
+						exec_data_out_val <= 1;
+						exec_data_is_weight <= load_weight;
+						if (!load_weight)
+							input_zero <= input_all_zero;
+						state <= DELIVER;
+					end
+					else if (write_reg && mem_itf_rdy)
 						state <= IDLE;
-				WAIT_OTHER:
-					if (mem_itf_rdy)
-						state <= IDLE;
+				DELIVER: state <= IDLE;
 				default: state <= IDLE;
 			endcase
 		end
-	end
 endmodule
-module vpu (
+module exec_unit (
 	clk,
 	rst_n,
-	exe_inst_in,
-	exe_inst_in_val,
-	weight_data,
-	weight_data_val,
-	input_data,
-	input_data_val,
-	vpu_res_out,
-	act_op_out,
-	vpu_res_out_val
+	exec_inst_in,
+	exec_inst_in_val,
+	exec_rdy,
+	data_in,
+	data_in_val,
+	is_weight,
+	data_out,
+	data_out_val
 );
-	input clk;
-	input rst_n;
-	input [8:0] exe_inst_in;
-	input exe_inst_in_val;
-	input [7:0] weight_data;
-	input weight_data_val;
-	input [7:0] input_data;
-	input input_data_val;
-	output reg [7:0] vpu_res_out;
-	output reg [2:0] act_op_out;
-	output reg vpu_res_out_val;
-	reg [7:0] weights;
-	reg [7:0] inputs;
-	wire [1:0] mode = exe_inst_in[8:7];
-	wire [1:0] operation = exe_inst_in[1:0];
-	wire accumulate = exe_inst_in[2];
-	wire sparse = exe_inst_in[6];
-	wire multiply = operation == 2'd2;
-	wire reverse_sub = operation == 2'd3;
-	wire do_subtract = (operation == 2'd1) || reverse_sub;
+	input wire clk;
+	input wire rst_n;
+	input wire [5:0] exec_inst_in;
+	input wire exec_inst_in_val;
+	output wire exec_rdy;
+	input wire [7:0] data_in;
+	input wire data_in_val;
+	input wire is_weight;
+	output reg [7:0] data_out;
+	output reg data_out_val;
 	localparam [7:0] FP8_ZERO = 8'h00;
 	localparam [7:0] FP8_QNAN = 8'h7f;
 	function automatic fp8_is_nan;
@@ -1212,355 +865,79 @@ module vpu (
 			end
 		end
 	endfunction
-	wire [7:0] x = inputs;
-	wire [7:0] w = weights;
-	wire [7:0] sum = vpu_res_out;
-	wire [7:0] product = fp8_mul(x, w);
-	wire [7:0] first_operand = (reverse_sub ? w : x);
-	wire [7:0] second_operand = (reverse_sub ? x : w);
-	wire [7:0] add_a = (multiply ? product : first_operand);
-	wire [7:0] add_b = (multiply ? (accumulate ? sum : 8'h00) : {second_operand[7] ^ do_subtract, second_operand[6:0]});
-	wire [7:0] arithmetic_result = fp8_add(add_a, add_b);
-	wire [7:0] mac_result = ((sparse && multiply) && (x[6:0] == 0) ? (accumulate ? sum : 8'h00) : arithmetic_result);
-	always @(posedge clk)
-		if (!rst_n) begin
-			weights <= 0;
-			inputs <= 0;
-			vpu_res_out <= 0;
-			act_op_out <= 0;
-			vpu_res_out_val <= 0;
-		end
-		else begin
-			if (weight_data_val)
-				weights <= weight_data;
-			if (input_data_val)
-				inputs <= input_data;
-			vpu_res_out_val <= exe_inst_in_val;
-			if (exe_inst_in_val) begin
-				act_op_out <= (mode == 2'd1 ? 3'd0 : exe_inst_in[5:3]);
-				case (mode)
-					2'd1: vpu_res_out <= 0;
-					2'd3: vpu_res_out <= inputs;
-					2'd0: vpu_res_out <= mac_result;
-					default:
-						;
-				endcase
-			end
-		end
-endmodule
-module act (
-	clk,
-	rst_n,
-	vpu_res_in,
-	act_op_in,
-	vpu_res_in_val,
-	act_res_out,
-	act_res_out_val
-);
-	reg _sv2v_0;
-	input clk;
-	input rst_n;
-	input [7:0] vpu_res_in;
-	input [2:0] act_op_in;
-	input vpu_res_in_val;
-	output reg [7:0] act_res_out;
-	output reg act_res_out_val;
-	localparam [7:0] FP8_ZERO = 8'h00;
-	localparam [7:0] FP8_QNAN = 8'h7f;
-	function automatic fp8_is_nan;
-		input reg [6:0] magnitude;
-		fp8_is_nan = magnitude == 7'h7f;
-	endfunction
-	function automatic [7:0] fp8_jam8;
+	wire accumulate = exec_inst_in[5];
+	wire [1:0] operation = exec_inst_in[4:3];
+	wire [2:0] activation = exec_inst_in[2:0];
+	assign exec_rdy = rst_n;
+	function automatic [7:0] activate;
 		input reg [7:0] x;
-		input reg [4:0] n;
-		case (n)
-			0: fp8_jam8 = x;
-			1: fp8_jam8 = {1'b0, x[7:2], x[1] | x[0]};
-			2: fp8_jam8 = {2'b00, x[7:3], |x[2:0]};
-			3: fp8_jam8 = {3'b000, x[7:4], |x[3:0]};
-			4: fp8_jam8 = {4'b0000, x[7:5], |x[4:0]};
-			5: fp8_jam8 = {5'b00000, x[7:6], |x[5:0]};
-			6: fp8_jam8 = {6'b000000, x[7], |x[6:0]};
-			default: fp8_jam8 = {7'b0000000, |x};
-		endcase
-	endfunction
-	function automatic [7:0] sv2v_cast_8;
-		input reg [7:0] inp;
-		sv2v_cast_8 = inp;
-	endfunction
-	function automatic [2:0] sv2v_cast_3;
-		input reg [2:0] inp;
-		sv2v_cast_3 = inp;
-	endfunction
-	function automatic [4:0] sv2v_cast_5;
-		input reg [4:0] inp;
-		sv2v_cast_5 = inp;
-	endfunction
-	function automatic [7:0] fp8_add;
-		input reg [7:0] a;
-		input reg [7:0] b;
-		reg [7:0] hi_operand;
-		reg [7:0] lo_operand;
-		reg [4:0] el;
-		reg [4:0] es;
-		reg [4:0] exponent;
-		reg [4:0] rounded;
-		reg [3:0] ml;
-		reg [3:0] ms;
-		reg [7:0] aligned;
-		reg [7:0] total;
-		reg subtract;
-		reg [2:0] leading_zeros;
-		reg [2:0] normalize_shift;
-		reg [0:1] _sv2v_jump;
+		input [2:0] op;
+		reg signed [6:0] quarter_scale;
+		reg [7:0] quarter;
+		reg [7:0] sigmoid;
 		begin
-			_sv2v_jump = 2'b00;
-			if (fp8_is_nan(a[6:0]) || fp8_is_nan(b[6:0])) begin
-				fp8_add = FP8_QNAN;
-				_sv2v_jump = 2'b11;
-			end
-			if (_sv2v_jump == 2'b00) begin
-				hi_operand = (a[6:0] >= b[6:0] ? a : b);
-				lo_operand = (a[6:0] >= b[6:0] ? b : a);
-				el = (hi_operand[6:3] == 0 ? 5'd1 : {1'b0, hi_operand[6:3]});
-				es = (lo_operand[6:3] == 0 ? 5'd1 : {1'b0, lo_operand[6:3]});
-				ml = {hi_operand[6:3] != 0, hi_operand[2:0]};
-				ms = {lo_operand[6:3] != 0, lo_operand[2:0]};
-				aligned = fp8_jam8({1'b0, ms, 3'b000}, el - es);
-				subtract = hi_operand[7] ^ lo_operand[7];
-				total = ({1'b0, ml, 3'b000} + (aligned ^ {8 {subtract}})) + sv2v_cast_8(subtract);
-				if (total == 0) begin
-					fp8_add = (a[7] && b[7] ? 8'h80 : FP8_ZERO);
-					_sv2v_jump = 2'b11;
-				end
-				if (_sv2v_jump == 2'b00) begin
-					exponent = el;
-					if (total[7]) begin
-						total = fp8_jam8(total, 5'd1);
-						exponent = exponent + 1'b1;
-					end
-					casez (total[6:0])
-						7'b1zzzzzz: leading_zeros = 0;
-						7'b01zzzzz: leading_zeros = 1;
-						7'b001zzzz: leading_zeros = 2;
-						7'b0001zzz: leading_zeros = 3;
-						7'b00001zz: leading_zeros = 4;
-						7'b000001z: leading_zeros = 5;
-						default: leading_zeros = 6;
-					endcase
-					normalize_shift = ({2'b00, leading_zeros} < exponent ? leading_zeros : sv2v_cast_3(exponent - 1'b1));
-					total = total << normalize_shift;
-					exponent = exponent - {2'b00, normalize_shift};
-					rounded = {1'b0, total[6:3]} + sv2v_cast_5(total[2] && ((total[1] || total[0]) || total[3]));
-					if (rounded[4]) begin
-						rounded = rounded >> 1;
-						exponent = exponent + 1'b1;
-					end
-					if ((exponent > 15) || ((exponent == 15) && (rounded > 14))) begin
-						fp8_add = {hi_operand[7], 7'h7e};
-						_sv2v_jump = 2'b11;
-					end
-					if (_sv2v_jump == 2'b00) begin
-						if ((exponent == 1) && (rounded < 8)) begin
-							fp8_add = {hi_operand[7], 4'b0000, rounded[2:0]};
-							_sv2v_jump = 2'b11;
-						end
-						if (_sv2v_jump == 2'b00) begin
-							fp8_add = {hi_operand[7], exponent[3:0], rounded[2:0]};
-							_sv2v_jump = 2'b11;
-						end
-					end
-				end
-			end
+			quarter_scale = (x[6:3] == 0 ? -7'sd11 : $signed({3'b000, x[6:3]}) - 7'sd12);
+			quarter = fp8_pack8(x[7], {4'b0000, x[6:3] != 0, x[2:0]}, quarter_scale);
+			sigmoid = fp8_add(quarter, 8'h30);
+			case (op)
+				3'b001: activate = (x[7] ? FP8_ZERO : x);
+				3'b010: activate = (x[6:0] > 7'h38 ? {x[7], 7'h38} : x);
+				3'b011: activate = (sigmoid[7] ? FP8_ZERO : (sigmoid[6:0] > 7'h38 ? 8'h38 : sigmoid));
+				3'b100: activate = (!x[7] && (x[6:0] != 0) ? 8'h38 : FP8_ZERO);
+				default: activate = x;
+			endcase
+			if (fp8_is_nan(x[6:0]))
+				activate = FP8_QNAN;
 		end
 	endfunction
-	function automatic signed [3:0] sv2v_cast_4_signed;
-		input reg signed [3:0] inp;
-		sv2v_cast_4_signed = inp;
-	endfunction
-	function automatic [7:0] fp8_pack8;
-		input reg sign;
-		input reg [7:0] magnitude;
-		input reg signed [6:0] scale;
-		reg [2:0] msb;
-		reg signed [6:0] exponent;
-		reg signed [6:0] shift;
-		reg [3:0] retained;
-		reg [3:0] encoded;
-		reg guard_bit;
-		reg sticky;
-		reg [4:0] rounded;
-		reg [0:1] _sv2v_jump;
-		begin
-			_sv2v_jump = 2'b00;
-			if (magnitude == 0) begin
-				fp8_pack8 = {sign, 7'b0000000};
-				_sv2v_jump = 2'b11;
-			end
-			if (_sv2v_jump == 2'b00) begin
-				casez (magnitude)
-					8'b1zzzzzzz: msb = 7;
-					8'b01zzzzzz: msb = 6;
-					8'b001zzzzz: msb = 5;
-					8'b0001zzzz: msb = 4;
-					8'b00001zzz: msb = 3;
-					8'b000001zz: msb = 2;
-					8'b0000001z: msb = 1;
-					default: msb = 0;
-				endcase
-				exponent = $signed({4'b0000, msb}) + scale;
-				if (exponent > 8) begin
-					fp8_pack8 = {sign, 7'h7e};
-					_sv2v_jump = 2'b11;
+	genvar _gv_lane_2;
+	generate
+		for (_gv_lane_2 = 0; _gv_lane_2 < 1; _gv_lane_2 = _gv_lane_2 + 1) begin : lanes
+			localparam lane = _gv_lane_2;
+			reg [7:0] input_reg;
+			reg [7:0] weight_reg;
+			reg [7:0] acc_reg;
+			wire multiply = operation == 2'b10;
+			wire [7:0] product = fp8_mul(input_reg, weight_reg);
+			wire [7:0] add_a = (multiply ? product : input_reg);
+			wire [7:0] add_b = (multiply ? acc_reg : {weight_reg[7] ^ (operation == 2'b01), weight_reg[6:0]});
+			wire [7:0] sum = fp8_add(add_a, add_b);
+			wire [7:0] result = (multiply && !accumulate ? product : sum);
+			always @(posedge clk)
+				if (!rst_n) begin
+					input_reg <= 0;
+					weight_reg <= 0;
+					acc_reg <= 0;
+					data_out[lane * 8+:8] <= 0;
 				end
-				if (_sv2v_jump == 2'b00) begin
-					shift = (exponent >= -6 ? $signed({4'b0000, msb}) - 7'sd3 : -(7'sd9 + scale));
-					retained = 0;
-					guard_bit = 0;
-					sticky = 0;
-					case (shift)
-						-7'sd3: retained = {magnitude[0], 3'b000};
-						-7'sd2: retained = {magnitude[1:0], 2'b00};
-						-7'sd1: retained = {magnitude[2:0], 1'b0};
-						0: retained = magnitude[3:0];
-						1: begin
-							retained = magnitude[4:1];
-							guard_bit = magnitude[0];
-						end
-						2: begin
-							retained = magnitude[5:2];
-							guard_bit = magnitude[1];
-							sticky = magnitude[0];
-						end
-						3: begin
-							retained = magnitude[6:3];
-							guard_bit = magnitude[2];
-							sticky = |magnitude[1:0];
-						end
-						4: begin
-							retained = magnitude[7:4];
-							guard_bit = magnitude[3];
-							sticky = |magnitude[2:0];
-						end
-						5: begin
-							retained = {1'b0, magnitude[7:5]};
-							guard_bit = magnitude[4];
-							sticky = |magnitude[3:0];
-						end
-						6: begin
-							retained = {2'b00, magnitude[7:6]};
-							guard_bit = magnitude[5];
-							sticky = |magnitude[4:0];
-						end
-						7: begin
-							retained = {3'b000, magnitude[7]};
-							guard_bit = magnitude[6];
-							sticky = |magnitude[5:0];
-						end
-						8: begin
-							guard_bit = magnitude[7];
-							sticky = |magnitude[6:0];
-						end
-						default:
-							;
-					endcase
-					rounded = {1'b0, retained} + sv2v_cast_5(guard_bit && (sticky || retained[0]));
-					if (exponent < -6) begin
-						if (rounded >= 8) begin
-							fp8_pack8 = {sign, 7'h08};
-							_sv2v_jump = 2'b11;
-						end
-						if (_sv2v_jump == 2'b00) begin
-							fp8_pack8 = {sign, 4'b0000, rounded[2:0]};
-							_sv2v_jump = 2'b11;
-						end
+				else begin
+					if (data_in_val) begin
+						if (is_weight)
+							weight_reg <= data_in[lane * 8+:8];
+						else
+							input_reg <= data_in[lane * 8+:8];
 					end
-					if (_sv2v_jump == 2'b00) begin
-						if (rounded[4]) begin
-							rounded = rounded >> 1;
-							exponent = exponent + 1'b1;
-						end
-						if ((exponent > 8) || ((exponent == 8) && (rounded > 14))) begin
-							fp8_pack8 = {sign, 7'h7e};
-							_sv2v_jump = 2'b11;
-						end
-						if (_sv2v_jump == 2'b00) begin
-							encoded = sv2v_cast_4_signed(exponent + 7'sd7);
-							fp8_pack8 = {sign, encoded, rounded[2:0]};
-							_sv2v_jump = 2'b11;
-						end
+					if (exec_inst_in_val) begin
+						acc_reg <= result;
+						data_out[lane * 8+:8] <= activate(result, activation);
 					end
 				end
-			end
 		end
-	endfunction
-	function automatic [7:0] fp8_mul;
-		input reg [7:0] a;
-		input reg [7:0] b;
-		reg [3:0] ma;
-		reg [3:0] mb;
-		reg [7:0] product;
-		reg signed [6:0] ea;
-		reg signed [6:0] eb;
-		reg [0:1] _sv2v_jump;
-		begin
-			_sv2v_jump = 2'b00;
-			if (fp8_is_nan(a[6:0]) || fp8_is_nan(b[6:0])) begin
-				fp8_mul = FP8_QNAN;
-				_sv2v_jump = 2'b11;
-			end
-			if (_sv2v_jump == 2'b00) begin
-				ma = {a[6:3] != 0, a[2:0]};
-				mb = {b[6:3] != 0, b[2:0]};
-				ea = (a[6:3] == 0 ? -7'sd9 : $signed({3'b000, a[6:3]}) - 7'sd10);
-				eb = (b[6:3] == 0 ? -7'sd9 : $signed({3'b000, b[6:3]}) - 7'sd10);
-				product = ma * mb;
-				fp8_mul = fp8_pack8(a[7] ^ b[7], product, ea + eb);
-				_sv2v_jump = 2'b11;
-			end
-		end
-	endfunction
-	wire [7:0] x = vpu_res_in;
-	wire nan = fp8_is_nan(x[6:0]);
-	wire signed [6:0] quarter_scale = (x[6:3] == 0 ? -7'sd11 : $signed({3'b000, x[6:3]}) - 7'sd12);
-	wire [7:0] quarter = fp8_pack8(x[7], {4'b0000, x[6:3] != 0, x[2:0]}, quarter_scale);
-	wire [7:0] sigmoid = fp8_add(quarter, 8'h30);
-	reg [7:0] result;
-	always @(*) begin
-		if (_sv2v_0)
-			;
-		case (act_op_in)
-			3'd1: result = (x[7] ? 8'h00 : x);
-			3'd2: result = (sigmoid[7] ? 8'h00 : (sigmoid[6:0] > 7'h38 ? 8'h38 : sigmoid));
-			3'd3: result = (x[6:0] > 7'h38 ? {x[7], 7'h38} : x);
-			3'd4: result = (!x[7] && (x[6:0] != 0) ? 8'h38 : 8'h00);
-			default: result = x;
-		endcase
-		if (nan)
-			result = FP8_QNAN;
-	end
+	endgenerate
 	always @(posedge clk)
-		if (!rst_n) begin
-			act_res_out <= 0;
-			act_res_out_val <= 0;
-		end
-		else begin
-			act_res_out_val <= vpu_res_in_val;
-			if (vpu_res_in_val)
-				act_res_out <= result;
-		end
-	initial _sv2v_0 = 0;
+		if (!rst_n)
+			data_out_val <= 1'b0;
+		else
+			data_out_val <= exec_inst_in_val;
 endmodule
 module mem_itf (
 	clk,
 	rst_n,
 	read_en,
 	write_en,
-	copy_en,
 	rdy,
-	src_addr,
-	dst_addr,
+	addr,
+	device,
 	write_data,
 	read_data,
 	read_data_val,
@@ -1568,55 +945,62 @@ module mem_itf (
 	qspi_req_rdy,
 	qspi_req_write,
 	qspi_req_addr,
+	qspi_req_device,
 	qspi_req_data,
 	qspi_read_data,
 	qspi_read_data_val
 );
-	input clk;
-	input rst_n;
-	input read_en;
-	input write_en;
-	input copy_en;
-	output reg rdy;
-	input [24:0] src_addr;
-	input [24:0] dst_addr;
-	input [7:0] write_data;
-	output wire [7:0] read_data;
+	input wire clk;
+	input wire rst_n;
+	input wire read_en;
+	input wire write_en;
+	output wire rdy;
+	input wire [23:0] addr;
+	input wire [1:0] device;
+	input wire [7:0] write_data;
+	output reg [7:0] read_data;
 	output reg read_data_val;
-	output reg qspi_req_val;
-	input qspi_req_rdy;
+	output wire qspi_req_val;
+	input wire qspi_req_rdy;
 	output reg qspi_req_write;
-	output wire [24:0] qspi_req_addr;
-	output reg [7:0] qspi_req_data;
-	input [7:0] qspi_read_data;
-	input qspi_read_data_val;
-	localparam [1:0] IDLE = 2'd0;
-	localparam [1:0] SEND = 2'd1;
-	localparam [1:0] WAIT = 2'd2;
+	output wire [23:0] qspi_req_addr;
+	output wire [1:0] qspi_req_device;
+	output wire [7:0] qspi_req_data;
+	input wire [7:0] qspi_read_data;
+	input wire qspi_read_data_val;
+	localparam [1:0] IDLE = 0;
+	localparam [1:0] SEND = 1;
+	localparam [1:0] WAIT = 2;
 	reg [1:0] state;
-	reg copy_pending;
-	assign qspi_req_addr = (qspi_req_write ? dst_addr : src_addr);
-	assign read_data = qspi_read_data;
-	always @(*) begin
-		rdy = state == IDLE;
-		qspi_req_val = rst_n && (state == SEND);
-	end
+	localparam integer LANE_BITS = 1;
+	reg [LANE_BITS - 1:0] lane_index;
+	reg [7:0] write_buffer;
+	assign rdy = rst_n && (state == IDLE);
+	assign qspi_req_val = rst_n && (state == SEND);
+	function automatic [23:0] sv2v_cast_24;
+		input reg [23:0] inp;
+		sv2v_cast_24 = inp;
+	endfunction
+	assign qspi_req_addr = addr + sv2v_cast_24(lane_index);
+	assign qspi_req_device = device;
+	assign qspi_req_data = write_buffer[lane_index * 8+:8];
 	always @(posedge clk)
 		if (!rst_n) begin
 			state <= IDLE;
-			copy_pending <= 0;
 			qspi_req_write <= 0;
-			qspi_req_data <= 0;
+			lane_index <= 0;
+			write_buffer <= 0;
+			read_data <= 0;
 			read_data_val <= 0;
 		end
 		else begin
 			read_data_val <= 0;
 			case (state)
 				IDLE:
-					if ((read_en || write_en) || copy_en) begin
+					if (read_en || write_en) begin
 						qspi_req_write <= write_en;
-						qspi_req_data <= write_data;
-						copy_pending <= copy_en;
+						write_buffer <= write_data;
+						lane_index <= 0;
 						state <= SEND;
 					end
 				SEND:
@@ -1624,16 +1008,15 @@ module mem_itf (
 						state <= WAIT;
 				WAIT:
 					if (qspi_read_data_val) begin
-						if (copy_pending) begin
-							qspi_req_write <= 1;
-							qspi_req_data <= qspi_read_data;
-							copy_pending <= 0;
-							state <= SEND;
+						if (!qspi_req_write)
+							read_data[lane_index * 8+:8] <= qspi_read_data;
+						if (lane_index == 1'sd0) begin
+							read_data_val <= !qspi_req_write;
+							state <= IDLE;
 						end
 						else begin
-							if (!qspi_req_write)
-								read_data_val <= 1;
-							state <= IDLE;
+							lane_index <= lane_index + 1'b1;
+							state <= SEND;
 						end
 					end
 				default: state <= IDLE;
@@ -1647,6 +1030,7 @@ module qspi_ctrl (
 	req_rdy,
 	req_write,
 	req_addr,
+	req_device,
 	req_data,
 	read_data,
 	read_data_val,
@@ -1658,20 +1042,21 @@ module qspi_ctrl (
 	dq_out,
 	dq_oe
 );
-	input clk;
-	input rst_n;
-	input req_val;
+	input wire clk;
+	input wire rst_n;
+	input wire req_val;
 	output wire req_rdy;
-	input req_write;
-	input [24:0] req_addr;
-	input [7:0] req_data;
+	input wire req_write;
+	input wire [23:0] req_addr;
+	input wire [1:0] req_device;
+	input wire [7:0] req_data;
 	output wire [7:0] read_data;
 	output reg read_data_val;
 	output reg sck;
 	output reg flash_sc_n;
 	output reg psram_a_sc_n;
 	output reg psram_b_sc_n;
-	input [3:0] dq_in;
+	input wire [3:0] dq_in;
 	output reg [3:0] dq_out;
 	output reg [3:0] dq_oe;
 	localparam [3:0] IDLE = 0;
@@ -1755,10 +1140,10 @@ module qspi_ctrl (
 			case (state)
 				IDLE:
 					if (req_val && req_rdy) begin
-						chip <= req_addr[24:23];
+						chip <= req_device;
 						write_reg <= req_write;
 						data_shift <= req_data;
-						operation <= (req_addr[24] ? MEMORY : WAIT_READY);
+						operation <= (req_device[1] ? MEMORY : WAIT_READY);
 						state <= SELECT;
 					end
 				SELECT: begin

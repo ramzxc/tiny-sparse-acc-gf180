@@ -3,12 +3,12 @@
 module uart_tx #(
     parameter integer CLKS_PER_BIT = 87 // for 115200 baud, 10MHz clk
 ) (
-    input clk,
-    input rst_n,
+    input  wire clk,
+    input  wire rst_n,
 
-    input                   inst_fifo_rdy,
+    input  wire inst_fifo_rdy,
 
-    output                  tx
+    output wire tx
 );
 
     localparam integer TIMER_BITS = (CLKS_PER_BIT > 1) ? $clog2(CLKS_PER_BIT) : 1;

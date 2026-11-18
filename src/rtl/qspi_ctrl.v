@@ -11,30 +11,31 @@
 // req_write/req_data are captured on acceptance and may change afterward.
 // Board setup: PSRAMs in QPI; Flash in SPI with QE=1, not continuous read.
 // Flash program targets must already be erased/unprotected. No erase interface.
-// Address map: 0xxxxxx=Flash, 10xxxxx=PSRAM A, 11xxxxx=PSRAM B.
+// Separate device select: 00=Flash, 10=PSRAM A, 11=PSRAM B.
 // One data byte per request; every byte address is supported.
 // Status polling has no timeout/error port: failed WREN or permanent busy waits.
 // Reset aborts the bus transaction; it cannot undo a memory write already made.
 module qspi_ctrl (
-    input clk,
-    input rst_n,
+    input  wire clk,
+    input  wire rst_n,
 
-    input req_val,
-    output req_rdy,
-    input req_write,
-    input [24:0] req_addr,
-    input [`DATA_WIDTH-1:0] req_data,
+    input  wire req_val,
+    output wire req_rdy,
+    input  wire req_write,
+    input  wire [23:0] req_addr,
+    input  wire [1:0] req_device,
+    input  wire [`DATA_WIDTH-1:0] req_data,
 
     // Valid after read completion and until the next request is accepted.
     // During a transfer, this exposes the shared shift register (not valid data).
-    output [`DATA_WIDTH-1:0] read_data,
+    output wire [`DATA_WIDTH-1:0] read_data,
     output reg read_data_val,
 
     output reg sck,
     output reg flash_sc_n,
     output reg psram_a_sc_n,
     output reg psram_b_sc_n,
-    input [3:0] dq_in,
+    input  wire [3:0] dq_in,
     output reg [3:0] dq_out,
     output reg [3:0] dq_oe
 );
@@ -132,11 +133,11 @@ module qspi_ctrl (
             case (state)
                 IDLE: begin
                     if (req_val && req_rdy) begin
-                        chip <= req_addr[24:23];
+                        chip <= req_device;
                         write_reg <= req_write;
                         // Most significant nibble first.
                         data_shift <= req_data;
-                        operation <= req_addr[24] ? MEMORY : WAIT_READY;
+                        operation <= req_device[1] ? MEMORY : WAIT_READY;
                         state <= SELECT;
                     end
                 end
@@ -266,12 +267,17 @@ module qspi_ctrl (
 
 `ifndef SYNTHESIS
     // Check the borrowed-address contract in standalone and integration tests.
-    reg [24:0] accepted_addr;
+    reg [23:0] accepted_addr;
     always @(posedge clk) begin
         if (!rst_n)
             accepted_addr <= 0;
-        else if (req_val && req_rdy)
+        else if (req_val && req_rdy) begin
             accepted_addr <= req_addr;
+            if (req_device == 2'b01)
+                $fatal(1, "Reserved memory device selector");
+            if (req_device[1] && req_addr[23])
+                $fatal(1, "PSRAM byte address must fit in 23 bits");
+        end
         else if (state != IDLE && req_addr !== accepted_addr)
             $fatal(1, "qspi_ctrl req_addr changed before completion");
     end

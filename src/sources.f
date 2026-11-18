@@ -2,10 +2,8 @@ rtl/project.v
 rtl/uart/uart_rx.v
 rtl/uart/uart_tx.v
 rtl/core/inst_fifo.v
-rtl/core/micro_ctrl.v
-rtl/core/decoder.v
-rtl/core/mem_ctrl.v
-rtl/core/vpu.v
-rtl/core/act.v
+rtl/core/inst_decoder.v
+rtl/core/data_ctrl.v
+rtl/core/exec_unit.v
 rtl/mem_itf.v
 rtl/qspi_ctrl.v

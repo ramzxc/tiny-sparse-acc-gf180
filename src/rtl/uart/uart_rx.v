@@ -1,22 +1,21 @@
 `include "defs/defs.vh"
 
-// Collect WORD_WIDTH/8 UART bytes, low byte first, into one external job.
+// Collect `INST_WIDTH/8 UART bytes, low byte first, into one external job.
 module uart_rx # (
-    parameter integer CLKS_PER_BIT = 87, // for 115200 baud, 10MHz clk
-    parameter integer WORD_WIDTH = `HOST_INST_WIDTH
+    parameter integer CLKS_PER_BIT = 87 // for 115200 baud, 10MHz clk
 ) (
-    input clk,
-    input rst_n,
+    input  wire clk,
+    input  wire rst_n,
 
-    output reg [WORD_WIDTH-1:0] inst,
+    output reg [`INST_WIDTH-1:0] inst,
     output reg inst_val,
 
-    input rx
+    input  wire rx
 );
     
     localparam integer TIMER_BITS = (CLKS_PER_BIT > 1) ? $clog2(CLKS_PER_BIT) : 1;
     localparam integer HALF_BIT_CLKS = CLKS_PER_BIT / 2;
-    localparam integer BYTE_COUNT = WORD_WIDTH / `DATA_WIDTH;
+    localparam integer BYTE_COUNT = `INST_WIDTH / `DATA_WIDTH;
     localparam integer BYTE_IDX_BITS = BYTE_COUNT > 1 ? $clog2(BYTE_COUNT) : 1;
     localparam [TIMER_BITS-1:0] BIT_LAST = TIMER_BITS'(CLKS_PER_BIT - 1);
     localparam [TIMER_BITS-1:0] HALF_BIT_LAST = TIMER_BITS'(HALF_BIT_CLKS - 1);
@@ -90,8 +89,8 @@ module uart_rx # (
 
                             if (bit_idx <= `DATA_WIDTH) begin
                                 // LSB-first bits and low-byte-first words end up
-                                // in natural order after all WORD_WIDTH shifts.
-                                inst <= {rx_sync, inst[WORD_WIDTH-1:1]};
+                                // in natural order after all `INST_WIDTH shifts.
+                                inst <= {rx_sync, inst[`INST_WIDTH-1:1]};
 
                                 bit_idx <= bit_idx + 1;
                             end

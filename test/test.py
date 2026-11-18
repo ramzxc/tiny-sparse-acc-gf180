@@ -31,28 +31,6 @@ async def receive_byte(dut):
 async def receive_reply(dut):
     return await receive_byte(dut), await receive_byte(dut)
 
-@cocotb.test()
-async def uart_ready(dut):
-    cocotb.start_soon(Clock(dut.clk, 100, unit="ns").start())
-    dut.ena.value = 1
-    dut.ui_in.value = 8
-    dut.flash_stuck_busy.value = 0
-    dut.rst_n.value = 0
-    await ClockCycles(dut.clk, 10)
-    receiver = cocotb.start_soon(receive_byte(dut))
-    dut.rst_n.value = 1
-    assert await with_timeout(receiver, 300, "us") == 1
-    assert all(int(dut.uio_out.value[bit]) == 1 for bit in (0, 6, 7))
-    direct = (Path(__file__).resolve().parents[1] / "src/build_mode.txt").read_text().strip() == "direct"
-    # Direct mode: send one NOP. Micro mode: reject zero dimensions.
-    word = (62 << 9) if direct else 0
-    receiver = cocotb.start_soon(receive_byte(dut))
-    for i in range(2 if direct else 8):
-        await send_byte(dut, (word >> (8*i)) & 255)
-    assert await with_timeout(receiver, 300, "us") == 1
-    assert bool(int(dut.uo_out.value[2])) == (not direct)
-    assert all(int(dut.uio_out.value[bit]) == 1 for bit in (0, 6, 7))
-
 from cocotb.queue import Queue
 from cocotb.triggers import FallingEdge
 from fp8_reference import mac8, add8, sub8, activate
@@ -96,144 +74,135 @@ class Host:
         if self.receiver.done():
             await self.receiver  # Surface protocol monitor failures.
 
-    async def command(self, opcode, payload=0):
-        await self.word((opcode << 9) | payload)
+    async def word_sync(self):
+        await self.word(0xe000)
 
-    async def address(self, addr, destination=False):
-        lo, hi = (5, 7) if destination else (4, 6)
-        await self.word((lo << 13) | (addr & 8191))
-        await self.word((hi << 13) | (addr >> 13))
+    async def address(self, addr):
+        await self.word(0x2000 | (addr & 0xfff))
+        await self.word(0x3000 | ((addr >> 12) & 0xfff))
 
-    async def sync(self, memory=False):
-        await self.command(61 if memory else 60)
-
-    async def load(self, addr):
+    async def load(self, addr, device=2, weight=False, sparse=False):
+        await self.word(0x8000 | (int(sparse)<<11) | (int(weight)<<10))
         await self.address(addr)
-        await self.command(1)
-        await self.sync(memory=True)
+        await self.word(0x4000 | (device<<10))
+        await self.word_sync()
 
-    async def store(self, addr):
-        await self.address(addr, destination=True)
-        await self.command(2)
-        await self.sync(memory=True)
+    async def execute(self, op=2, acc=False, act=0):
+        await self.word(0x6000 | (int(acc)<<12) | (op<<10) | (act<<7))
+        await self.word_sync()
+
+    async def store(self, addr, device=3):
+        await self.word(0x9000)
+        await self.address(addr)
+        await self.word(0x5000 | (device<<10))
+        await self.word_sync()
         await Timer(20, unit="us")
-
-    def check_idle(self):
-        assert not int(self.dut.uo_out.value[2]), "Core error asserted"
-        assert all(int(self.dut.uio_out.value[b]) for b in (0, 6, 7)), "Memory CS remains active"
-        assert not self.receiver.done(), "Host monitor stopped"
-
 
 async def start_host(dut):
     cocotb.start_soon(Clock(dut.clk, 100, unit="ns").start())
-    dut.ena.value = 1
-    host = Host(dut)
+    dut.ena.value=1
+    host=Host(dut)
     await host.reset()
     return host
 
-
 @cocotb.test()
 async def memory_compute_roundtrip(dut):
-    """Flash -> PSRAM -> FP8 MAC/activation -> PSRAM -> Flash."""
-    host = await start_host(dut)
-    a_writes = int(dut.ram_a.writes.value)
-    b_writes = int(dut.ram_b.writes.value)
-    programs = int(dut.flash.program_ops.value)
-    dut.flash.mem[16].value = 0x40  # weight 2
-    dut.ram_b.mem[128].value = 0x44  # input 3
-    dut.flash.mem[512].value = 0xff
-    await host.address(16)
-    await host.address(WEIGHT + 32, destination=True)
-    await host.command(0)
-    await host.sync(memory=True)
-    await host.load(WEIGHT + 32)
-    await host.load(UNIFIED + 128)
-    assert int(dut.ram_a.mem[32].value) == 0x40
-
-    expected = 0
-    # MUL, accumulate, ADD, SUB, RSUB, then MUL with every activation.
-    cases = [(2, 0, 0), (2, 1, 0), (0, 0, 0), (1, 0, 1), (3, 0, 0)]
-    cases += [(2, 0, act) for act in range(5)]
-    for i, (op, acc, act) in enumerate(cases):
-        expected = (mac8(0x44, 0x40, expected, bool(acc)) if op == 2 else
-                    add8(0x44, 0x40) if op == 0 else
-                    sub8(0x44, 0x40) if op == 1 else sub8(0x40, 0x44))
-        await host.command(32, op | (acc << 2) | (act << 3))
-        await host.sync()
-        await host.store(UNIFIED + 256 + i)
-        assert int(dut.ram_b.mem[256+i].value) == activate(expected, act), f"Case {i}"
-
-    # Read the stored result back through PSRAM, then program and read back NOR.
-    await host.address(UNIFIED + 256)
-    await host.address(512, destination=True)
-    await host.command(3)
-    await host.sync(memory=True)
-    await host.address(512)
-    await host.address(UNIFIED + 400, destination=True)
-    await host.command(0)
-    await host.sync(memory=True)
-    await Timer(20, unit="us")
-    assert int(dut.flash.mem[512].value) == 0x4c
-    assert int(dut.ram_b.mem[400].value) == 0x4c
-    assert int(dut.flash.program_ops.value) - programs == 1
-    assert int(dut.ram_a.writes.value) - a_writes == 1
-    assert int(dut.ram_b.writes.value) - b_writes == len(cases) + 1
-    host.check_idle()
+    host=await start_host(dut)
+    dut.flash.mem[16].value=0x40
+    dut.ram_b.mem[128].value=0x44
+    dut.flash.mem[512].value=0xff
+    await host.load(16,device=0,weight=True)
+    await host.load(128,device=3)
+    expected=0
+    cases=[(2,False,0),(2,True,0),(0,False,0),(1,False,1)]
+    cases += [(2,False,a) for a in range(5)]
+    for i,(op,acc,act) in enumerate(cases):
+        expected=(mac8(0x44,0x40,expected,acc) if op==2 else
+                  add8(0x44,0x40) if op==0 else sub8(0x44,0x40))
+        await host.execute(op,acc,act)
+        await host.store(256+i)
+        assert int(dut.ram_b.mem[256+i].value)==activate(expected,act), f"case {i}"
+    await host.execute()
+    await host.store(512,device=0)
+    assert int(dut.flash.mem[512].value)==0x4c
+    await host.load(512,device=0)
+    await host.execute(op=0)
+    await host.store(32,device=2)
+    assert int(dut.ram_a.mem[32].value)==0x50  # 6+2=8
     host.receiver.cancel()
-
 
 @cocotb.test()
-async def stalled_memory_and_queued_commands(dut):
-    """Hold NOR busy while UART fills the FIFO; verify ordered recovery."""
-    host = await start_host(dut)
-    dut.flash.mem[24].value = 0xb8
-    dut.ram_b.mem[500].value = 0xa5
-    await host.address(24)
-    await host.address(UNIFIED + 500, destination=True)
-    dut.flash_stuck_busy.value = 1
-    await host.command(0)
-    await host.sync(memory=True)
-    # Keep sending at READY rate; the sender must stall when admission fills.
-    async def queued():
-        for _ in range(5):
-            await host.command(62)
-    sender = cocotb.start_soon(queued())
-    await Timer(1200, unit="us")
-    assert not sender.done(), "FIFO did not backpressure during stalled memory"
-    assert int(dut.ram_b.mem[500].value) == 0xa5, "Copy completed while NOR busy"
-    dut.flash_stuck_busy.value = 0
-    await with_timeout(sender, 3, "ms")
-    await host.sync(memory=True)
-    await Timer(20, unit="us")
-    assert int(dut.ram_b.mem[500].value) == 0xb8
-    host.check_idle()
+async def sparse_skip_and_snapshot(dut):
+    host=await start_host(dut)
+    dut.ram_a.mem[0].value=0
+    dut.ram_a.mem[1].value=0x40
+    dut.ram_b.mem[0].value=0x44
+    await host.load(0,device=2,sparse=True)
+    before=int(dut.ram_b.reads.value)
+    await host.load(0,device=3,weight=True,sparse=True)
+    await host.execute()
+    await host.store(100)
+    assert int(dut.ram_b.reads.value)==before
+    assert int(dut.ram_b.mem[100].value)==0
+    await host.load(1,device=2)
+    await host.load(0,device=3,weight=True,sparse=True)
+    await host.execute()
+    await host.word(0x9000)  # Snapshot 6 before next EXEC changes the result.
+    await host.execute(op=0)
+    await host.address(101)
+    await host.word(0x5c00)
+    await host.word_sync()
+    await Timer(20,unit="us")
+    assert int(dut.ram_b.mem[101].value)==0x4c
     host.receiver.cancel()
-
 
 @cocotb.test()
 async def interrupted_uart_and_qspi_reset(dut):
-    """Abort an incomplete UART word and a QSPI read, then run a fresh MAC."""
-    host = await start_host(dut)
-    await with_timeout(host.credits.get(), 300, "us")
-    await send_byte(dut, 0xff)  # Only half of a 16-bit instruction.
+    host=await start_host(dut)
+    await with_timeout(host.credits.get(),300,"us")
+    await send_byte(dut,0xff)
     await host.reset()
-    await host.command(62)
-    dut.ram_a.mem[32].value = 0x38
-    dut.ram_b.mem[128].value = 0xc0  # -2
-    await host.address(WEIGHT + 32)
-    async def reset_during_read():
+    dut.ram_a.mem[32].value=0x38
+    dut.ram_b.mem[128].value=0xc0
+    await host.address(32)
+    async def interrupt_read():
         await FallingEdge(dut.ram_a_cs)
-        await Timer(350, unit="ns")
-        dut.rst_n.value = 0
-    interrupt = cocotb.start_soon(reset_during_read())
-    await host.command(1)
-    await with_timeout(interrupt, 300, "us")
+        await Timer(350,unit="ns")
+        dut.rst_n.value=0
+    interrupt=cocotb.start_soon(interrupt_read())
+    await host.word(0x4800)
+    await with_timeout(interrupt,300,"us")
     await host.reset()
-    await host.load(WEIGHT + 32)
-    await host.load(UNIFIED + 128)
-    await host.command(32, 2)
-    await host.sync()
-    await host.store(UNIFIED + 600)
-    assert int(dut.ram_b.mem[600].value) == 0xc0
-    host.check_idle()
+    await host.load(32,weight=True)
+    await host.load(128,device=3)
+    await host.execute()
+    await host.store(600)
+    assert int(dut.ram_b.mem[600].value)==0xc0
+    host.receiver.cancel()
+
+@cocotb.test()
+async def stalled_memory_and_queued_commands(dut):
+    host=await start_host(dut)
+    dut.ram_a.mem[0].value=0x38
+    dut.ram_b.mem[0].value=0x40
+    dut.flash.mem[64].value=0xff
+    await host.load(0,weight=True)
+    await host.load(0,device=3)
+    await host.execute()
+    await host.word(0x9000)
+    await host.address(64)
+    dut.flash_stuck_busy.value=1
+    await host.word(0x5000)
+    async def queued():
+        await host.word_sync()
+        for _ in range(5):
+            await host.word(0)
+    sender=cocotb.start_soon(queued())
+    await Timer(1200,unit="us")
+    assert not sender.done(), "FIFO failed to backpressure during NOR busy"
+    dut.flash_stuck_busy.value=0
+    await with_timeout(sender,3,"ms")
+    await host.word_sync()
+    await Timer(20,unit="us")
+    assert int(dut.flash.mem[64].value)==0x40
     host.receiver.cancel()

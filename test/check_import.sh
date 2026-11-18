@@ -1,13 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
 cd "$(dirname "$0")/.."
-for test in inst_fifo decoder act fp8_math vpu_mac qspi_ctrl mem_itf mem_ctrl micro_ctrl uart_matvec uart_microcode; do
-    bash "test/run_${test}.sh"
-done
-build_dir=$(mktemp -d /tmp/tt-checkpoint.XXXXXX)
+python3 test/test_exec.py
+python3 test/test_qspi.py
+build_dir=$(mktemp -d /tmp/tt-rebuild-tests.XXXXXX)
 trap 'rm -rf "$build_dir"' EXIT
-top=tb_tt_checkpoint
-if [[ $(cat src/build_mode.txt) == direct ]]; then top=tb_uart_microcode; fi
-iverilog -g2012 -I src/rtl -s "$top" -o "$build_dir/top" \
-    src/rtl/generated/design.v test/qspi_psram_model.sv test/qspi_nor_model.sv "test/$top.sv"
-vvp "$build_dir/top"
+sources=()
+while IFS= read -r line; do sources+=("src/$line"); done < src/sources.f
+iverilog -g2012 -I src/rtl -I src/rtl/core -s tb_rebuild -o "$build_dir/integration" "${sources[@]}" test/tb_rebuild.sv test/qspi_psram_model.sv test/qspi_nor_model.sv
+vvp "$build_dir/integration"
+for width in 2 3 4 8; do
+  iverilog -g2012 -DCOMPUTE_WIDTH="$width" -I src/rtl -I src/rtl/core -s tb_vector -o "$build_dir/vector_$width" "${sources[@]}" test/tb_vector.sv test/qspi_psram_model.sv test/qspi_nor_model.sv
+  vvp "$build_dir/vector_$width"
+done

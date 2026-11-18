@@ -1,19 +1,18 @@
 `include "../defs/defs.vh"
 
 module inst_fifo # (
-    parameter integer FIFO_DEPTH = 1,
-    parameter integer WORD_WIDTH = `HOST_INST_WIDTH
+    parameter integer FIFO_DEPTH = 1
 ) (
-    input clk,
-    input rst_n,
+    input  wire clk,
+    input  wire rst_n,
 
-    input [WORD_WIDTH-1:0] inst,
-    input inst_val,
+    input  wire [`INST_WIDTH-1:0] inst_in,
+    input  wire inst_in_val,
 
     output reg fifo_rdy,
     
-    input core_rdy,
-    output reg [WORD_WIDTH-1:0] inst_out,
+    input  wire decoder_rdy,
+    output reg [`INST_WIDTH-1:0] inst_out,
     output reg inst_out_val
 );
 
@@ -21,14 +20,14 @@ module inst_fifo # (
     localparam integer PTR_BITS = (FIFO_DEPTH > 1) ? $clog2(FIFO_DEPTH) : 1;
     localparam integer COUNT_BITS = $clog2(FIFO_DEPTH + 1);
 
-    reg [WORD_WIDTH-1:0] words [0:FIFO_DEPTH-1];
+    reg [`INST_WIDTH-1:0] words [0:FIFO_DEPTH-1];
     reg [PTR_BITS-1:0] read_ptr;
     reg [PTR_BITS-1:0] write_ptr;
     reg [COUNT_BITS-1:0] count;
 
-    wire pop = rst_n && (count != 0) && core_rdy;
+    wire pop = rst_n && (count != 0) && decoder_rdy;
     wire space_available = (count < COUNT_BITS'(FIFO_DEPTH));
-    wire push = rst_n && inst_val && space_available;
+    wire push = rst_n && inst_in_val && space_available;
 
     function [PTR_BITS-1:0] next_ptr;
         input [PTR_BITS-1:0] ptr;
@@ -45,10 +44,10 @@ module inst_fifo # (
         inst_out = words[read_ptr];
         inst_out_val = rst_n && (count != 0);
 
-        // Hold the request until RX returns an instruction. inst_val stays high
+        // Hold the request until RX returns an instruction. inst_in_val stays high
         // for one clock, giving TX a LOW request cycle before the next READY.
         // TX sends only once while fifo_rdy is continuously high.
-        fifo_rdy = rst_n && space_available && !inst_val;
+        fifo_rdy = rst_n && space_available && !inst_in_val;
     end
 
     always @(posedge clk) begin
@@ -58,7 +57,7 @@ module inst_fifo # (
             count <= 0;
         end else begin
             if (push) begin
-                words[write_ptr] <= inst;
+                words[write_ptr] <= inst_in;
                 write_ptr <= next_ptr(write_ptr);
             end
 

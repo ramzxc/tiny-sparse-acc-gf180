@@ -1,17 +1,22 @@
 `ifndef ACC_DEFS_VH
 `define ACC_DEFS_VH
 
+`ifndef DATA_WIDTH
 `define DATA_WIDTH 8
+`endif
+`ifndef COMPUTE_WIDTH
 `define COMPUTE_WIDTH 1
+`endif
 
-// FP8 E4M3FN, nearest-even rounding, finite saturation.
-
-// External job: 64 bits, UART sends eight bytes, low byte first.
-`define HOST_INST_WIDTH 64
-
-// Normal: opcode[15:9], payload[8:0]. Address: command[15:13], fragment[12:0].
+// FP8 E4M3FN: sign=1, exponent=4, mantissa=3; exponent bias=7.
+// Round to nearest, ties to even. Finite overflow saturates to +/-448.
+// UART directly accepts one 16-bit instruction, low byte first.
 `define INST_WIDTH 16
-`define INST_OP_WIDTH 7
-`define INST_PAYLOAD_WIDTH 9
+`define INST_OP_WIDTH 3
+`define INST_PAYLOAD_WIDTH 13
+
+// Decoder outputs: packed EXEC fields and full ADDR/MEM/DATA word.
+`define EXEC_INST_WIDTH 6
+`define DATA_INST_WIDTH 16
 
 `endif

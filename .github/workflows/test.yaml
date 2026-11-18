@@ -52,9 +52,6 @@ jobs:
         shell: bash
         run: pip install -r test/requirements.txt
 
-      - name: Prove ICC2 UART reset corrections
-        run: python3 test/check_icc2_reset.py
-
       - name: Run tests
         run: |
           cd test

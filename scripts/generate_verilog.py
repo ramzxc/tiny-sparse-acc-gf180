@@ -12,8 +12,8 @@ args = parser.parse_args()
 sources = (ROOT / 'src/sources.f').read_text().splitlines()
 command = [os.environ.get('SV2V', 'sv2v'), '-DSYNTHESIS', '-Isrc/rtl', '-Isrc/rtl/core']
 mode = (ROOT / 'src/build_mode.txt').read_text().strip()
-if mode not in ('micro', 'direct'):
-    raise SystemExit('build_mode.txt must be micro or direct')
+if mode != 'direct':
+    raise SystemExit('This RTL build supports direct instructions only')
 if mode == 'direct':
     command.append('-DTT_DIRECT_UCODE')
 command += ['src/' + name for name in sources]
