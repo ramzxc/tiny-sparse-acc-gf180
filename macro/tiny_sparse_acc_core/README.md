@@ -50,3 +50,17 @@ Local validation re-extracts the packaged core GDS and compares it together with
 the CI-extracted wrapper against the original powered reference netlists.
 The final packaged GDS passed: `Circuits match uniquely`. Logical and powered
 reference netlists are unchanged.
+
+The wrapper can also lose a top-level alias when its vias are hierarchical.
+`src/tcl/magicrc.tcl` retains the PDK startup and runs
+`scripts/restore_spice_ports.py` after SPICE emission. It restores a missing
+wrapper port and normalizes its macro-terminal aliases only when the same
+extraction's `merge`/`equiv` records prove connectivity and the macro SPICE
+already contains the corresponding zero-ohm aliases. It does not read the
+reference schematic. Unproven connections abort extraction; the original SPICE
+is retained alongside the corrected file as `.before-port-aliases`.
+Netgen still checks the complete core and wrapper.
+
+Validated with the actual failed run 44315380242 extraction and wrapper netlist:
+`Circuits match uniquely`. Tests also reject disconnected pins, missing macro
+alias evidence, and nonzero resistors. No GDS, RTL, or reference netlist changed.
