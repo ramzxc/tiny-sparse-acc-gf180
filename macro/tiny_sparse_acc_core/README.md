@@ -51,16 +51,16 @@ the CI-extracted wrapper against the original powered reference netlists.
 The final packaged GDS passed: `Circuits match uniquely`. Logical and powered
 reference netlists are unchanged.
 
-The wrapper can also lose a top-level alias when its vias are hierarchical.
-`src/tcl/magicrc.tcl` retains the PDK startup and runs
-`scripts/restore_spice_ports.py` after SPICE emission. It restores a missing
-wrapper port and normalizes its macro-terminal aliases only when the same
-extraction's `merge`/`equiv` records prove connectivity and the macro SPICE
-already contains the corresponding zero-ohm aliases. It does not read the
-reference schematic. Unproven connections abort extraction; the original SPICE
-is retained alongside the corrected file as `.before-port-aliases`.
-Netgen still checks the complete core and wrapper.
+## Wrapper via-flattening experiment
 
-Validated with the actual failed run 44315380242 extraction and wrapper netlist:
-`Circuits match uniquely`. Tests also reject disconnected pins, missing macro
-alias evidence, and nonzero resistors. No GDS, RTL, or reference netlist changed.
+`src/tcl/magicrc.tcl` sources the PDK startup and sets Magic's native
+`gds flatglob VIA_*` option. This expands OpenROAD via cells during GDS import;
+standard cells and the core remain hierarchical. No extracted-SPICE Python
+postprocessor is used. The stored GDS and fabrication geometry are unchanged.
+
+Local re-extraction of the successful run 44317152587's final GDS restores all
+top-level port names, but Netgen still reports one top-level pin mismatch:
+`uio_oe[4]` is represented through a shorted alias instead of a direct macro
+terminal. Thus via flattening alone is not yet a complete replacement for
+commit d883463's SPICE alias restoration. This revision is an explicit CI
+experiment, not a claim that LVS is fixed.
