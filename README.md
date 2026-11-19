@@ -1,12 +1,42 @@
-# Tiny sparse accelerator
+![](../../workflows/gds/badge.svg) ![](../../workflows/docs/badge.svg) ![](../../workflows/test/badge.svg) ![](../../workflows/fpga/badge.svg)
 
-현재 main은 rebuild RTL을 Synopsys로 합성·PnR한 GDS 코어를 wrapper에 통합합니다. FP8 E4M3FN, 기본 1 lane이며 micro controller와 내부 SRAM 매크로는 사용하지 않습니다. UART로 16비트 명령을 받아 외부 Flash/PSRAM에 접근합니다.
+# Tiny Tapeout Verilog Project Template
 
-- [현재 구조와 명령어](docs/architecture.md)
-- [핀과 사용 방법](docs/info.md)
-- RTL: `src/rtl/`, 소스 목록: `src/sources.f`
-- 생성 Verilog: `python3 scripts/generate_verilog.py`
-- RTL 검증: `bash test/check_import.sh`
-- Actions: GDS 코어와 wrapper 통합·배치·배선, precheck 및 GL 테스트
+- [Read the documentation for project](docs/info.md)
 
-현재 rebuild 코어 GDS·LEF·넷리스트는 `macro/tiny_sparse_acc_core/`에 있습니다. 이전 구현은 Git 이력에서 확인할 수 있습니다.
+## What is Tiny Tapeout?
+
+Tiny Tapeout is an educational project that aims to make it easier and cheaper than ever to get your digital and analog designs manufactured on a real chip.
+
+To learn more and get started, visit https://tinytapeout.com.
+
+## Set up your Verilog project
+
+1. Add your Verilog files to the `src` folder.
+2. Edit the [info.yaml](info.yaml) and update information about your project, paying special attention to the `source_files` and `top_module` properties. If you are upgrading an existing Tiny Tapeout project, check out our [online info.yaml migration tool](https://tinytapeout.github.io/tt-yaml-upgrade-tool/).
+3. Edit [docs/info.md](docs/info.md) and add a description of your project.
+4. Adapt the testbench to your design. See [test/README.md](test/README.md) for more information.
+
+The GitHub action will automatically build the ASIC files using [LibreLane](https://www.zerotoasiccourse.com/terminology/librelane/).
+
+## Enable GitHub actions to build the results page
+
+- [Enabling GitHub Pages](https://tinytapeout.com/faq/#my-github-action-is-failing-on-the-pages-part)
+
+## Resources
+
+- [FAQ](https://tinytapeout.com/faq/)
+- [Digital design lessons](https://tinytapeout.com/digital_design/)
+- [Learn how semiconductors work](https://tinytapeout.com/siliwiz/)
+- [Join the community](https://tinytapeout.com/discord)
+- [Build your design locally](https://www.tinytapeout.com/guides/local-hardening/)
+
+## What next?
+
+- [Submit your design to the next shuttle](https://app.tinytapeout.com/).
+- Edit [this README](README.md) and explain your design, how it works, and how to test it.
+- Share your project on your social network of choice:
+  - LinkedIn [#tinytapeout](https://www.linkedin.com/search/results/content/?keywords=%23tinytapeout) [@TinyTapeout](https://www.linkedin.com/company/100708654/)
+  - Mastodon [#tinytapeout](https://chaos.social/tags/tinytapeout) [@matthewvenn](https://chaos.social/@matthewvenn)
+  - X (formerly Twitter) [#tinytapeout](https://twitter.com/hashtag/tinytapeout) [@tinytapeout](https://twitter.com/tinytapeout)
+  - Bluesky [@tinytapeout.com](https://bsky.app/profile/tinytapeout.com)
