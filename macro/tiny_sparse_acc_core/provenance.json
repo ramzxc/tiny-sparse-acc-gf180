@@ -1,14 +1,14 @@
 {
-  "export": "20261119_160122_1795071682898338",
+  "export": "20261119_220514_1795093514192231",
   "source_sha256": {
-    "core.gds": "75ec4b581eb8cf059e063f61b53e225cb9bba1bde71c0de56c500c5209d1140a",
-    "core.lef": "b704c82cd1db18b658affd852cd0bd1e46f16daec72270ee003eb88a58bb6f6c",
-    "core.v": "a29c8fb83231552f938a84346693633d73068969611ce2758f513c7db295ff84",
-    "core.pg.v": "f6f15d7bcbd9b63edec53a57334fe7f2da6706c0716df5f051b2dd993350b5ce",
-    "core.gf180_nominal_25.spef": "ad3f6c345caa31b799fcec951a07ec9d7b20fa0303e5da1a2ba2c7e91b35fd77"
+    "core.gds": "7f37871470e27f50866abccd85e094de509c9f643e0e22f48e530f3e00bd225f",
+    "core.lef": "b831fa3a0a68d984081caf878f80530861868a8b3ac3f649617f3e70380915a7",
+    "core.v": "3156e1542125aa9507c22136591fe99342eeb3694c9fcdf2ae3300b480048001",
+    "core.pg.v": "bf81f93a84d861b7fd7ee8aa7c3199f703ced31210c7f634212031895e649a49",
+    "core.gf180_nominal_25.spef": "f2fac11c0320441979b0c2fa6d9a5ee2241b3e740253a78d58071979f3f2a372"
   },
-  "removed_unused_spef_fillers": 1325,
-  "flattened_via_instances": 14155,
+  "removed_unused_spef_fillers": 1118,
+  "flattened_via_instances": 14572,
   "via_flatten_geometry_check": "exact polygon multiset equality on every layer/datatype",
   "pr_boundary_um": [
     0,
@@ -50,7 +50,7 @@
     3.36,
     11.76
   ],
-  "pnr_run": "20261119_155725_463851",
+  "pnr_run": "slew_20261119_220419_578718",
   "pnr_block": "finished",
   "wrapper_clearance_um": {
     "left": 0,
@@ -59,20 +59,54 @@
     "top": 0
   },
   "local_integration": {
-    "placement_check": "passed with cut rows, taps and endcaps",
+    "core_export": "20261119_220514_1795093514192231",
+    "pdn": "LibreLane unmodified default pdn_cfg.tcl, trim enabled",
     "wrapper_routing_drc": 0,
+    "power_connected": true,
+    "power_pin_geometry_verified": true,
+    "core_geometry_preserved": true,
     "magic_drc": 0,
     "klayout_drc": 0,
     "klayout_antenna": 0,
     "lvs": "Circuits match uniquely (core hierarchy included)",
-    "gl_tests": {
-      "pass": 5,
-      "fail": 0
+    "metal5_polygons": 0,
+    "github_actions_run": false,
+    "full_tt_precheck_run": false,
+    "tt_timing": {
+      "min": {
+        "setup_ns": 17.77,
+        "hold_ns": 0.36,
+        "cap_slew_fanout_violations": 0,
+        "unannotated_drivers": 0
+      },
+      "nom": {
+        "setup_ns": 15.86,
+        "hold_ns": 0.35,
+        "cap_slew_fanout_violations": 0,
+        "unannotated_drivers": 0
+      },
+      "max": {
+        "setup_ns": 13.34,
+        "hold_ns": 0.33,
+        "cap_slew_fanout_violations": 0,
+        "unannotated_drivers": 0
+      }
     },
-    "custom_pdn_tcl": false,
-    "icc2_route_drc": 0,
-    "icc2_open_nets": 0,
-    "nominal_setup_slack_ns": 12.83
+    "gl": {
+      "passed": 5,
+      "failed": 0,
+      "model": "functional standard cells with 1 ns unit delays, not SDF",
+      "reset_corrections": "8 exhaustively proved reset D-cone constants; gl/reset_proof.json"
+    },
+    "gds_sha256": "4a49bdfcc0ac092564204f7069dc0df51036fe618c5abd6eed7e3beaf798676d",
+    "production_macro_updated": true,
+    "limitations": [
+      "SS outside selected target",
+      "Real board electrical characterization remains unverified",
+      "Not SDF-annotated gate simulation",
+      "Full Tiny Tapeout precheck and GitHub Actions not rerun",
+      "KLayout density and SI noise signoff not included"
+    ]
   },
   "size_search": {
     "scope": "Largest tested site/row-aligned size with existing external power pin geometry and default LibreLane PDN",
@@ -85,5 +119,6 @@
     "next_width_result": "PDN channel repair creates an extra external power stripe",
     "next_height_um": 148.96,
     "next_height_result": "PDN generation or connectivity failure in tested placements"
-  }
+  },
+  "electrical_verification": "docs/electrical-verification.md"
 }
